@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "linear-regression"
+version = "0.1.0"
+description = ""
+authors = ["Dreamlone <mik.sarafanov@gmail.com>"]
+readme = "README.md"
+packages = [{include = "linear_regression"}]
+
+[tool.poetry.dependencies]
+python = "^3.13"
+matplotlib = "^3.10.7"
+scikit-learn = "^1.7.2"
+pandas = "^2.3.3"
+imageio = "^2.37.0"
+svgutils = "^0.3.4"
+cairosvg = "^2.8.2"
+seaborn = "^0.13.2"
+pyarrow = "^22.0.0"
+
+[tool.poetry.group.aws-infra]
+optional = true
+
+[tool.poetry.group.aws-infra.dependencies]
+boto3 = "^1.40.59"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
