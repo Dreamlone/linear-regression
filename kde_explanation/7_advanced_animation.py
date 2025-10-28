@@ -21,7 +21,7 @@ from kde_explanation.kde_utils import get_kde_simulation_path, get_kde_plots_pat
 
 DPI                 = 150
 INTERVAL_MS         = 30
-FRAME_SKIP          = 50
+FRAME_SKIP          = 100
 LINE_INTERP_STEPS   = 1
 
 PARTICLES_RADIUS    = 0.02
@@ -373,6 +373,8 @@ def compose_animation(output_gif: Path,
     ax1.set_aspect('equal')
     ax1.xaxis.set_ticklabels([]); ax1.xaxis.set_ticks([])
     ax1.plot([0, 62], [GROUND_Y, GROUND_Y], c='black', linewidth=1.2)
+    ax1.yaxis.set_ticklabels([])
+    ax1.yaxis.set_ticks([])
 
     # Source circles
     circles = [patches.Circle((sx[i], sy[i]), CIRCLE_RADIUS) for i in range(n_circles)]

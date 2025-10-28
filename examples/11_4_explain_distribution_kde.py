@@ -33,59 +33,64 @@ def generate_synthetic_data(n_samples=100, noise_std=1.0, outlier_fraction=0.1, 
 def annotations_by_language(mode: str):
     if mode == "eng":
         title = ""
-        first_plot_title = ""
+        right_plot_title = ""
         freq = ""
     elif mode == "rus":
         title = "Еще один способ визуализации распределения"
-        first_plot_title = "Датасет с двумя переменными (X и Y)"
+        right_plot_title = "Плотность распределения"
         freq = "Ядерная оценка плотности"
     else:
         raise NotImplementedError(f"Language {mode} is not supported")
-    return title, first_plot_title, freq
+    return title, right_plot_title, freq
 
 
 def plot_kde_explanation(mode: str = "eng"):
     """ Plot the diagram with kernel density estimation """
-    title, first_plot_title, freq = annotations_by_language(mode)
+    title, right_plot_title, freq = annotations_by_language(mode)
 
     x, y = generate_synthetic_data()
 
-    fig_size = (11, 6)
+    fig_size = (10, 5)
     fig, axs = plt.subplots(1, 2, figsize=fig_size)
     fig.subplots_adjust(left=0.05, right=0.97, hspace=0.25)
 
     axs[0].scatter(y, x, s=40, c="grey", alpha=0.8)
     axs[0].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[0].set_xlim(MIN_Y, MAX_Y)
+    axs[0].yaxis.set_ticklabels([])
+    axs[0].yaxis.set_ticks([])
 
     kde = stats.gaussian_kde(y)
     y_grid = np.linspace(MIN_Y, MAX_Y, 1000)
     kde_values = kde(y_grid)
-    axs[1].plot(y_grid, kde_values, color='red', lw=2, alpha=0.5, label="Ядерная оценка")
+    axs[1].plot(y_grid, kde_values, color='red', lw=2, alpha=0.5, zorder=1)
     axs[1].set_ylim(0, 0.10)
 
-    rng = np.random.default_rng(42)
-    sample_indices = rng.choice(len(y), size=5, replace=False)
-    bandwidth = kde.factor * np.std(y)  # оценка ширины ядра
+    bandwidth = kde.factor * np.std(y)
 
-    for idx in sample_indices:
+    # Show some individual distributions
+    for idx, color in zip([9, 22], ["#70B7CC", "orange"]):
         y0 = y[idx]
         kernel_x = np.linspace(y0 - 3 * bandwidth, y0 + 3 * bandwidth, 300)
-        kernel_y = stats.norm.pdf(kernel_x, loc=y0, scale=bandwidth) * 1 / len(y)
+        kernel_y = 16 + (stats.norm.pdf(kernel_x, loc=y0, scale=bandwidth) * 410 / len(y))
+        axs[0].plot(kernel_x, kernel_y, color=color, lw=2)
+        axs[0].scatter([y0], [x[idx]], color=color, s=50, alpha=1, zorder=2)
+        axs[0].plot([y0, y0], [max(kernel_y), x[idx]], '--', color=color, lw=1)
+        axs[1].plot(kernel_x, stats.norm.pdf(kernel_x, loc=y0, scale=bandwidth) * 2 / len(y), color=color, lw=2)
 
     axs[1].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
-    axs[1].set_ylabel("Плотность распределения", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[1].set_ylabel(right_plot_title, fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[1].set_title(freq, fontdict=FONTDICT)
     axs[1].set_xlim(MIN_Y, MAX_Y)
 
-    fig.suptitle(title, fontsize=16, fontdict={'fontname': FONTNAME}, va="top", y=1.05)
+    fig.suptitle(title, fontsize=16, fontdict={'fontname': FONTNAME}, va="top", y=1)
 
     raw_svg_file = Path(get_plots_path(), f"11_4_kde_{mode}.svg", bbox_inches='tight')
     final_plot = Path(get_plots_path(), f"11_4_kde_{mode}.png")
     plt.savefig(raw_svg_file)
     plt.close()
 
-    save_plot_according_to_template(raw_svg_file, final_plot, template_name="template_orange.svg")
+    save_plot_according_to_template(raw_svg_file, final_plot, template_name="template_orange_small.svg")
 
 
 if __name__ == '__main__':
