@@ -21,7 +21,7 @@ from kde_explanation.kde_utils import get_kde_simulation_path, get_kde_plots_pat
 
 DPI                 = 150
 INTERVAL_MS         = 30
-FRAME_SKIP          = 70
+FRAME_SKIP          = 50
 LINE_INTERP_STEPS   = 1
 
 PARTICLES_RADIUS    = 0.02
@@ -464,12 +464,15 @@ def compose_animation(output_gif: Path,
             ranks = circle_rank[idx]
             cols = cmap_circles(norm_circles(ranks))
             colors[idx] = cols
-        pc.set_edgecolor(colors)
+        pc.set_edgecolor([tuple(c) for c in colors])
+        pc.set_alpha(None)
 
     def init():
         line1.set_xdata([-5.0, -5.0])
         line2.set_xdata([-5.0, -5.0])
-        pc.set_edgecolor(base_edge_colors)
+        pc.set_edgecolor([tuple(c) for c in base_edge_colors])
+        pc.set_alpha(None)
+
         ec.set_offsets(np.empty((0, 2)))
         ec.set(facecolors=np.empty((0, 4)), edgecolors=np.empty((0, 4)))
         env_line_left.set_data([], [])
