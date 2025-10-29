@@ -37,7 +37,7 @@ def annotations_by_language(mode: str):
         freq = ""
     elif mode == "rus":
         title = "Частотные гистограммы с разным количеством интервалов k"
-        first_plot_title = "Датасет с двумя переменными (X и Y)"
+        first_plot_title = "Исходный датасет"
         freq = "Относительная частота"
     else:
         raise NotImplementedError(f"Language {mode} is not supported")
@@ -55,11 +55,12 @@ def plot_hist_explanation(mode: str = "eng"):
     axs[0, 0].set_visible(False)
     axs[0, 2].set_visible(False)
 
-    axs[0, 1].scatter(x, y, s=40, c="grey", alpha=0.8)
-    axs[0, 1].set_ylabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
-    axs[0, 1].set_xlabel("X", fontdict={'fontsize': 12, 'fontname': FONTNAME})
-    axs[0, 1].set_ylim(MIN_Y, MAX_Y)
+    axs[0, 1].scatter(y, x, s=40, c="grey", alpha=0.8)
+    axs[0, 1].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[0, 1].set_xlim(MIN_Y, MAX_Y)
     axs[0, 1].set_title(first_plot_title, fontdict=FONTDICT)
+    axs[0, 1].yaxis.set_ticklabels([])
+    axs[0, 1].yaxis.set_ticks([])
 
     axs[1, 0].set_xlim(MIN_Y, MAX_Y)
     axs[1, 0].set_ylim(0, 0.1)

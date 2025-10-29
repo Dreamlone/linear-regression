@@ -77,10 +77,11 @@ def plot_hist_bins_rules(mode: str = "eng"):
     axs[0, 2].text(0.5, 0.25, r"$k = \lceil 2 \cdot 100^{1/3} \rceil$", transform=axs[0, 2].transAxes,
                    ha='center', va='center', color="black", fontsize=18, fontdict=FONTDICT)
 
-    axs[0, 1].scatter(x, y, s=40, c="grey", alpha=0.8)
-    axs[0, 1].set_ylabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
-    axs[0, 1].set_xlabel("X", fontdict={'fontsize': 12, 'fontname': FONTNAME})
-    axs[0, 1].set_ylim(MIN_Y, MAX_Y)
+    axs[0, 1].scatter(y, x, s=40, c="grey", alpha=0.8)
+    axs[0, 1].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[0, 1].set_xlim(MIN_Y, MAX_Y)
+    axs[0, 1].yaxis.set_ticklabels([])
+    axs[0, 1].yaxis.set_ticks([])
     axs[0, 1].set_title(f"{first_plot_title}: {len(y)}", fontdict={'fontsize': 16, 'fontname': FONTNAME})
 
     sturges_k = int(np.ceil(1 + np.log2(len(y))))
