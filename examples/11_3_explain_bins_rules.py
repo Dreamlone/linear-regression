@@ -78,7 +78,7 @@ def plot_hist_bins_rules(mode: str = "eng"):
                    ha='center', va='center', color="black", fontsize=18, fontdict=FONTDICT)
 
     axs[0, 1].scatter(y, x, s=40, c="grey", alpha=0.8)
-    axs[0, 1].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[0, 1].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[0, 1].set_xlim(MIN_Y, MAX_Y)
     axs[0, 1].yaxis.set_ticklabels([])
     axs[0, 1].yaxis.set_ticks([])
@@ -90,7 +90,7 @@ def plot_hist_bins_rules(mode: str = "eng"):
     axs[1, 0].hist(y, density=True, range=(MIN_Y, MAX_Y),
                 alpha=0.5, rwidth=0.9, bins=sturges_k,
                 color="#70B7CC", orientation='vertical')
-    axs[1, 0].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[1, 0].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[1, 0].set_ylabel(freq, fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[1, 0].grid(alpha=0.2)
     axs[1, 0].set_title(f"k = {sturges_k}", fontdict={'fontsize': 16, 'fontname': FONTNAME})
@@ -102,7 +102,7 @@ def plot_hist_bins_rules(mode: str = "eng"):
     axs[1, 2].hist(y, density=True, range=(MIN_Y, MAX_Y),
                    alpha=0.5, rwidth=0.9, bins=rice_k,
                    color="orange", orientation='vertical')
-    axs[1, 2].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[1, 2].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[1, 2].set_title(f"k = {rice_k}", fontdict={'fontsize': 16, 'fontname': FONTNAME})
     # axs[1, 2].yaxis.set_ticklabels([])
 

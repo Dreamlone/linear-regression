@@ -31,6 +31,39 @@ def get_datasets():
     return rooms, good_prices, bad_prices_first, bad_prices_second
 
 
+def split_train_test_manual(features: np.array, target: np.array, apply_distortion: bool):
+    """ Function for 'bad' sampling with not vary good data """
+    distorted_x, distorted_y = None, None
+    ids_to_pick = [0, 1, 3, 7, 8, 11, 15, 18, 21, 22, 23, 26, 27, 28, 29, 32, 35, 38, 41, 44]
+    print(f"Sample size: {len(ids_to_pick)}")
+    x_sample = []
+    y_sample = []
+    for i in ids_to_pick:
+        x_sample.append(features[i])
+        y_sample.append(target[i])
+    x_sampled, y_sampled = np.array(x_sample), np.array(y_sample)
+
+    if apply_distortion:
+        # Apply changes in-place (affecting y_sampled)
+        distorted_x = []
+        distorted_y = []
+        for i in [2]:
+            y_sampled[i] = y_sampled[i] - 10000
+            distorted_x.append(x_sampled[i])
+            distorted_y.append(y_sampled[i])
+        for i in [9, 10]:
+            y_sampled[i] = y_sampled[i] + 10000
+            distorted_x.append(x_sampled[i])
+            distorted_y.append(y_sampled[i])
+        for i in [11]:
+            y_sampled[i] = y_sampled[i] + 20000
+            distorted_x.append(x_sampled[i])
+            distorted_y.append(y_sampled[i])
+        distorted_x, distorted_y = np.array(distorted_x), np.array(distorted_y)
+
+    return x_sampled, y_sampled, distorted_x, distorted_y
+
+
 def symmetric_mean_absolute_percentage_error(actual, predicted):
     """ Function to calculate SMAPE metric """
 

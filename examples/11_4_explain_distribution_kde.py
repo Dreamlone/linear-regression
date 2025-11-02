@@ -55,7 +55,7 @@ def plot_kde_explanation(mode: str = "eng"):
     fig.subplots_adjust(left=0.05, right=0.97, hspace=0.25)
 
     axs[0].scatter(y, x, s=40, c="grey", alpha=0.8)
-    axs[0].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[0].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[0].set_xlim(MIN_Y, MAX_Y)
     axs[0].yaxis.set_ticklabels([])
     axs[0].yaxis.set_ticks([])
@@ -78,7 +78,7 @@ def plot_kde_explanation(mode: str = "eng"):
         axs[0].plot([y0, y0], [max(kernel_y), x[idx]], '--', color=color, lw=1)
         axs[1].plot(kernel_x, stats.norm.pdf(kernel_x, loc=y0, scale=bandwidth) * 2 / len(y), color=color, lw=2)
 
-    axs[1].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[1].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[1].set_ylabel(right_plot_title, fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[1].set_title(freq, fontdict=FONTDICT)
     axs[1].set_xlim(MIN_Y, MAX_Y)

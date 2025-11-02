@@ -56,7 +56,7 @@ def plot_hist_explanation(mode: str = "eng"):
     axs[0, 2].set_visible(False)
 
     axs[0, 1].scatter(y, x, s=40, c="grey", alpha=0.8)
-    axs[0, 1].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[0, 1].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[0, 1].set_xlim(MIN_Y, MAX_Y)
     axs[0, 1].set_title(first_plot_title, fontdict=FONTDICT)
     axs[0, 1].yaxis.set_ticklabels([])
@@ -67,7 +67,7 @@ def plot_hist_explanation(mode: str = "eng"):
     axs[1, 0].hist(y, density=True, range=(MIN_Y, MAX_Y),
                 alpha=0.9, rwidth=0.9, bins=5,
                 color="#C7B875", orientation='vertical')
-    axs[1, 0].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[1, 0].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[1, 0].set_ylabel(freq, fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[1, 0].grid(alpha=0.2)
     axs[1, 0].set_title("k = 5", fontdict={'fontsize': 16, 'fontname': FONTNAME})
@@ -77,7 +77,7 @@ def plot_hist_explanation(mode: str = "eng"):
     axs[1, 1].hist(y, density=True, range=(MIN_Y, MAX_Y),
                    alpha=0.9, rwidth=0.9, bins=10,
                    color="#C7B875", orientation='vertical')
-    axs[1, 1].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[1, 1].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[1, 1].grid(alpha=0.2)
     axs[1, 1].set_title("k = 10", fontdict={'fontsize': 16, 'fontname': FONTNAME})
     # axs[1, 1].yaxis.set_ticklabels([])
@@ -88,7 +88,7 @@ def plot_hist_explanation(mode: str = "eng"):
     axs[1, 2].hist(y, density=True, range=(MIN_Y, MAX_Y),
                    alpha=0.9, rwidth=0.9, bins=20,
                    color="#C7B875", orientation='vertical')
-    axs[1, 2].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[1, 2].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[1, 2].set_title("k = 20", fontdict={'fontsize': 16, 'fontname': FONTNAME})
     # axs[1, 2].yaxis.set_ticklabels([])
 

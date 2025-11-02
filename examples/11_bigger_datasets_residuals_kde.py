@@ -43,12 +43,13 @@ def _plot_residuals(ax, actual_v, predicted_v, x_label, fontdict, color,
 def _plot_hist(ax, residuals, y_label, fontdict, color, hide_y_ticks: bool = False):
     kde = stats.gaussian_kde(residuals)
 
+    n_bins = int(np.ceil(2 * len(residuals) ** (1 / 3)))
     ax.hist(residuals, density=True, range=(-8000, 8000),
-            alpha=0.5, rwidth=0.9, bins=23,
+            alpha=0.5, rwidth=0.9, bins=n_bins,
             color=color, orientation='horizontal')
     xx = np.linspace(-8000, 8000, 1000)
     ax.plot([0, 0.0008], [0, 0], '--', color="black", alpha=0.3)
-    ax.plot(kde(xx), xx, color=color, linewidth=1)
+    ax.plot(kde(xx), xx, color=color, linewidth=1.5)
     ax.grid(color='grey', alpha=0.1)
     ax.set_ylim(-8000, 8000)
     ax.set_xlim(0, 0.0008)

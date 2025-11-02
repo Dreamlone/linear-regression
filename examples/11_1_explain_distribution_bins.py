@@ -41,8 +41,8 @@ def annotations_by_language(mode: str):
         fourth_plot_title = ""
         fourth_x = ""
     elif mode == "rus":
-        title = "Визуализация выборки в виде частотной гистограммы (для переменной Y)"
-        first_plot_title = "Датасет с двумя переменными (X и Y)"
+        title = "Визуализация выборки в виде частотной гистограммы (для переменной V)"
+        first_plot_title = "Датасет с двумя переменными (U и V)"
         second_plot_title = "Наложение k интервалов\nи подсчет наблюдений"
         third_plot_title = "Частотная гистограмма"
         third_x = "Абсолютная частота"
@@ -63,8 +63,8 @@ def plot_hist_explanation(mode: str = "eng"):
     fig.subplots_adjust(left=0.03, right=0.98, wspace=0.3)
 
     axs[0].scatter(x, y, s=40, c="grey", alpha=0.8)
-    axs[0].set_ylabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
-    axs[0].set_xlabel("X", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[0].set_ylabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[0].set_xlabel("U", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[0].set_ylim(MIN_Y, MAX_Y)
     axs[0].set_title(first_plot_title, fontdict=FONTDICT)
 
@@ -73,8 +73,8 @@ def plot_hist_explanation(mode: str = "eng"):
     cmap = colormaps.get_cmap('tab20c').resampled(N_BINS)
     colors = [cmap(i) for i in bin_indices]
     axs[1].scatter(x, y, c=colors, s=40, alpha=1)
-    axs[1].set_ylabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
-    axs[1].set_xlabel("X", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[1].set_ylabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[1].set_xlabel("U", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[1].set_title(second_plot_title, fontdict=FONTDICT)
     axs[1].set_ylim(MIN_Y, MAX_Y)
     axs[1].set_title(second_plot_title, fontdict=FONTDICT)
@@ -110,7 +110,7 @@ def plot_hist_explanation(mode: str = "eng"):
         )
     axs[2].set_xlim(0, 25)
     axs[2].set_ylim(MIN_Y, MAX_Y)
-    axs[2].set_ylabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[2].set_ylabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[2].set_title(third_plot_title, fontdict=FONTDICT)
     axs[2].set_xlabel(third_x, fontdict={'fontsize': 12, 'fontname': FONTNAME})
 
@@ -119,7 +119,7 @@ def plot_hist_explanation(mode: str = "eng"):
     axs[3].hist(y, density=True, range=(MIN_Y, MAX_Y),
                 alpha=0.8, rwidth=0.9, bins=N_BINS,
                 color="grey", orientation='vertical')
-    axs[3].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[3].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[3].set_title(fourth_plot_title, fontdict=FONTDICT)
     axs[3].set_ylabel(fourth_x, fontdict={'fontsize': 12, 'fontname': FONTNAME})
 

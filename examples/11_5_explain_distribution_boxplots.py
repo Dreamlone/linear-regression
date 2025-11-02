@@ -37,20 +37,20 @@ def annotations_by_language(mode: str):
         first_plot_title = ""
         second_plot_title = ""
         third_plot_title = ""
-        third_x = ""
+        median_label = "median"
     elif mode == "rus":
         title = "Ящик с усами"
         first_plot_title = "Исходный датасет"
         second_plot_title = "Ядерная оценка плотности\nи частотная гистограмма (k = 10)"
-        third_plot_title = 'Диаграмма "ящик с усами" в вертикальной ориентации'
-        third_x = "Абсолютная частота"
+        third_plot_title = 'Диаграмма "ящик с усами"\nв вертикальной ориентации'
+        median_label = "медиана"
     else:
         raise NotImplementedError(f"Language {mode} is not supported")
-    return title, first_plot_title, second_plot_title, third_plot_title, third_x
+    return title, first_plot_title, second_plot_title, third_plot_title, median_label
 
 
 def plot_distribution_boxplot(mode: str = "eng"):
-    title, first_plot_title, second_plot_title, third_plot_title, third_x = annotations_by_language(mode)
+    title, first_plot_title, second_plot_title, third_plot_title, median_label = annotations_by_language(mode)
 
     x, y = generate_synthetic_data()
 
@@ -59,7 +59,7 @@ def plot_distribution_boxplot(mode: str = "eng"):
     fig.subplots_adjust(left=0.03, right=0.98, wspace=0.3)
 
     axs[0].scatter(y, x, s=40, c="grey", alpha=0.8)
-    axs[0].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[0].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     axs[0].set_xlim(MIN_Y, MAX_Y)
     axs[0].set_title(first_plot_title, fontdict=FONTDICT)
     axs[0].yaxis.set_ticklabels([])
@@ -71,26 +71,48 @@ def plot_distribution_boxplot(mode: str = "eng"):
     axs[1].plot(y_grid, kde_values, color='black', lw=2, zorder=2)
     axs[1].set_ylim(0, 0.10)
     axs[1].set_title(second_plot_title, fontdict=FONTDICT)
-    axs[1].set_xlabel("Y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[1].set_xlabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
 
     k = 10
     axs[1].hist(y, density=True, range=(MIN_Y, MAX_Y),
                    alpha=0.5, rwidth=0.9, bins=k,
                    color="grey", orientation='vertical', zorder=1)
+    median_value = np.median(y)
+    q1 = np.percentile(y, 25)
+    q3 = np.percentile(y, 75)
+    axs[1].plot([median_value, median_value], [0.07, 0.048], '--', c='grey')
+    axs[1].text(
+        median_value * 0.95, 0.088, median_label,
+        ha="center", va="top",
+        rotation="vertical", rotation_mode="anchor",
+        fontdict={'fontname': FONTNAME}
+    )
+    axs[1].plot([q1, q1], [0.07, 0.048], '--', c='grey')
+    axs[1].plot([q3, q3], [0.07, 0.048], '--', c='grey')
+    for q_coordinate, q_label in zip([q1, q3], ["Q1", "Q3"]):
+        axs[1].text(
+            q_coordinate * 0.95, 0.082, q_label,
+            ha="center", va="top",
+            rotation="vertical", rotation_mode="anchor",
+            fontdict={'fontname': FONTNAME}
+        )
 
     ax_boxplot = axs[1].twinx()
     ax_boxplot.boxplot(
         y,
+        positions=[1.5],
         orientation="horizontal",
-        widths=0.05,
+        widths=0.1,
         patch_artist=True,
         boxprops=dict(facecolor='orange', color='grey'),
         medianprops=dict(color='white'),
         whiskerprops=dict(color='grey'),
-        capprops=dict(color='orange'),
+        capprops=dict(color='grey'),
         flierprops=dict(markerfacecolor='orange', marker='o', markersize=4, linestyle='none', alpha=0.5),
         zorder=2
     )
+    ax_boxplot.set_ylim(0, 2)
+    ax_boxplot.set_yticks([])
 
     axs[2].boxplot(
         y,
@@ -100,10 +122,14 @@ def plot_distribution_boxplot(mode: str = "eng"):
         boxprops=dict(facecolor='orange', color='grey'),
         medianprops=dict(color='white'),
         whiskerprops=dict(color='grey'),
-        capprops=dict(color='orange'),
+        capprops=dict(color='grey'),
         flierprops=dict(markerfacecolor='orange', marker='o', markersize=4, linestyle='none', alpha=0.5),
         zorder=2
     )
+    axs[2].xaxis.set_ticklabels([])
+    axs[2].xaxis.set_ticks([])
+    axs[2].set_ylabel("V", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    axs[2].set_title(third_plot_title, fontdict=FONTDICT)
 
     fig.suptitle(title, fontsize=16, fontdict={'fontname': FONTNAME}, va="top", y=1.2)
 

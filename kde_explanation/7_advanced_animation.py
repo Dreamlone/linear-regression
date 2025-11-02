@@ -37,6 +37,7 @@ ENVELOPE_ALPHA          = 0.7
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
 
+
 @dataclass
 class S3Bucket:
     bucket: str
@@ -378,11 +379,15 @@ def compose_animation(output_gif: Path,
 
     # Source circles
     circles = [patches.Circle((sx[i], sy[i]), CIRCLE_RADIUS) for i in range(n_circles)]
-    pc = PatchCollection(circles, facecolor='none', edgecolor='grey', linewidths=0.6, alpha=0.5)
+    pc = PatchCollection(circles, facecolor='grey', edgecolor='white', linewidths=0.6, alpha=1.0)
     ax1.add_collection(pc)
 
-    grey_rgba = mcolors.to_rgba('grey', alpha=0.5)
-    base_edge_colors = np.tile(grey_rgba, (n_circles, 1))
+    grey_rgba = mcolors.to_rgba('grey', alpha=1.0)
+    white_edge_rgba = (1.0, 1.0, 1.0, grey_rgba[3])
+    base_edge_colors = np.tile(white_edge_rgba, (n_circles, 1))
+
+    base_face_colors = np.tile(grey_rgba, (n_circles, 1))
+    white_rgba = (1.0, 1.0, 1.0, base_face_colors[0, 3])
 
     # ranks of circles by X (from left to right): correspond to the order of intersection by the vertical line
     order = np.argsort(sx)
@@ -459,17 +464,27 @@ def compose_animation(output_gif: Path,
 
     def recolor_circles_by_line(xline):
         """Color the source circles: uncrossed ones — gray, crossed ones — coolwarm according to their rank"""
-        colors = base_edge_colors.copy()
+        edge_cols = base_edge_colors.copy()
         mask_crossed = sx < xline
         if np.any(mask_crossed):
             idx = np.where(mask_crossed)[0]
             ranks = circle_rank[idx]
-            cols = cmap_circles(norm_circles(ranks))
-            colors[idx] = cols
-        pc.set_edgecolor([tuple(c) for c in colors])
+            edge_cols[idx] = cmap_circles(norm_circles(ranks))
+
+        pc.set_edgecolor([tuple(c) for c in edge_cols])
+
+        face_cols = base_face_colors.copy()
+        if np.any(mask_crossed):
+            face_cols[mask_crossed] = white_rgba
+        pc.set_facecolor([tuple(c) for c in face_cols])
+
         pc.set_alpha(None)
 
     def init():
+        pc.set_facecolor([tuple(c) for c in base_face_colors])
+        pc.set_edgecolor([tuple(c) for c in base_edge_colors])
+        pc.set_alpha(None)
+
         line1.set_xdata([-5.0, -5.0])
         line2.set_xdata([-5.0, -5.0])
         pc.set_edgecolor([tuple(c) for c in base_edge_colors])

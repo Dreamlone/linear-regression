@@ -283,8 +283,9 @@ def _plot_residuals(ax, actual_v, predicted_v, x_label, color):
 def _plot_hist(ax, residuals, color):
     kde = stats.gaussian_kde(residuals)
 
+    rice_k = int(np.ceil(2 * len(residuals) ** (1 / 3)))
     ax.hist(residuals, density=True, range=(-8000, 8000),
-            alpha=0.5, rwidth=0.9, bins=16,
+            alpha=0.5, rwidth=0.9, bins=rice_k,
             color=color, orientation='horizontal')
     xx = np.linspace(-8000, 8000, 1000)
     ax.plot([0, 0.0008], [0, 0], '--', color="black", alpha=0.3)

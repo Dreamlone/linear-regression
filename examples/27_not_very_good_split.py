@@ -7,28 +7,10 @@ from sklearn.metrics import root_mean_squared_error
 from sklearn.model_selection import train_test_split
 
 from examples.paths import get_plots_path
-from examples.utils import get_datasets, save_plot_according_to_template
+from examples.utils import get_datasets, save_plot_according_to_template, split_train_test_manual
 
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
-
-from sklearn.linear_model import RANSACRegressor, LinearRegression
-
-
-def fit_ransac_and_predict(x_sampled: np.ndarray, y_sampled: np.ndarray) -> np.ndarray:
-    # Преобразуем x в двумерный массив (формат, ожидаемый sklearn)
-    x_sampled_reshaped = x_sampled.reshape(-1, 1)
-
-    # Инициализация RANSAC с базовой моделью линейной регрессии
-    ransac = RANSACRegressor(LinearRegression(), random_state=2)
-
-    # Обучение модели
-    ransac.fit(x_sampled_reshaped, y_sampled)
-
-    # Предсказание
-    y_pred = ransac.predict(x_sampled_reshaped)
-
-    return y_pred
 
 
 def annotations_by_language(mode: str, apply_distortion: bool):
@@ -74,17 +56,6 @@ def _get_predicted(rooms: np.array, actual_prices: np.array):
     return np.array(predicted_prices), intercept, slope
 
 
-def _split_train_test_manual(features: np.array, target: np.array):
-    ids_to_pick = [0, 1, 3, 7, 8, 11, 15, 18, 21, 22, 23, 26, 27, 28, 29, 32, 35, 38, 41, 44]
-    print(f"Sample size: {len(ids_to_pick)}")
-    x_sample = []
-    y_sample = []
-    for i in ids_to_pick:
-        x_sample.append(features[i])
-        y_sample.append(target[i])
-    return np.array(x_sample), np.array(y_sample)
-
-
 def _split_train_test(features: np.array, target: np.array, test_size: float = 0.4):
     x_train, x_test, y_train, y_test = train_test_split(
         features, target, test_size=test_size, random_state=14 * 20)
@@ -105,25 +76,8 @@ def plot_all_datasets_in_one(mode: str = "eng", apply_distortion: bool = False):
     common_features = np.concat([rooms, rooms, rooms])
     common_target = np.concat([good_prices, bad_prices_first, bad_prices_second])
 
-    x_sampled, y_sampled = _split_train_test_manual(common_features, common_target)
-    if apply_distortion:
-        distorted_x = []
-        distorted_y = []
-        for i in [2]:
-            y_sampled[i] = y_sampled[i] - 10000
-            distorted_x.append(x_sampled[i])
-            distorted_y.append(y_sampled[i])
-        for i in [9, 10]:
-            y_sampled[i] = y_sampled[i] + 10000
-            distorted_x.append(x_sampled[i])
-            distorted_y.append(y_sampled[i])
-        for i in [11]:
-            y_sampled[i] = y_sampled[i] + 20000
-            distorted_x.append(x_sampled[i])
-            distorted_y.append(y_sampled[i])
+    x_sampled, y_sampled, distorted_x, distorted_y = split_train_test_manual(common_features, common_target, apply_distortion)
     predicted, intercept, slope = _get_predicted(x_sampled, y_sampled)
-
-    # ransac_output = fit_ransac_and_predict(x_sampled, y_sampled)
 
     print("--- METRICS ---")
     rmse_metric = root_mean_squared_error(y_sampled, predicted)
