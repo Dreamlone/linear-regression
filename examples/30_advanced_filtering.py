@@ -198,6 +198,7 @@ def annotations_by_language(mode: str):
         elliptic_envelope_plot = "Elliptic Envelope"
         main_plot = ""
         lof_label = ""
+        y_label = ""
     elif mode == "rus":
         title = "Способы фильтрации данных (многомерные методы)"
         mahalanobis_plot = "Махаланобисово расстояние"
@@ -205,9 +206,10 @@ def annotations_by_language(mode: str):
         elliptic_envelope_plot = "Elliptic Envelope"
         main_plot = "Данные с выбросами"
         lof_label = "Оценка локальной плотности (LOF)"
+        y_label = "Обнаруженные выбросы"
     else:
         raise NotImplementedError(f"Language {mode} is not supported")
-    return (title, mahalanobis_plot, lof_plot, elliptic_envelope_plot, main_plot, lof_label)
+    return (title, mahalanobis_plot, lof_plot, elliptic_envelope_plot, main_plot, lof_label, y_label)
 
 
 def generate_synthetic_data(n_samples=100, noise_std=1.0, outlier_fraction=0.1, random_state=2025):
@@ -235,13 +237,15 @@ def ax_cleanup(ax):
 
 
 def plot_filtering_method_concepts(mode: str = "eng"):
-    (title, mahalanobis_plot, lof_plot, elliptic_envelope_plot, main_plot, lof_label) = annotations_by_language(mode)
+    (title, mahalanobis_plot, lof_plot, elliptic_envelope_plot,
+     main_plot, lof_label, y_label) = annotations_by_language(mode)
     x, y = generate_synthetic_data()
 
-    fig_size = (13, 12)
+    fig_size = (10, 9)
     fig = plt.figure(figsize=fig_size)
-    gs = GridSpec(4, 3, figure=fig)
-    ax_main = fig.add_subplot(gs[0:2, 0:3])
+    gs = GridSpec(3, 2, figure=fig)
+    gs.update(hspace=0.3)
+    ax_main = fig.add_subplot(gs[0, 0:2])
     ax_main.set_title(main_plot, fontsize=12, fontdict={'fontname': FONTNAME})
     ax_main.scatter(x, y, s=60, c="#5b94e5", alpha=0.8)
     ax_main.set_ylim(MIN_Y, MAX_Y)
@@ -251,22 +255,23 @@ def plot_filtering_method_concepts(mode: str = "eng"):
     ##########################
     # 1 Mahalanobis distance #
     ##########################
-    ax_mahalanobis = fig.add_subplot(gs[2, 0])
+    ax_mahalanobis = fig.add_subplot(gs[1, 0])
     ax_mahalanobis.set_title(mahalanobis_plot, fontsize=12, fontdict={'fontname': FONTNAME})
 
-    ax_mahalanobis_data = fig.add_subplot(gs[3, 0])
+    ax_mahalanobis_data = fig.add_subplot(gs[2, 0])
     x_borders, y_borders, x_in, y_in, x_out, y_out = filter_mahalanobis(ax_mahalanobis, x, y, alpha=0.1)
     ax_mahalanobis_data.plot(x_borders, y_borders, '--', c='red')
     ax_mahalanobis_data.scatter(x_in, y_in, s=30, c="#5b94e5", alpha=0.8)
     ax_mahalanobis_data.scatter(x_out, y_out, s=40, c="red", alpha=0.8)
     ax_mahalanobis_data.set_ylim(MIN_Y, MAX_Y)
     ax_mahalanobis_data.set_xlim(MIN_X, MAX_X)
+    ax_mahalanobis_data.set_ylabel(y_label, fontdict={'fontsize': 12, 'fontname': FONTNAME})
     ax_cleanup(ax_mahalanobis_data)
 
     ################################
     # 2 LOF — Local Outlier Factor #
     ################################
-    ax_lof = fig.add_subplot(gs[2, 1])
+    ax_lof = fig.add_subplot(gs[1, 1])
 
     x_borders, y_borders, x_in, y_in, x_out, y_out = plot_lof_boundary(ax_lof, x, y, lof_label)
     ax_lof.set_title(lof_plot, fontsize=12, fontdict={'fontname': FONTNAME})
@@ -275,7 +280,7 @@ def plot_filtering_method_concepts(mode: str = "eng"):
     ax_cleanup(ax_lof)
     ax_lof.spines[['right', 'top']].set_visible(False)
 
-    ax_lof_data = fig.add_subplot(gs[3, 1])
+    ax_lof_data = fig.add_subplot(gs[2, 1])
     ax_lof_data.plot(x_borders, y_borders, '--', c='red')
     ax_lof_data.scatter(x_in, y_in, s=30, c="#5b94e5", alpha=0.8)
     ax_lof_data.scatter(x_out, y_out, s=40, c="red", alpha=0.8)

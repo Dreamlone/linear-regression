@@ -5,8 +5,6 @@ import imageio
 import numpy as np
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-from scipy.stats import stats
-from sklearn.metrics import r2_score
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
 from examples.utils import save_plot_according_to_template

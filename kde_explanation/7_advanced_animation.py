@@ -19,7 +19,7 @@ from scipy.spatial import cKDTree
 
 from kde_explanation.kde_utils import get_kde_simulation_path, get_kde_plots_path
 
-DPI                 = 150
+DPI                 = 120
 INTERVAL_MS         = 30
 FRAME_SKIP          = 100
 LINE_INTERP_STEPS   = 1
