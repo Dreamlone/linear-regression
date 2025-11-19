@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 from examples.paths import get_plots_path, get_plots_templates_path
 
@@ -31,6 +32,57 @@ def get_datasets():
     return rooms, good_prices, bad_prices_first, bad_prices_second
 
 
+def get_extended_dataset() -> pd.DataFrame:
+    prices = np.array([9000, 10000, 11000, 18500, 20000, 21500, 29000, 30000, 31000,
+                       38500, 40000, 41500, 49000, 50000, 51000, 9000, 10000, 11000,
+                       18500, 20000, 21500, 27000, 30000, 33000, 36000, 40000, 44000,
+                       43000, 50000, 57000, 9000, 10000, 11000, 20000, 21000, 22000,
+                       30000, 31000, 32000, 34000, 35000, 36000, 35000, 36000, 37000])
+    # if apply_distortion:
+    #     # Apply changes in-place (affecting y)
+    #     for i in [3]:
+    #         prices[i] = prices[i] - 10000
+    #     for i in [22, 23]:
+    #         prices[i] = prices[i] + 10000
+    #     for i in [26]:
+    #         prices[i] = prices[i] + 20000
+
+    rooms = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5,
+                      1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5,
+                      1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5])
+    city_name = np.array(["A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A",
+                          "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B",
+                          "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C"])
+    # Area depends on rooms number
+    area = 28 + 22 * rooms
+
+    base = np.where(city_name == "A", 400, np.where(city_name == "B", 800, 1200))
+    metro_distance = (base + (6 - rooms) * 120).astype(int)
+
+    ac_bool = np.zeros_like(rooms, dtype=bool)
+    for city in ["A", "B", "C"]:
+        m = (city_name == city)
+        med_price = np.median(prices[m])
+        ac_bool[m] = (rooms[m] >= 3) | (prices[m] >= med_price)
+    ac_in_apartment = np.where(ac_bool, "yes", "no")
+
+    return pd.DataFrame({
+        "city": city_name,
+        "rooms": rooms,
+        "area": area,
+        "metro_distance": metro_distance,
+        "ac_in_apartment": ac_in_apartment,
+        "price": prices
+    })
+
+
+def extract_row(array: np.array, i_to_pick: int):
+    if len(array.shape) == 2:
+        return array[i_to_pick, :]
+    else:
+        return array[i_to_pick]
+
+
 def split_train_test_manual(features: np.array, target: np.array, apply_distortion: bool):
     """ Function for 'bad' sampling with not vary good data """
     distorted_x, distorted_y = None, None
@@ -39,8 +91,8 @@ def split_train_test_manual(features: np.array, target: np.array, apply_distorti
     x_sample = []
     y_sample = []
     for i in ids_to_pick:
-        x_sample.append(features[i])
-        y_sample.append(target[i])
+        x_sample.append(extract_row(features, i))
+        y_sample.append(extract_row(target, i))
     x_sampled, y_sampled = np.array(x_sample), np.array(y_sample)
 
     if apply_distortion:
@@ -49,16 +101,16 @@ def split_train_test_manual(features: np.array, target: np.array, apply_distorti
         distorted_y = []
         for i in [2]:
             y_sampled[i] = y_sampled[i] - 10000
-            distorted_x.append(x_sampled[i])
-            distorted_y.append(y_sampled[i])
+            distorted_x.append(extract_row(x_sampled, i))
+            distorted_y.append(extract_row(y_sampled, i))
         for i in [9, 10]:
             y_sampled[i] = y_sampled[i] + 10000
-            distorted_x.append(x_sampled[i])
-            distorted_y.append(y_sampled[i])
+            distorted_x.append(extract_row(x_sampled, i))
+            distorted_y.append(extract_row(y_sampled, i))
         for i in [11]:
             y_sampled[i] = y_sampled[i] + 20000
-            distorted_x.append(x_sampled[i])
-            distorted_y.append(y_sampled[i])
+            distorted_x.append(extract_row(x_sampled, i))
+            distorted_y.append(extract_row(y_sampled, i))
         distorted_x, distorted_y = np.array(distorted_x), np.array(distorted_y)
 
     return x_sampled, y_sampled, distorted_x, distorted_y

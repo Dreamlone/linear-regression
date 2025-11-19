@@ -160,7 +160,7 @@ def generate_base_frame(x: np.array, y: np.array, h: np.array, x_for_fit: np.arr
 
     ax_model.plot([1, 5], [11133.333333333334, 46600], '--', c='black', alpha=0.5, zorder=2,
                   label=best_model_label)
-    ax_model.plot(x_for_fit, predicted, c='red', alpha=0.5, zorder=1, label=current_model_label)
+    ax_model.plot(x_for_fit, predicted, c='red', alpha=1.0, zorder=1, label=current_model_label)
     ax_model.scatter(x, y, facecolors='none', edgecolor="black", s=50, alpha=0.8, linewidths=0.5)
     ax_model.yaxis.set_ticklabels([])
     ax_model.set_title(model_label, fontsize=12, fontdict={'fontname': FONTNAME})
@@ -225,7 +225,7 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
                                                                        predicted, leverage_label, model_label,
                                                                        best_model_label, current_model_label,
                                                                        cook_distance_label, influence_label)
-        ax_cook.plot(x_for_fit, predicted, c='red', alpha=0.5, zorder=5)
+        ax_cook.plot(x_for_fit, predicted, c='red', alpha=1.0, zorder=5)
         ax_model.legend(loc='upper left', prop={'family': FONTNAME, 'size': 8})
 
         fig_base.suptitle(f"1 - {build_model}", fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=1.2)
@@ -250,7 +250,7 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         ax_model.scatter([x_i], [y_i], facecolors='none', edgecolor="red", s=200)
         ax_cook.scatter([x_i], [y_i], facecolors='none', edgecolor="red", s=200)
         ax_model.legend(loc='upper left', prop={'family': FONTNAME, 'size': 8})
-        ax_cook.plot(x_for_fit, predicted, c='red', alpha=0.5, zorder=5)
+        ax_cook.plot(x_for_fit, predicted, c='red', alpha=1.0, zorder=5)
 
         fig_point.suptitle(f"2 - {excluding_title}", fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=1.2)
         raw_svg_file = Path(tmp_dir, f"32_cooks_distance_leverage_{mode}_{image_index}.svg")
@@ -285,7 +285,7 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         d = calculate_cooks_distance(x_for_fit, y_for_fit)
         ax_cook.scatter(x_for_fit, y_for_fit, c=d, cmap='Reds', s=50, zorder=5,
                         edgecolor="black", linewidths=0.5, alpha=0.9, vmin=0, vmax=VMAX)
-        ax_cook.plot(x_for_fit, predicted, c='red', alpha=0.5, zorder=5)
+        ax_cook.plot(x_for_fit, predicted, c='red', alpha=1.0, zorder=5)
         annotate_cook(ax_cook, h_i=h_i, p=2, y_i=y_i, pred_i=predicted[fit_array_index], y=y_for_fit, y_pred=predicted)
 
         fig_point.suptitle(f"3 - {excluding_title}", fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=1.2)
@@ -323,14 +323,14 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         x_for_fit_next = np.delete(x_for_fit_next, fit_array_index)
         y_for_fit_next = np.delete(y_for_fit_next, fit_array_index)
         predicted_next, intercept_next, slope_next = _build_model(x_for_fit_next, y_for_fit_next)
-        ax_model.plot(x_for_fit_next, predicted_next, c='orange', alpha=0.5, zorder=1, label=new_model_label)
+        ax_model.plot(x_for_fit_next, predicted_next, c='red', alpha=0.4, zorder=1, label=new_model_label)
         ax_model.legend(loc='upper left', prop={'family': FONTNAME, 'size': 8})
 
         ax_cook.scatter([x_i], [y_i], facecolors='none', edgecolor="red", s=200)
         d = calculate_cooks_distance(x_for_fit, y_for_fit)
         ax_cook.scatter(x_for_fit, y_for_fit, c=d, cmap='Reds', s=50, zorder=5,
                         edgecolor="black", linewidths=0.5, alpha=0.9, vmin=0, vmax=VMAX)
-        ax_cook.plot(x_for_fit, predicted, c='red', alpha=0.5, zorder=5)
+        ax_cook.plot(x_for_fit, predicted, c='red', alpha=1.0, zorder=5)
         annotate_cook(ax_cook, h_i=h_i, p=2, y_i=y_i, pred_i=predicted[fit_array_index], y=y_for_fit, y_pred=predicted)
 
         fig_point.suptitle(f"4 - {excluding_title}", fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=1.2)

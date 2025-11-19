@@ -1,4 +1,4 @@
-# An Intuitive Explanation of the Linear Regression
+# A Visual Explanation of the Linear Regression
 
 This repository contains materials to explain the linear regression algorithm.
 
@@ -63,14 +63,14 @@ Start the exploration with `examples` folder
 ## Articles 
 
 - habr (rus) - Как бы я рассказал про линейную регрессию (если б меня кто-то спросил)
-- TDS (eng) - An Intuitive Explanation of the Linear Regression
+- TDS (eng) - A Visual Explanation of the Linear Regression
 
 ## How to cite
 
 ```
 @misc{dreamlone-linear-regression,
   author       = {Mikhail Sarafanov},
-  title        = {An Intuitive Explanation of the Linear Regression},
+  title        = {A Visual Explanation of the Linear Regression},
   howpublished = {\url{https://github.com/Dreamlone/linear-regression}},
   year         = {2025}
 }
