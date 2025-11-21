@@ -21,7 +21,7 @@ from kde_explanation.kde_utils import get_kde_simulation_path, get_kde_plots_pat
 
 DPI                 = 120
 INTERVAL_MS         = 30
-FRAME_SKIP          = 100
+FRAME_SKIP          = 115
 LINE_INTERP_STEPS   = 1
 
 PARTICLES_RADIUS    = 0.02
@@ -36,6 +36,9 @@ ENVELOPE_ALPHA          = 0.7
 
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
+
+# Number of frames over which the red line alpha will fade from 1 to 0
+ALPHA_BLEACH_FRAMES = 30
 
 
 @dataclass
@@ -54,12 +57,15 @@ class S3Bucket:
         return s3
 
 
-def smooth_envelope(x, y,
-                    method: str = "savgol",
-                    savgol_window: int = 21,   # нечётное
-                    savgol_poly: int = 3,
-                    gaussian_sigma: float = 2.0,
-                    spline_s: float | None = None):
+def smooth_envelope(
+    x,
+    y,
+    method: str = "savgol",
+    savgol_window: int = 21,   # must be odd
+    savgol_poly: int = 3,
+    gaussian_sigma: float = 2.0,
+    spline_s: float | None = None
+):
     y = np.asarray(y, dtype=float)
     x = np.asarray(x, dtype=float)
 
@@ -95,13 +101,15 @@ def smooth_envelope(x, y,
     return y_sm
 
 
-def list_frames_sorted(parquet_dir):
+def list_frames_sorted(parquet_dir: Path):
     files = list(parquet_dir.glob("*.parquet"))
+
     def key_func(p: Path):
         try:
             return 0, int(p.stem)
         except ValueError:
             return 1, p.name
+
     return sorted(files, key=key_func)
 
 
@@ -178,6 +186,7 @@ def list_s3_frames_sorted(s3, bucket: str, prefix: str) -> list[str]:
             return 0, int(stem)
         except ValueError:
             return 1, name
+
     print(f"Number of simulated frames: {len(keys)}")
     return sorted(keys, key=key_func)
 
@@ -186,28 +195,49 @@ def frame_reader_parquet_s3(
     s3,
     bucket: str,
     prefix: str,
-    frame_skip: int = 1):
+    frame_skip: int = 1,
+):
     """
-    Yield (frame_idx, sand_xy (N x 2, float32), line_x (float), labels (N, int32))
-    from per-frame Parquet files stored in S3 under (bucket, prefix),
-    written by save_frame_parquet().
+    Yield (frame_idx, sand_xy, line_x, labels)
+    from Parquet files in S3, with step over NUMERIC frame id.
     """
     from io import BytesIO
 
     keys = list_s3_frames_sorted(s3, bucket, prefix)
-    if frame_skip > 1:
-        keys = keys[::frame_skip]
+
+    num_to_key: dict[int, str] = {}
+    frame_nums: list[int] = []
+    for key in keys:
+        name = key.rsplit("/", 1)[-1]
+        stem = name[:-8] if name.endswith(".parquet") else name
+        try:
+            n = int(stem)
+        except ValueError:
+            continue
+        frame_nums.append(n)
+        num_to_key[n] = key
+
+    if not frame_nums:
+        return
+
+    frame_nums = sorted(frame_nums)
+
+    if frame_skip <= 1:
+        selected_nums = frame_nums
+    else:
+        desired = range(frame_nums[0], frame_nums[-1] + 1, frame_skip)
+        existing = set(frame_nums)
+        selected_nums = [n for n in desired if n in existing]
 
     cols = ["time_index", "coordinate_x", "coordinate_y", "type", "initial_circle"]
 
-    for key in keys:
+    for frame_idx in selected_nums:
+        key = num_to_key[frame_idx]
         obj = s3.get_object(Bucket=bucket, Key=key)
         data = obj["Body"].read()
         df = pd.read_parquet(BytesIO(data), columns=cols, engine="pyarrow")
         if df.empty:
             continue
-
-        frame_idx = int(df["time_index"].iloc[0])
 
         sand_df = df[df["type"] == "sand"]
         if not sand_df.empty:
@@ -226,7 +256,12 @@ def frame_reader_parquet_s3(
         yield frame_idx, sand_xy, line_x, labels
 
 
-def generate_synthetic_data(n_samples=100, noise_std=1.0, outlier_fraction=0.1, random_state=2025):
+def generate_synthetic_data(
+    n_samples=100,
+    noise_std=1.0,
+    outlier_fraction=0.1,
+    random_state=2025
+):
     rng = np.random.default_rng(random_state)
     x = np.linspace(0, 10, n_samples)
     true_slope = 2.0
@@ -269,7 +304,8 @@ def compute_upper_envelope_connected(
     ys = sand_xy[:, 1]
 
     in_domain = (xs >= x_min) & (xs <= x_max)
-    xs = xs[in_domain]; ys = ys[in_domain]
+    xs = xs[in_domain]
+    ys = ys[in_domain]
     if xs.size == 0:
         return centers, np.full(n_bins, ground_y, dtype=float)
 
@@ -326,12 +362,15 @@ def compute_upper_envelope_connected(
         if np.any(sel):
             y_max[b] = np.max(ys_conn[sel])
 
-    y = smooth_envelope(centers, y_max,
-                        method="gaussian",
-                        savgol_window=21,
-                        savgol_poly=3,
-                        gaussian_sigma=10.0,
-                        spline_s=None)
+    y = smooth_envelope(
+        centers,
+        y_max,
+        method="gaussian",
+        savgol_window=21,
+        savgol_poly=3,
+        gaussian_sigma=10.0,
+        spline_s=None
+    )
     return centers, y
 
 
@@ -345,20 +384,22 @@ def annotations_by_language(mode: str):
     return title
 
 
-def compose_animation(output_gif: Path,
-                      s3_bucket_data: Union[S3Bucket, None] = None,
-                      folder_with_simulation: Union[Path, None] = None,
-                      mode: str = "eng"):
+def compose_animation(
+    output_gif: Path,
+    s3_bucket_data: Union[S3Bucket, None] = None,
+    folder_with_simulation: Union[Path, None] = None,
+    mode: str = "eng"
+):
     """
     Please run this script only after 6_advanced_simulation.py (that script produces simulation files)
     Create animation based on simulation files
     """
     if s3_bucket_data is None:
-        print("Animaition will be created from local simulation files")
+        print("Animation will be created from local simulation files")
         if folder_with_simulation is None:
             folder_with_simulation = get_kde_simulation_path()
     else:
-        print("Animaition will be created from S3 bucket simulation files")
+        print("Animation will be created from S3 bucket simulation files")
         s3_client = s3_bucket_data.get_client()
 
     # --- static data (KDE and circles)
@@ -367,12 +408,16 @@ def compose_animation(output_gif: Path,
     x_grid = np.linspace(sx.min(), sx.max(), 1000)
     kde_vals = kde_values_on_grid(sx, x_grid)
 
+    # Rightmost circle boundary (center + radius)
+    rightmost_circle_x = float(np.max(sx) + CIRCLE_RADIUS)
+
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 5), constrained_layout=True)
 
     # Left plot (circles)
     ax1.set(xlim=[-6, 65], ylim=[-6, 65])
     ax1.set_aspect('equal')
-    ax1.xaxis.set_ticklabels([]); ax1.xaxis.set_ticks([])
+    ax1.xaxis.set_ticklabels([])
+    ax1.xaxis.set_ticks([])
     ax1.plot([0, 62], [GROUND_Y, GROUND_Y], c='black', linewidth=1.2)
     ax1.yaxis.set_ticklabels([])
     ax1.yaxis.set_ticks([])
@@ -389,7 +434,7 @@ def compose_animation(output_gif: Path,
     base_face_colors = np.tile(grey_rgba, (n_circles, 1))
     white_rgba = (1.0, 1.0, 1.0, base_face_colors[0, 3])
 
-    # ranks of circles by X (from left to right): correspond to the order of intersection by the vertical line
+    # Ranks of circles by X (from left to right): correspond to the order of intersection by the vertical line
     order = np.argsort(sx)
     circle_rank = np.empty(n_circles, dtype=int)
     circle_rank[order] = np.arange(n_circles)
@@ -397,7 +442,7 @@ def compose_animation(output_gif: Path,
     cmap_circles = matplotlib.colormaps['coolwarm']
     norm_circles = mcolors.Normalize(vmin=0, vmax=max(1, n_circles - 1))
 
-    # sand grains
+    # Sand grains
     ec = EllipseCollection(
         [], [], [],
         units='xy',
@@ -409,14 +454,16 @@ def compose_animation(output_gif: Path,
     )
     ax1.add_collection(ec)
 
-    line1 = ax1.axvline(-5.0, color='red', linewidth=0.2, alpha=1)
+    line1 = ax1.axvline(-5.0, color='red', linewidth=0.2, alpha=1.0)
 
     # Right plot (KDE)
-    ax2.set_xlim([-6, 65]); ax2.set_ylim([0.0, 1.0])
-    ax2.xaxis.set_ticklabels([]); ax2.xaxis.set_ticks([])
+    ax2.set_xlim([-6, 65])
+    ax2.set_ylim([0.0, 1.0])
+    ax2.xaxis.set_ticklabels([])
+    ax2.xaxis.set_ticks([])
     ax2.plot(x_grid, kde_vals, color='grey', linewidth=2)
     ax2.fill_between(x_grid, 0, kde_vals, color='grey', alpha=0.15)
-    line2 = ax2.axvline(-5.0, color='red', linewidth=0.2, alpha=1)
+    line2 = ax2.axvline(-5.0, color='red', linewidth=0.2, alpha=1.0)
 
     ax2_env = ax2.twinx()
     ax2_env.set_ylim([-5, 45])
@@ -426,9 +473,12 @@ def compose_animation(output_gif: Path,
     ax2_env.set_zorder(ax2.get_zorder() + 1)
     title = annotations_by_language(mode)
     ax2.text(
-        0.5, 0.98, title,
+        0.5,
+        0.98,
+        title,
         transform=ax2.transAxes,
-        ha="center", va="top",
+        ha="center",
+        va="top",
         fontdict={'fontname': FONTNAME}
     )
     env_line_left,  = ax1.plot([], [], color=ENVELOPE_COLOR,
@@ -439,16 +489,38 @@ def compose_animation(output_gif: Path,
     if s3_bucket_data is None:
         frames_iter = frame_reader_parquet(folder_with_simulation, FRAME_SKIP)
     else:
-        frames_iter = frame_reader_parquet_s3(s3_client, s3_bucket_data.bucket,
-                                              s3_bucket_data.prefix, FRAME_SKIP)
+        frames_iter = frame_reader_parquet_s3(
+            s3_client,
+            s3_bucket_data.bucket,
+            s3_bucket_data.prefix,
+            FRAME_SKIP
+        )
 
     frames_list = list(frames_iter)
     n_frames = len(frames_list)
     if n_frames == 0:
-        raise RuntimeError(f"Frames have not beedn found")
+        raise RuntimeError("Frames have not been found")
 
-    # color normalization by initial_circle (for sand)
-    all_labels = np.concatenate([fr[3] for fr in frames_list if fr[3] is not None and len(fr[3]) > 0])
+    # Precompute when the line crosses the rightmost circle boundary
+    bleach_start_index = None
+    for idx, (_, _, line_x_val, _) in enumerate(frames_list):
+        if line_x_val >= rightmost_circle_x:
+            bleach_start_index = idx
+            break
+
+    if bleach_start_index is not None:
+        print(
+            f"Alpha bleach will start at animation index {bleach_start_index} "
+            f"(frame {frames_list[bleach_start_index][0]}), "
+            f"threshold x={rightmost_circle_x:.3f}"
+        )
+    else:
+        print("Alpha bleach will not be triggered (line never reaches rightmost circle).")
+
+    # Color normalization by initial_circle (for sand)
+    all_labels = np.concatenate([
+        fr[3] for fr in frames_list if fr[3] is not None and len(fr[3]) > 0
+    ])
     valid_labels = all_labels[all_labels >= 0]
     if valid_labels.size > 0:
         vmin = int(valid_labels.min())
@@ -487,6 +559,9 @@ def compose_animation(output_gif: Path,
 
         line1.set_xdata([-5.0, -5.0])
         line2.set_xdata([-5.0, -5.0])
+        line1.set_alpha(1.0)
+        line2.set_alpha(1.0)
+
         pc.set_edgecolor([tuple(c) for c in base_edge_colors])
         pc.set_alpha(None)
 
@@ -501,7 +576,7 @@ def compose_animation(output_gif: Path,
 
         # grains of sand + colors (edge = face)
         if sand_xy.shape[0] > 0:
-            widths  = np.full(sand_xy.shape[0], 2 * PARTICLES_RADIUS)
+            widths = np.full(sand_xy.shape[0], 2 * PARTICLES_RADIUS)
             heights = np.full(sand_xy.shape[0], 2 * PARTICLES_RADIUS)
             ec.set(widths=widths, heights=heights, angles=np.zeros(sand_xy.shape[0]))
             ec.set_offsets(sand_xy)
@@ -510,10 +585,10 @@ def compose_animation(output_gif: Path,
             if labels is None or len(labels) != sand_xy.shape[0]:
                 cols[:] = neutral_rgba
             else:
-                labels = labels.astype(int, copy=False)
-                pos_mask = labels >= 0
+                labels_int = labels.astype(int, copy=False)
+                pos_mask = labels_int >= 0
                 if np.any(pos_mask):
-                    cols[pos_mask] = cmap_sand(norm_sand(labels[pos_mask]))
+                    cols[pos_mask] = cmap_sand(norm_sand(labels_int[pos_mask]))
                 if np.any(~pos_mask):
                     cols[~pos_mask] = neutral_rgba
 
@@ -522,9 +597,23 @@ def compose_animation(output_gif: Path,
             ec.set_offsets(np.empty((0, 2)))
             ec.set(facecolors=np.empty((0, 4)), edgecolors=np.empty((0, 4)))
 
-        # verical lines. Both plots; left and right
+        # vertical lines. Both plots; left and right
         line1.set_xdata([line_x, line_x])
         line2.set_xdata([line_x, line_x])
+
+        # Compute alpha for the red line (bleaching effect after crossing rightmost circle)
+        if bleach_start_index is None or i < bleach_start_index:
+            alpha_line = 1.0
+        else:
+            # number of frames since bleaching started
+            k = i - bleach_start_index
+            if k >= ALPHA_BLEACH_FRAMES:
+                alpha_line = 0.0
+            else:
+                alpha_line = max(0.0, 1.0 - k / ALPHA_BLEACH_FRAMES)
+
+        line1.set_alpha(alpha_line)
+        line2.set_alpha(alpha_line)
 
         # repainting coolwarm circles by rank
         recolor_circles_by_line(line_x)
@@ -563,5 +652,5 @@ def compose_animation(output_gif: Path,
 if __name__ == "__main__":
     s3_bucket = S3Bucket(bucket="linear-regression-kernel-density", prefix="simulation")
 
-    output_gif = Path(get_kde_plots_path(), 'final_simulation.gif')
+    output_gif = Path(get_kde_plots_path(), "final_simulation.gif")
     compose_animation(output_gif=output_gif, s3_bucket_data=s3_bucket, mode="rus")
