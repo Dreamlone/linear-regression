@@ -40,6 +40,9 @@ FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
 # Number of frames over which the red line alpha will fade from 1 to 0
 ALPHA_BLEACH_FRAMES = 30
 
+# How many times to repeat the last frame in the animation
+LAST_FRAMES_REPEAT = 30
+
 
 @dataclass
 class S3Bucket:
@@ -572,7 +575,11 @@ def compose_animation(
         return line1, line2, pc, ec, env_line_left, env_line_right
 
     def animate(i):
-        fi, sand_xy, line_x, labels = frames_list[i]
+        # Map animation frame index to data frame index:
+        # for i < n_frames we use i, for i >= n_frames we keep the last frame
+        data_idx = i if i < n_frames else (n_frames - 1)
+
+        fi, sand_xy, line_x, labels = frames_list[data_idx]
 
         # grains of sand + colors (edge = face)
         if sand_xy.shape[0] > 0:
@@ -602,11 +609,10 @@ def compose_animation(
         line2.set_xdata([line_x, line_x])
 
         # Compute alpha for the red line (bleaching effect after crossing rightmost circle)
-        if bleach_start_index is None or i < bleach_start_index:
+        if bleach_start_index is None or data_idx < bleach_start_index:
             alpha_line = 1.0
         else:
-            # number of frames since bleaching started
-            k = i - bleach_start_index
+            k = data_idx - bleach_start_index
             if k >= ALPHA_BLEACH_FRAMES:
                 alpha_line = 0.0
             else:
@@ -618,7 +624,7 @@ def compose_animation(
         # repainting coolwarm circles by rank
         recolor_circles_by_line(line_x)
 
-        prev_sand = frames_list[i - 1][1] if i > 0 else None
+        prev_sand = frames_list[data_idx - 1][1] if data_idx > 0 else None
         env_x, env_y = compute_upper_envelope_connected(
             sand_xy,
             prev_sand_xy=prev_sand,
@@ -628,7 +634,10 @@ def compose_animation(
             ground_y=GROUND_Y
         )
 
-        delayed_line_x = frames_list[i - ENVELOPE_DELAY_FRAMES][2] if i >= ENVELOPE_DELAY_FRAMES else -5.0
+        delayed_line_x = (
+            frames_list[data_idx - ENVELOPE_DELAY_FRAMES][2]
+            if data_idx >= ENVELOPE_DELAY_FRAMES else -5.0
+        )
         reveal_mask = env_x <= delayed_line_x
 
         env_line_left.set_data(env_x[reveal_mask], env_y[reveal_mask])
@@ -636,11 +645,15 @@ def compose_animation(
 
         return line1, line2, pc, ec, env_line_left, env_line_right
 
+    # Total number of animation frames including repeats of the last frame
+    repeat_extra = max(LAST_FRAMES_REPEAT - 1, 0)
+    total_anim_frames = n_frames + repeat_extra
+
     ani = animation.FuncAnimation(
         fig=fig,
         func=animate,
         init_func=init,
-        frames=n_frames,
+        frames=total_anim_frames,
         interval=INTERVAL_MS,
         blit=True
     )
@@ -652,5 +665,6 @@ def compose_animation(
 if __name__ == "__main__":
     s3_bucket = S3Bucket(bucket="linear-regression-kernel-density", prefix="simulation")
 
-    output_gif = Path(get_kde_plots_path(), "final_simulation.gif")
-    compose_animation(output_gif=output_gif, s3_bucket_data=s3_bucket, mode="rus")
+    mode = "eng"
+    output_gif = Path(get_kde_plots_path(), f"final_simulation_{mode}.gif")
+    compose_animation(output_gif=output_gif, s3_bucket_data=s3_bucket, mode=mode)
