@@ -4,7 +4,7 @@ from pathlib import Path
 import imageio
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D  # proxy for legend
+from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from examples.paths import get_plots_path, get_tmp_animation_directory
 from examples.utils import save_plot_according_to_template, get_datasets, split_train_test_manual

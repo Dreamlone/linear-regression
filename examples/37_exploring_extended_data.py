@@ -6,7 +6,7 @@ import matplotlib.colors as mcolors
 import numpy as np
 from matplotlib.gridspec import GridSpec
 from scipy.interpolate import griddata
-from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import StandardScaler
 
 from examples.paths import get_plots_path
@@ -17,10 +17,10 @@ FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
 MIN_TARGET = 0
 MAX_TARGET = 70000
 TARGET_TICKS = [0, 25000, 50000]
-SHIFT = 0.1
+CMAP = "coolwarm"
 COLUMN_BORDERS_BY_NAME = {"rooms": {"ticks": [1, 2, 3, 4, 5], "min": 0.5, "max": 5.5},
                           "area": {"ticks": [50, 90, 130], "min": 45, "max": 145},
-                          "metro_distance": {"ticks": [600, 1000, 1400, 1800], "min": 550, "max": 1900},
+                          "metro_distance": {"ticks": [600, 1000, 1400, 1800], "min": 450, "max": 2000},
                           "city": {"ticks": None, "min": None, "max": None},
                           "ac_in_apartment": {"ticks": None, "min": None, "max": None}}
 
@@ -46,7 +46,7 @@ def add_row_label(fig: plt.Figure, gs: plt.GridSpec, row_index: int, text: str):
     row_box = gs[row_index, :].get_position(fig)
     y_center = (row_box.y0 + row_box.y1) / 2.0
     fig.text(
-        -0.1,
+        -0.07,
         y_center,
         text,
         va="center",
@@ -63,7 +63,8 @@ def encode_feature_for_axis(feature: np.array):
     positions = np.empty_like(feature, dtype=float)
     for idx, val in enumerate(unique_values):
         mask = feature == val
-        positions[mask] = idx + np.random.uniform(-0.05, 0.05, size=mask.sum())
+        # + np.random.uniform(-0.05, 0.05, size=mask.sum())
+        positions[mask] = idx
     ticks = np.arange(number_unique_values)
     ticklabels = [str(v) for v in unique_values]
 
@@ -103,7 +104,7 @@ def scatter_plot_3d(ax, first_feature: np.array, second_feature: np.array,
         y_positions,
         y,
         c=y,
-        cmap='coolwarm',
+        cmap=CMAP,
         vmin=MIN_TARGET,
         vmax=MAX_TARGET,
         s=25,
@@ -128,7 +129,7 @@ def scatter_plot_3d(ax, first_feature: np.array, second_feature: np.array,
     ax3d.set_zlabel(y_label, fontdict={'fontsize': 8, 'fontname': FONTNAME})
 
     ax3d.grid(alpha=0.3)
-    ax3d.view_init(20, -50)
+    ax3d.view_init(20, -60)
 
     # Make tick labels smaller
     for axis in [ax3d.xaxis, ax3d.yaxis, ax3d.zaxis]:
@@ -146,14 +147,14 @@ def scatter_plot_2d(ax, feature: np.array, y: np.array, x_label: str, y_label: s
             mask = feature == value
             y_filtered = y[mask]
             ax.scatter(np.random.uniform(x_center - 0.1, x_center + 0.1, len(y_filtered)), y_filtered,
-                       s=30, c=y_filtered, cmap='coolwarm', vmin=MIN_TARGET, vmax=MAX_TARGET, edgecolors='black', linewidths=1.2)
+                       s=30, c=y_filtered, cmap=CMAP, vmin=MIN_TARGET, vmax=MAX_TARGET, edgecolors='black', linewidths=1.2)
             x_center += 1
         ax.set_xlim(-1, number_unique_values)
         ax.set_xticks(list(range(number_unique_values)))
         ax.xaxis.set_ticklabels(np.unique(feature))
     else:
         # Regular scatter plot
-        ax.scatter(feature, y, c=y, cmap='coolwarm', vmin=MIN_TARGET, vmax=MAX_TARGET, s=30,
+        ax.scatter(feature, y, c=y, cmap=CMAP, vmin=MIN_TARGET, vmax=MAX_TARGET, s=30,
                    edgecolors='black', linewidths=1.2, zorder=2)
         ax.set_xlim(feature_info["min"], feature_info["max"])
         ax.set_xticks(feature_info["ticks"])
@@ -173,18 +174,33 @@ def scatter_plot_2d(ax, feature: np.array, y: np.array, x_label: str, y_label: s
 
 def contour_plot(ax, first_feature: np.array, second_feature: np.array, y: np.array,
                  first_label: str, second_label: str, first_feature_info: Dict, second_feature_info: Dict):
+    method = "cubic"
+    levels = 5
 
-    if len(np.unique(first_feature)) <= 3 or len(np.unique(second_feature)) <= 3:
-        # Disable the categorical plots for now FIXME later
-        ax.set_axis_off()
-        return None
+    if len(np.unique(first_feature)) <= 3:
+        first_feature, x_ticks, x_ticklabels = encode_feature_for_axis(first_feature)
+        min_x, max_x = -0.5, len(x_ticks) - 0.5
+        method = "nearest"
+    else:
+        x_ticks = first_feature_info["ticks"]
+        x_ticklabels = first_feature_info["ticks"]
+        min_x, max_x = first_feature_info["min"], first_feature_info["max"]
+
+    if len(np.unique(second_feature)) <= 3:
+        second_feature, y_ticks, y_ticklabels = encode_feature_for_axis(second_feature)
+        min_y, max_y = -0.5, len(y_ticks) - 0.5
+        method = "nearest"
+    else:
+        y_ticks = second_feature_info["ticks"]
+        y_ticklabels = second_feature_info["ticks"]
+        min_y, max_y = second_feature_info["min"], second_feature_info["max"]
 
     # Scaling
     scaler_f = StandardScaler()
     scaler_s = StandardScaler()
     first_feature = scaler_f.fit_transform(first_feature.reshape(-1, 1))
     second_feature = scaler_s.fit_transform(second_feature.reshape(-1, 1))
-    int_model = LinearRegression()
+    int_model = KNeighborsRegressor(n_neighbors=3)
     int_model.fit(np.hstack([first_feature, second_feature]), y.reshape(-1, 1))
 
     # Extent features with border values
@@ -210,12 +226,11 @@ def contour_plot(ax, first_feature: np.array, second_feature: np.array, y: np.ar
         points=(np.ravel(first_feature_ext), np.ravel(second_feature_ext)),
         values=np.ravel(y),
         xi=(first_feature_grid, second_feature_grid),
-        method="cubic",
+        method=method,
     )
-    levels = 7
     contourf = ax.contourf(first_feature_grid, second_feature_grid, z_grid, norm=norm,
-                           levels=np.linspace(MIN_TARGET, MAX_TARGET, levels), cmap="coolwarm", vmin=MIN_TARGET, vmax=MAX_TARGET,
-                           extend="both")
+                           levels=np.linspace(MIN_TARGET, MAX_TARGET, levels), cmap=CMAP,
+                           vmin=MIN_TARGET, vmax=MAX_TARGET, extend="both")
     ax.scatter(first_feature, second_feature, marker="x", s=4, c='black')
     cbar = plt.colorbar(
         contourf,
@@ -232,25 +247,25 @@ def contour_plot(ax, first_feature: np.array, second_feature: np.array, y: np.ar
                                levels=np.linspace(MIN_TARGET, MAX_TARGET, levels), colors="black", linewidths=1)
 
     # ----- Set ticks in scaled space but label them in original coordinates -----
-    xticks_orig = np.array(first_feature_info["ticks"])
+    xticks_orig = np.array(x_ticks)
     xticks_scaled = scaler_f.transform(xticks_orig.reshape(-1, 1)).ravel()
     ax.set_xticks(xticks_scaled)
-    ax.set_xticklabels(first_feature_info["ticks"], fontsize=6, fontname=FONTNAME)
+    ax.set_xticklabels(x_ticklabels, fontsize=6, fontname=FONTNAME)
 
-    yticks_orig = np.array(second_feature_info["ticks"])
+    yticks_orig = np.array(y_ticks)
     yticks_scaled = scaler_s.transform(yticks_orig.reshape(-1, 1)).ravel()
     ax.set_yticks(yticks_scaled)
-    ax.set_yticklabels(second_feature_info["ticks"], fontsize=6, fontname=FONTNAME)
+    ax.set_yticklabels(y_ticklabels, fontsize=6, fontname=FONTNAME)
 
     # Labels and grid
     ax.set_ylabel(second_label, fontdict={'fontsize': 8, 'fontname': FONTNAME})
     ax.set_xlabel(first_label, fontdict={'fontsize': 8, 'fontname': FONTNAME})
     ax.grid(alpha=0.3)
 
-    min_f = scaler_f.transform(np.array([first_feature_info["min"]]).reshape(-1, 1)).ravel()[0]
-    min_s = scaler_s.transform(np.array([second_feature_info["min"]]).reshape(-1, 1)).ravel()[0]
-    max_f = scaler_f.transform(np.array([first_feature_info["max"]]).reshape(-1, 1)).ravel()[0]
-    max_s = scaler_s.transform(np.array([second_feature_info["max"]]).reshape(-1, 1)).ravel()[0]
+    min_f = scaler_f.transform(np.array([min_x]).reshape(-1, 1)).ravel()[0]
+    min_s = scaler_s.transform(np.array([min_y]).reshape(-1, 1)).ravel()[0]
+    max_f = scaler_f.transform(np.array([max_x]).reshape(-1, 1)).ravel()[0]
+    max_s = scaler_s.transform(np.array([max_y]).reshape(-1, 1)).ravel()[0]
     ax.set_xlim(min_f, max_f)
     ax.set_ylim(min_s, max_s)
     return contourf
@@ -266,11 +281,8 @@ def plot_new_extended_dataset(mode: str = "eng"):
     x, y, _, _ = split_train_test_manual(features, target, apply_distortion=True)
 
     fig_size = (14, 14)
-    # fig, axs = plt.subplots(5, 5, figsize=fig_size)
-    # fig.subplots_adjust(left=0.05, right=0.97, hspace=0.5, wspace=0.5)
     fig = plt.figure(figsize=fig_size)
-    fig.subplots_adjust(left=0.05, right=0.97)
-    gs = GridSpec(5, 5, figure=fig)
+    gs = GridSpec(5, 5, figure=fig, left=0.07, right=1.0)
     gs.update(hspace=0.5, wspace=0.5)
 
     for row_id, row_feature in zip([0, 1, 2, 3, 4], features_names):

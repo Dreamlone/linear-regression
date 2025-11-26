@@ -41,14 +41,21 @@ def get_extended_dataset() -> pd.DataFrame:
     rooms = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5,
                       1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5,
                       1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5])
-    city_name = np.array(["A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A",
-                          "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B",
-                          "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C"])
+
+    city_name = np.array([
+        "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A", "A",
+        "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B", "B",
+        "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C", "C"
+    ])
+
     # Area depends on rooms number
     area = 28 + 22 * rooms
 
-    base = np.where(city_name == "A", 400, np.where(city_name == "B", 800, 1200))
-    metro_distance = (base + (6 - rooms) * 120).astype(int)
+    # Hand-crafted metro_distance with ~monotone trend + 5 small violations
+    metro_distance = np.array([1900, 1803, 1707, 1610, 1514, 1321, 1417, 1225, 1128, 1032, 935,
+                               839, 742, 646, 550, 1900, 1803, 1707, 1321, 1514, 1417, 1610, 1225,
+                               1128, 1150, 935, 839, 742, 646, 550, 1900, 1803, 1707, 1321, 1514,
+                               1417, 1610, 1225, 1128, 1032, 935, 839, 900, 646, 550])
 
     ac_bool = np.zeros_like(rooms, dtype=bool)
     for city in ["A", "B", "C"]:
