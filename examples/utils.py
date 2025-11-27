@@ -58,7 +58,7 @@ def get_extended_dataset() -> pd.DataFrame:
                                1417, 1610, 1225, 1128, 1032, 935, 839, 900, 646, 550])
 
     ac_bool = np.zeros_like(rooms, dtype=bool)
-    for city in ["A", "B", "C"]:
+    for city in ["B", "C"]:
         m = (city_name == city)
         med_price = np.median(prices[m])
         ac_bool[m] = (rooms[m] >= 3) | (prices[m] >= med_price)

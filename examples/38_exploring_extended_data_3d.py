@@ -1,4 +1,5 @@
 import shutil
+from copy import deepcopy
 from pathlib import Path
 from typing import Dict
 
@@ -8,6 +9,9 @@ import numpy as np
 from matplotlib.gridspec import GridSpec
 from scipy.interpolate import griddata
 import imageio
+from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.preprocessing import StandardScaler
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
 from examples.utils import save_plot_according_to_template, split_train_test_manual, get_extended_dataset
@@ -57,20 +61,24 @@ def add_row_label(fig: plt.Figure, gs: plt.GridSpec, row_index: int, text: str):
     )
 
 
-def encode_feature_for_axis(feature: np.array):
+def encode_feature_for_axis(feature: np.array, mode: str):
     unique_values = np.unique(feature)
     number_unique_values = len(unique_values)
+
+    if number_unique_values == 2 and mode == "rus":
+        # Prettify visualization
+        unique_values = unique_values[::-1]
 
     # Categorical or low-cardinality numeric feature
     positions = np.empty_like(feature, dtype=float)
     for idx, val in enumerate(unique_values):
         mask = feature == val
+        # + np.random.uniform(-0.05, 0.05, size=mask.sum())
         positions[mask] = idx
     ticks = np.arange(number_unique_values)
     ticklabels = [str(v) for v in unique_values]
 
     return positions, ticks, ticklabels
-
 
 def scatter_plot_3d(
     ax,
@@ -82,26 +90,40 @@ def scatter_plot_3d(
     y_label: str,
     first_feature_info: Dict,
     second_feature_info: Dict,
+    mode: str,
     hide_colorbar: bool = False,
 ):
-    # Aligning the axis
-    if len(np.unique(first_feature)) <= 3:
-        x_positions, x_ticks, x_ticklabels = encode_feature_for_axis(first_feature)
-        min_x, max_x = -0.5, len(x_ticks) - 0.5
-    else:
-        x_positions = first_feature.astype(float)
-        x_ticks = first_feature_info["ticks"]
-        x_ticklabels = first_feature_info["ticks"]
-        min_x, max_x = first_feature_info["min"], first_feature_info["max"]
+    number_levels = 7
+    norm = mcolors.Normalize(vmin=MIN_TARGET, vmax=MAX_TARGET)
+    levels = np.linspace(MIN_TARGET, MAX_TARGET, number_levels)
 
+    # Aligning the axis
+    x_positions = first_feature.astype(float)
+    x_ticks = first_feature_info["ticks"]
+    x_ticklabels = first_feature_info["ticks"]
+    min_x, max_x = np.min(first_feature), np.max(first_feature)
+
+    cases = [{"min_first": min_x, "max_first": max_x, "first_feature": first_feature}]
     if len(np.unique(second_feature)) <= 3:
-        y_positions, y_ticks, y_ticklabels = encode_feature_for_axis(second_feature)
+        y_positions, y_ticks, y_ticklabels = encode_feature_for_axis(second_feature, mode)
         min_y, max_y = -0.5, len(y_ticks) - 0.5
+        method = "categorical"
+
+        values = np.unique(y_positions)
+        values.sort()
+        updated_cases = []
+        for value in values:
+            for case in cases:
+                case = deepcopy(case)
+                case.update({"min_second": value - 0.1, "max_second": value + 0.1, "second_feature": y_positions})
+                updated_cases.append(case)
+        cases = updated_cases
     else:
         y_positions = second_feature.astype(float)
         y_ticks = second_feature_info["ticks"]
         y_ticklabels = second_feature_info["ticks"]
-        min_y, max_y = second_feature_info["min"], second_feature_info["max"]
+        min_y, max_y = np.min(second_feature), np.max(second_feature)
+        method = "linear"
 
     fig = ax.figure
     rect = ax.get_position()
@@ -114,28 +136,66 @@ def scatter_plot_3d(
     X_grid, Y_grid = np.meshgrid(x_lin, y_lin)
 
     # Interpolate target onto grid
+    if method == "categorical":
+        for case in cases:
+            # Clip the initial dataframes according to borders
+            mask = ((case["first_feature"] >= case["min_first"]) & (case["first_feature"] <= case["max_first"])
+                    & (case["second_feature"] >= case["min_second"]) & (case["second_feature"] <= case["max_second"]))
+            y_filtered = y[mask]
+            first_filtered = case["first_feature"][mask]
+            second_filtered = case["second_feature"][mask]
 
-    z_grid = griddata(
-        points=(np.ravel(x_positions), np.ravel(y_positions)),
-        values=np.ravel(y),
-        xi=(X_grid, Y_grid),
-        method="linear",
-    )
-    norm = mcolors.Normalize(vmin=MIN_TARGET, vmax=MAX_TARGET)
-    levels = np.linspace(MIN_TARGET, MAX_TARGET, 7)
+            first_lin = np.linspace(case["min_first"], case["max_first"], grid_size)
+            second_lin = np.linspace(case["min_second"], case["max_second"], grid_size)
+            first_feature_grid, second_feature_grid = np.meshgrid(first_lin, second_lin)
 
-    # Projection on "floor" (XY plane, z = MIN_TARGET)
-    ax3d.contourf(
-        X_grid,
-        Y_grid,
-        z_grid,
-        zdir="z",
-        offset=MIN_TARGET,
-        levels=levels,
-        cmap=CMAP,
-        norm=norm,
-        alpha=0.8,
-    )
+            scaler_f = StandardScaler()
+            scaler_s = StandardScaler()
+            first_filtered = scaler_f.fit_transform(first_filtered.reshape(-1, 1))
+            second_filtered = scaler_s.fit_transform(second_filtered.reshape(-1, 1))
+
+            # Fit interpolator
+            int_model = LinearRegression()
+            int_model.fit(np.hstack([first_filtered, second_filtered]), y_filtered.reshape(-1, 1))
+
+            f = scaler_f.transform(first_feature_grid.reshape(-1, 1))
+            s = scaler_s.transform(second_feature_grid.reshape(-1, 1))
+            z_grid = int_model.predict(np.hstack([f, s]))
+            z_grid = z_grid.reshape(first_feature_grid.shape)
+
+            ax3d.contourf(
+                first_feature_grid,
+                second_feature_grid,
+                z_grid,
+                zdir="z",
+                offset=MIN_TARGET,
+                levels=levels,
+                cmap=CMAP,
+                norm=norm,
+                alpha=0.8,
+                zorder=1
+            )
+    else:
+        z_grid = griddata(
+            points=(np.ravel(x_positions), np.ravel(y_positions)),
+            values=np.ravel(y),
+            xi=(X_grid, Y_grid),
+            method=method,
+        )
+
+        # Projection on "floor" (XY plane, z = MIN_TARGET)
+        ax3d.contourf(
+            X_grid,
+            Y_grid,
+            z_grid,
+            zdir="z",
+            offset=MIN_TARGET,
+            levels=levels,
+            cmap=CMAP,
+            norm=norm,
+            alpha=0.8,
+            zorder=1
+        )
 
     scatter = ax3d.scatter(
         x_positions,
@@ -149,6 +209,7 @@ def scatter_plot_3d(
         edgecolors="black",
         linewidths=1,
         alpha=0.9,
+        zorder=3
     )
 
     cb = fig.colorbar(scatter, ax=ax3d, shrink=0.3, aspect=10, pad=0.25)
@@ -197,6 +258,9 @@ def plot_new_extended_dataset_as_3d(mode: str = "eng"):
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
     dataset = get_extended_dataset()
+    if mode == "rus":
+        dataset["ac_in_apartment"] = dataset["ac_in_apartment"].replace({"no": "нет", "yes": "да"})
+
     features_names = ["rooms", "area", "metro_distance", "city", "ac_in_apartment"]
     features = np.array(dataset[features_names])
     target = np.array(dataset["price"])
@@ -222,14 +286,14 @@ def plot_new_extended_dataset_as_3d(mode: str = "eng"):
                         second_label=feature_label_by_column["metro_distance"], y_label=y_label,
                         first_feature_info=COLUMN_BORDERS_BY_NAME["rooms"],
                         second_feature_info=COLUMN_BORDERS_BY_NAME["metro_distance"],
-                        hide_colorbar=True)
+                        hide_colorbar=True, mode=mode)
         ax_right = scatter_plot_3d(ax_right, x[:, area_id], x[:, ac_id], y,
                         first_label=feature_label_by_column["area"],
                         second_label=feature_label_by_column["ac_in_apartment"],
                         y_label=y_label,
                         first_feature_info=COLUMN_BORDERS_BY_NAME["area"],
                         second_feature_info=COLUMN_BORDERS_BY_NAME["ac_in_apartment"],
-                        hide_colorbar=False)
+                        hide_colorbar=False, mode=mode)
         ax_left.view_init(vertical_view_id, view_id)
         ax_right.view_init(vertical_view_id, view_id)
 
@@ -244,10 +308,6 @@ def plot_new_extended_dataset_as_3d(mode: str = "eng"):
                                         template_name="template_small.svg",
                                         dpi=DPI)
         frames.append(final_plot)
-        # if vertical_view_id < 10 and vertical_view_id <= 0:
-        #     vertical_view_id += 1
-        # else:
-        #     vertical_view_id -= 1
 
 
     gif_path = Path(get_plots_path(), f"38_3d_rotation_{mode}.gif")

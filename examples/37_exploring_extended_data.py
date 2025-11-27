@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 from typing import Dict
 
@@ -5,7 +6,9 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
 from matplotlib.gridspec import GridSpec
-from scipy.interpolate import griddata
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.linear_model import LinearRegression
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import StandardScaler
 
@@ -29,6 +32,7 @@ def annotations_by_language(mode: str):
         title = ""
         x_label_by_column = {}
         y_label = ""
+        int_method = ""
     elif mode == "rus":
         title = "Визуализация многомерных данных"
         x_label_by_column = {"rooms": "количество комнат",
@@ -37,9 +41,10 @@ def annotations_by_language(mode: str):
                              "city": "город",
                              "ac_in_apartment": "есть ли кондиционер"}
         y_label = "стоимость"
+        int_method = "Метод интерполяции"
     else:
         raise NotImplementedError(f"Language {mode} is not supported")
-    return title, x_label_by_column, y_label
+    return title, x_label_by_column, y_label, int_method
 
 
 def add_row_label(fig: plt.Figure, gs: plt.GridSpec, row_index: int, text: str):
@@ -55,9 +60,13 @@ def add_row_label(fig: plt.Figure, gs: plt.GridSpec, row_index: int, text: str):
     )
 
 
-def encode_feature_for_axis(feature: np.array):
+def encode_feature_for_axis(feature: np.array, mode: str):
     unique_values = np.unique(feature)
     number_unique_values = len(unique_values)
+
+    if number_unique_values == 2 and mode == "rus":
+        # Prettify visualization
+        unique_values = unique_values[::-1]
 
     # Categorical or low-cardinality numeric feature
     positions = np.empty_like(feature, dtype=float)
@@ -73,10 +82,10 @@ def encode_feature_for_axis(feature: np.array):
 
 def scatter_plot_3d(ax, first_feature: np.array, second_feature: np.array,
                     y: np.array, first_label: str, second_label: str, y_label: str,
-                    first_feature_info: Dict, second_feature_info: Dict):
+                    first_feature_info: Dict, second_feature_info: Dict, mode: str):
     # Aligning the axis
     if len(np.unique(first_feature)) <= 3:
-        x_positions, x_ticks, x_ticklabels = encode_feature_for_axis(first_feature)
+        x_positions, x_ticks, x_ticklabels = encode_feature_for_axis(first_feature, mode)
         min_x, max_x = -0.5, len(x_ticks) - 0.5
     else:
         x_positions = first_feature
@@ -85,7 +94,7 @@ def scatter_plot_3d(ax, first_feature: np.array, second_feature: np.array,
         min_x, max_x = first_feature_info["min"], first_feature_info["max"]
 
     if len(np.unique(second_feature)) <= 3:
-        y_positions, y_ticks, y_ticklabels = encode_feature_for_axis(second_feature)
+        y_positions, y_ticks, y_ticklabels = encode_feature_for_axis(second_feature, mode)
         min_y, max_y = -0.5, len(y_ticks) - 0.5
     else:
         y_positions = second_feature
@@ -138,12 +147,17 @@ def scatter_plot_3d(ax, first_feature: np.array, second_feature: np.array,
             tick_label.set_fontname(FONTNAME)
 
 
-def scatter_plot_2d(ax, feature: np.array, y: np.array, x_label: str, y_label: str, feature_info: Dict):
+def scatter_plot_2d(ax, feature: np.array, y: np.array, x_label: str, y_label: str, feature_info: Dict,
+                    mode: str):
     number_unique_values = len(np.unique(feature))
+    unique_values = np.unique(feature)
+    if number_unique_values == 2 and mode == "rus":
+        unique_values = unique_values[::-1]
+
     if number_unique_values <= 3:
         # It is better to use stripplot
         x_center = 0
-        for value in np.unique(feature):
+        for value in unique_values:
             mask = feature == value
             y_filtered = y[mask]
             ax.scatter(np.random.uniform(x_center - 0.1, x_center + 0.1, len(y_filtered)), y_filtered,
@@ -151,7 +165,7 @@ def scatter_plot_2d(ax, feature: np.array, y: np.array, x_label: str, y_label: s
             x_center += 1
         ax.set_xlim(-1, number_unique_values)
         ax.set_xticks(list(range(number_unique_values)))
-        ax.xaxis.set_ticklabels(np.unique(feature))
+        ax.xaxis.set_ticklabels(unique_values)
     else:
         # Regular scatter plot
         ax.scatter(feature, y, c=y, cmap=CMAP, vmin=MIN_TARGET, vmax=MAX_TARGET, s=30,
@@ -172,66 +186,120 @@ def scatter_plot_2d(ax, feature: np.array, y: np.array, x_label: str, y_label: s
             tick_label.set_fontname(FONTNAME)
 
 
-def contour_plot(ax, first_feature: np.array, second_feature: np.array, y: np.array,
-                 first_label: str, second_label: str, first_feature_info: Dict, second_feature_info: Dict):
-    method = "cubic"
+def _interpolate_within_borders(ax,
+                                min_first: float, max_first: float,
+                                min_second: float, max_second: float,
+                                first_array: np.array, second_array: np.array,
+                                y_array: np.array,
+                                method: str = "linear"):
+    """ Does the interpolation and plot it as contourf """
+    grid_size = 100
     levels = 5
-
-    if len(np.unique(first_feature)) <= 3:
-        first_feature, x_ticks, x_ticklabels = encode_feature_for_axis(first_feature)
-        min_x, max_x = -0.5, len(x_ticks) - 0.5
-        method = "nearest"
-    else:
-        x_ticks = first_feature_info["ticks"]
-        x_ticklabels = first_feature_info["ticks"]
-        min_x, max_x = first_feature_info["min"], first_feature_info["max"]
-
-    if len(np.unique(second_feature)) <= 3:
-        second_feature, y_ticks, y_ticklabels = encode_feature_for_axis(second_feature)
-        min_y, max_y = -0.5, len(y_ticks) - 0.5
-        method = "nearest"
-    else:
-        y_ticks = second_feature_info["ticks"]
-        y_ticklabels = second_feature_info["ticks"]
-        min_y, max_y = second_feature_info["min"], second_feature_info["max"]
-
-    # Scaling
-    scaler_f = StandardScaler()
-    scaler_s = StandardScaler()
-    first_feature = scaler_f.fit_transform(first_feature.reshape(-1, 1))
-    second_feature = scaler_s.fit_transform(second_feature.reshape(-1, 1))
-    int_model = KNeighborsRegressor(n_neighbors=3)
-    int_model.fit(np.hstack([first_feature, second_feature]), y.reshape(-1, 1))
-
-    # Extent features with border values
-    min_f = np.min(first_feature)
-    min_s = np.min(second_feature)
-    max_f = np.max(first_feature)
-    max_s = np.max(second_feature)
-    first_ad_on = np.array([min_f, min_f, max_f, max_f]).reshape(-1, 1)
-    second_ad_on = np.array([min_s, max_s, max_s, min_s]).reshape(-1, 1)
-
-    first_feature_ext = np.hstack([first_feature.ravel(), first_ad_on.ravel()])
-    second_feature_ext = np.hstack([second_feature.ravel(), second_ad_on.ravel()])
-    corner_y_values = int_model.predict(np.hstack([first_ad_on, second_ad_on]))
-    y = np.hstack([y.ravel(), np.ravel(corner_y_values)])
-
-    # Build a regular grid over the feature space
-    grid_size = 50
-    first_lin = np.linspace(first_feature_ext.min(), first_feature_ext.max(), grid_size)
-    second_lin = np.linspace(second_feature_ext.min(), second_feature_ext.max(), grid_size)
-    first_feature_grid, second_feature_grid = np.meshgrid(first_lin, second_lin)
     norm = mcolors.Normalize(vmin=MIN_TARGET, vmax=MAX_TARGET)
-    z_grid = griddata(
-        points=(np.ravel(first_feature_ext), np.ravel(second_feature_ext)),
-        values=np.ravel(y),
-        xi=(first_feature_grid, second_feature_grid),
-        method=method,
-    )
+    model_by_method = {"linear": LinearRegression(),
+                       "nearest": KNeighborsRegressor(n_neighbors=1),
+                       "gaussian mixture": GaussianProcessRegressor(alpha=0.005),
+                       "random forest": RandomForestRegressor()}
+
+    # Clip the initial dataframes according to borders
+    mask = ((first_array >= min_first) & (first_array <= max_first)
+            & (second_array >= min_second) & (second_array <= max_second))
+    y_filtered = y_array[mask]
+    first_filtered = first_array[mask]
+    second_filtered = second_array[mask]
+    if any([len(i) < 1 for i in [y_filtered, first_filtered, second_filtered]]):
+        # Nothing to interpolate
+        return ax
+
+    # Apply interpolator
+    first_lin = np.linspace(min_first, max_first, grid_size)
+    second_lin = np.linspace(min_second, max_second, grid_size)
+    first_feature_grid, second_feature_grid = np.meshgrid(first_lin, second_lin)
+
+    if len(np.unique(first_filtered)) == 1 and len(np.unique(second_filtered)) == 1:
+        # No need to make model - we can take mean value
+        z_grid = np.repeat(np.mean(y_filtered), grid_size * grid_size)
+        z_grid = z_grid.reshape(first_feature_grid.shape)
+    else:
+        # Scaling for features
+        scaler_f = StandardScaler()
+        scaler_s = StandardScaler()
+        first_filtered = scaler_f.fit_transform(first_filtered.reshape(-1, 1))
+        second_filtered = scaler_s.fit_transform(second_filtered.reshape(-1, 1))
+
+        # Fit interpolator
+        int_model = model_by_method[method]
+        int_model.fit(np.hstack([first_filtered, second_filtered]), y_filtered.reshape(-1, 1))
+
+        f = scaler_f.transform(first_feature_grid.reshape(-1, 1))
+        s = scaler_s.transform(second_feature_grid.reshape(-1, 1))
+        z_grid = int_model.predict(np.hstack([f, s]))
+        z_grid = z_grid.reshape(first_feature_grid.shape)
+
     contourf = ax.contourf(first_feature_grid, second_feature_grid, z_grid, norm=norm,
                            levels=np.linspace(MIN_TARGET, MAX_TARGET, levels), cmap=CMAP,
                            vmin=MIN_TARGET, vmax=MAX_TARGET, extend="both")
-    ax.scatter(first_feature, second_feature, marker="x", s=4, c='black')
+    ax.contour(first_feature_grid, second_feature_grid, z_grid,
+               levels=np.linspace(MIN_TARGET, MAX_TARGET, levels),
+               colors="white", linewidths=1.5)
+
+    # Draw borders of the interpolation zones
+    ax.plot([min_first, min_first], [min_second, max_second], c='black', linewidth=0.5)
+    ax.plot([min_first, max_first], [min_second, min_second], c='black', linewidth=0.5)
+    ax.plot([max_first, min_first], [max_second, max_second], c='black', linewidth=0.5)
+    ax.plot([max_first, max_first], [max_second, min_second], c='black', linewidth=0.5)
+    return contourf
+
+
+def contour_plot(ax, first_feature: np.array, second_feature: np.array, y: np.array,
+                 first_label: str, second_label: str, first_feature_info: Dict, second_feature_info: Dict,
+                 int_method: str, mode: str):
+    cases = []
+    if len(np.unique(first_feature)) <= 3:
+        method = "linear"
+        first_feature, x_ticks, x_ticklabels = encode_feature_for_axis(first_feature, mode)
+        min_first, max_first = -0.5, len(x_ticks) - 0.5
+
+        values = np.unique(first_feature)
+        values.sort()
+        for value in values:
+            cases.append({"min_first": value - 0.5, "max_first": value + 0.5, "first_feature": first_feature})
+    else:
+        method = "nearest"
+        x_ticks = first_feature_info["ticks"]
+        x_ticklabels = first_feature_info["ticks"]
+        min_first, max_first = first_feature_info["min"], first_feature_info["max"]
+        cases.append({"min_first": min_first, "max_first": max_first, "first_feature": first_feature})
+
+    if len(np.unique(second_feature)) <= 3:
+        second_feature, y_ticks, y_ticklabels = encode_feature_for_axis(second_feature, mode)
+        min_second, max_second = -0.5, len(y_ticks) - 0.5
+
+        values = np.unique(second_feature)
+        values.sort()
+        updated_cases = []
+        for value in values:
+            for case in cases:
+                case = deepcopy(case)
+                case.update({"min_second": value - 0.5, "max_second": value + 0.5, "second_feature": second_feature})
+                updated_cases.append(case)
+        cases = updated_cases
+    else:
+        y_ticks = second_feature_info["ticks"]
+        y_ticklabels = second_feature_info["ticks"]
+        min_second, max_second = second_feature_info["min"], second_feature_info["max"]
+        for case in cases:
+            case.update({"min_second": min_second, "max_second": max_second, "second_feature": second_feature})
+
+    for case in cases:
+        # Each case must contain all necessary information
+        contourf = _interpolate_within_borders(ax, case["min_first"], case["max_first"],
+                                               case["min_second"], case["max_second"],
+                                               case["first_feature"], case["second_feature"],
+                                               y, method)
+
+    ax.set_title(f"{int_method}: '{method}'", fontdict={'fontsize': 5, 'fontname': FONTNAME})
+    ax.scatter(first_feature, second_feature, marker="x", s=4, c='black', zorder=2)
     cbar = plt.colorbar(
         contourf,
         ax=ax,
@@ -243,18 +311,10 @@ def contour_plot(ax, first_feature: np.array, second_feature: np.array, y: np.ar
         tick_label.set_fontsize(5)
         tick_label.set_fontname(FONTNAME)
 
-    contour_lines = ax.contour(first_feature_grid, second_feature_grid, z_grid,
-                               levels=np.linspace(MIN_TARGET, MAX_TARGET, levels), colors="black", linewidths=1)
-
-    # ----- Set ticks in scaled space but label them in original coordinates -----
-    xticks_orig = np.array(x_ticks)
-    xticks_scaled = scaler_f.transform(xticks_orig.reshape(-1, 1)).ravel()
-    ax.set_xticks(xticks_scaled)
+    ax.set_xticks(x_ticks)
     ax.set_xticklabels(x_ticklabels, fontsize=6, fontname=FONTNAME)
 
-    yticks_orig = np.array(y_ticks)
-    yticks_scaled = scaler_s.transform(yticks_orig.reshape(-1, 1)).ravel()
-    ax.set_yticks(yticks_scaled)
+    ax.set_yticks(y_ticks)
     ax.set_yticklabels(y_ticklabels, fontsize=6, fontname=FONTNAME)
 
     # Labels and grid
@@ -262,19 +322,17 @@ def contour_plot(ax, first_feature: np.array, second_feature: np.array, y: np.ar
     ax.set_xlabel(first_label, fontdict={'fontsize': 8, 'fontname': FONTNAME})
     ax.grid(alpha=0.3)
 
-    min_f = scaler_f.transform(np.array([min_x]).reshape(-1, 1)).ravel()[0]
-    min_s = scaler_s.transform(np.array([min_y]).reshape(-1, 1)).ravel()[0]
-    max_f = scaler_f.transform(np.array([max_x]).reshape(-1, 1)).ravel()[0]
-    max_s = scaler_s.transform(np.array([max_y]).reshape(-1, 1)).ravel()[0]
-    ax.set_xlim(min_f, max_f)
-    ax.set_ylim(min_s, max_s)
+    ax.set_xlim(min_first, max_first)
+    ax.set_ylim(min_second, max_second)
     return contourf
 
 
 def plot_new_extended_dataset(mode: str = "eng"):
-    title, x_label_by_column, y_label = annotations_by_language(mode)
+    title, x_label_by_column, y_label, int_method = annotations_by_language(mode)
 
     dataset = get_extended_dataset()
+    if mode == "rus":
+        dataset["ac_in_apartment"] = dataset["ac_in_apartment"].replace({"no": "нет", "yes": "да"})
     features_names = ["rooms", "area", "metro_distance", "city", "ac_in_apartment"]
     features = np.array(dataset[features_names])
     target = np.array(dataset["price"])
@@ -299,21 +357,22 @@ def plot_new_extended_dataset(mode: str = "eng"):
 
             if row_id == 0:
                 ax.set_title(x_label_column, y =1.2,
-                                                 fontdict={'fontsize': 12, 'fontname': FONTNAME})
+                             fontdict={'fontsize': 12, 'fontname': FONTNAME})
             if column_id > row_id:
                 # 3d scatter plot
                 scatter_plot_3d(ax, x[:, row_id], x[:, column_id], y,
                                 first_label=x_label_row, second_label=x_label_column, y_label=y_label,
-                                first_feature_info=first_info, second_feature_info=second_info)
+                                first_feature_info=first_info, second_feature_info=second_info, mode=mode)
             elif column_id == row_id:
                 # 2d scatter plot
                 scatter_plot_2d(ax, x[:, column_id], y, x_label_row, y_label=y_label,
-                                feature_info=COLUMN_BORDERS_BY_NAME[column_feature])
+                                feature_info=COLUMN_BORDERS_BY_NAME[column_feature], mode=mode)
             else:
                 # Counter plot
                 contour_plot(ax, x[:, row_id], x[:, column_id], y,
                              first_label=x_label_row, second_label=x_label_column,
-                             first_feature_info=first_info, second_feature_info=second_info)
+                             first_feature_info=first_info, second_feature_info=second_info,
+                             int_method=int_method, mode=mode)
 
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME}, va="top")
 
