@@ -10,7 +10,6 @@ from matplotlib.gridspec import GridSpec
 from scipy.interpolate import griddata
 import imageio
 from sklearn.linear_model import LinearRegression
-from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import StandardScaler
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
@@ -272,7 +271,7 @@ def plot_new_extended_dataset_as_3d(mode: str = "eng"):
         fig_size = (12, 6)
         fig = plt.figure(figsize=fig_size)
         gs = GridSpec(1, 2, figure=fig)
-        gs.update(wspace=0.05)
+        gs.update(wspace=0.01)
         ax_left = fig.add_subplot(gs[0, 0])
         ax_right = fig.add_subplot(gs[0, 1])
 
@@ -297,9 +296,9 @@ def plot_new_extended_dataset_as_3d(mode: str = "eng"):
         ax_left.view_init(vertical_view_id, view_id)
         ax_right.view_init(vertical_view_id, view_id)
 
-        fig.suptitle(title, fontsize=16, fontdict={'fontname': FONTNAME}, va="top", y=0.95)
+        fig.suptitle(title, fontsize=18, fontdict={'fontname': FONTNAME}, va="top", y=0.95)
 
-        raw_svg_file = Path(tmp_dir, f"38_3d_{mode}.svg", bbox_inches='tight')
+        raw_svg_file = Path(tmp_dir, f"38_3d_{mode}.svg")
         final_plot = Path(tmp_dir, f"38_3d_{mode}_{vertical_view_id}_{view_id}.png")
         plt.savefig(raw_svg_file)
         plt.close()

@@ -5,6 +5,7 @@ import imageio
 import numpy as np
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches  # <-- added for progress bar
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
 from examples.utils import save_plot_according_to_template, get_datasets, split_train_test_manual
@@ -15,6 +16,7 @@ warnings.filterwarnings('ignore')
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 12, 'fontname': FONTNAME}
 VMAX = 0.5
+
 
 def _build_model(rooms: np.array, actual_prices: np.array):
     """ Build the model using analytical solution for one feature model """
@@ -70,11 +72,11 @@ def annotate_leverage(ax, x, x_i, loc=(0.02, 0.98)):
     x = np.asarray(x, dtype=float)
     n = x.size
     xbar = np.nanmean(x)
-    sxx = np.nansum((x - xbar)**2)
-    h_i = (1.0 / n) + ((x_i - xbar)**2 / sxx) if sxx > 0 else (1.0 / n)
+    sxx = np.nansum((x - xbar) ** 2)
+    h_i = (1.0 / n) + ((x_i - xbar) ** 2 / sxx) if sxx > 0 else (1.0 / n)
 
     eq_general = r"$h_i=\frac{1}{n}+\frac{(x_i-\bar{x})^2}{\sum_{j=1}^{n}(x_j-\bar{x})^2}$"
-    eq_values  = rf"$h_i=\frac{{1}}{{{n}}}+\frac{{({x_i:.3g}-{xbar:.3g})^2}}{{{sxx:.3g}}}={h_i:.2f}$"
+    eq_values = rf"$h_i=\frac{{1}}{{{n}}}+\frac{{({x_i:.3g}-{xbar:.3g})^2}}{{{sxx:.3g}}}={h_i:.2f}$"
 
     ax.text(loc[0], loc[1], eq_general + "\n" + eq_values,
             transform=ax.transAxes, ha="left", va="top",
@@ -82,7 +84,7 @@ def annotate_leverage(ax, x, x_i, loc=(0.02, 0.98)):
     return h_i
 
 
-def calculate_cooks_distance(x: np.array, y:np.array):
+def calculate_cooks_distance(x: np.array, y: np.array):
     """ Cook's distance (OLS y ~ 1 + x) """
     x_ = np.column_stack([np.ones_like(x), x])
     inv = np.linalg.pinv(x_.T @ x_)
@@ -118,9 +120,9 @@ def annotate_cook(ax,
         y_pred = np.asarray(y_pred, dtype=float)
         n = y.size
         e = y - y_pred
-        mse = (np.nansum(e**2)) / max(n - p, 1)
+        mse = (np.nansum(e ** 2)) / max(n - p, 1)
     denom = max(1e-12, 1.0 - float(h_i))
-    d = (e_i**2 / (p * mse)) * (h_i / (denom**2))
+    d = (e_i ** 2 / (p * mse)) * (h_i / (denom ** 2))
 
     eq_general = r"$D_i=\frac{e_i^2}{p\,\mathrm{MSE}}\cdot\frac{h_i}{(1-h_i)^2}$"
     eq_values = rf"$D=\frac{{({fmt(e_i)})^2}}{{{p}\cdot{fmt(mse)}}}\cdot\frac{{{fmt(h_i)}}}{{(1-{fmt(h_i)})^2}}={fmt(d)}$"
@@ -153,7 +155,7 @@ def generate_base_frame(x: np.array, y: np.array, h: np.array, x_for_fit: np.arr
 
     sc = ax_leverage.scatter(x, y, c=h, cmap='coolwarm', s=50,
                              edgecolor="black", linewidths=0.5, alpha=0.9)
-    cbar = fig.colorbar(sc, ax=ax_leverage, shrink=0.9, pad=0.02)
+    fig.colorbar(sc, ax=ax_leverage, shrink=0.9, pad=0.02)
     ax_leverage.set_title(leverage_label, fontsize=12, fontdict={'fontname': FONTNAME})
     ax_leverage.set_ylabel("y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
     ax_leverage.spines[['right', 'top']].set_visible(False)
@@ -184,6 +186,50 @@ def generate_base_frame(x: np.array, y: np.array, h: np.array, x_for_fit: np.arr
     return fig, ax_leverage, ax_model, ax_cook
 
 
+def draw_progress_bar(fig,
+                      current_frame: int,
+                      total_frames: int,
+                      frames_per_stage: int = 4,
+                      position=(0.07, -0.18, 0.18, 0.04)):
+    """
+    Draw a tiny progress bar (rectangles left-to-right) in the bottom part.
+    current_frame is zero-based index.
+    Each rectangle is labeled with stage number (1..frames_per_stage) when filled.
+    """
+    left, bottom, width, height = position
+    ax_bar = fig.add_axes([left, bottom, width, height])
+    ax_bar.set_xlim(0, total_frames)
+    ax_bar.set_ylim(0, 1)
+    ax_bar.axis("off")
+
+    for i in range(total_frames):
+        filled = i <= current_frame  # fill current and all previous
+        stage_number = (i % frames_per_stage) + 1  # 1,2,3,4,1,2,3,4,...
+
+        rect = patches.Rectangle(
+            (i + 0.1, 0.1),   # x, y in data coords
+            0.8,              # width
+            0.8,              # height
+            linewidth=0.5,
+            edgecolor="grey",
+            facecolor="grey" if filled else "none",
+            zorder=1
+        )
+        ax_bar.add_patch(rect)
+
+        if filled:
+            ax_bar.text(
+                i + 0.5, 0.5,
+                str(stage_number),
+                ha="center",
+                va="center",
+                color="white",
+                fontsize=6,
+                fontname=FONTNAME,
+                zorder=2
+            )
+
+
 def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float = 3500):
     (leverage_label, model_label, best_model_label, current_model_label, new_model_label,
      build_model, influence_label, cook_distance_label, excluding_title) = annotations_by_language(mode)
@@ -202,10 +248,19 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
 
     image_files = []
     image_index = 0
+
+    # Progress bar setup
+    points_to_check = [11, 19, 14, 2]
+    conclusions = ["drop", "keep", "drop", "keep"]
+    frames_per_point = 4
+    total_frames = frames_per_point * len(points_to_check)
+    frame_index = 0  # global frame counter for progress bar
+
     x_for_fit = np.copy(x)
     y_for_fit = np.copy(y)
     dropped_points = []
-    for point_to_check, conclusion in zip([11, 19, 14, 2], ["drop", "keep", "drop", "keep"]):
+
+    for point_to_check, conclusion in zip(points_to_check, conclusions):
         x_i = x[point_to_check]
         y_i = y[point_to_check]
         fit_array_index = np.argwhere(y_for_fit == y_i)
@@ -221,28 +276,37 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         #############################
         # Base frame with new model #
         #############################
-        fig_base, ax_leverage, ax_model, ax_cook = generate_base_frame(x, y, h, x_for_fit, dropped_points,
-                                                                       predicted, leverage_label, model_label,
-                                                                       best_model_label, current_model_label,
-                                                                       cook_distance_label, influence_label)
+        fig_base, ax_leverage, ax_model, ax_cook = generate_base_frame(
+            x, y, h, x_for_fit, dropped_points,
+            predicted, leverage_label, model_label,
+            best_model_label, current_model_label,
+            cook_distance_label, influence_label
+        )
         ax_cook.plot(x_for_fit, predicted, c='red', alpha=1.0, zorder=5)
         ax_model.legend(loc='upper left', prop={'family': FONTNAME, 'size': 8})
 
         fig_base.suptitle(f"1 - {build_model}", fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=1.2)
+
+        # Progress bar
+        draw_progress_bar(fig_base, frame_index, total_frames)
+
         raw_svg_file = Path(tmp_dir, f"32_cooks_distance_base_{mode}_{image_index}.svg")
         plt.savefig(raw_svg_file, bbox_inches='tight')
         plt.close()
         path_to_final_path = Path(tmp_dir, f"32_cooks_distance_base_{mode}_{image_index}.png")
         save_plot_according_to_template(raw_svg_file, path_to_final_path, template_name="template_small.svg")
         image_files.append(path_to_final_path)
+        frame_index += 1
 
         ######################
         # Calculate leverage #
         ######################
-        fig_point, ax_leverage, ax_model, ax_cook = generate_base_frame(x, y, h, x_for_fit, dropped_points,
-                                                                        predicted, leverage_label, model_label,
-                                                                        best_model_label, current_model_label,
-                                                                        cook_distance_label, influence_label)
+        fig_point, ax_leverage, ax_model, ax_cook = generate_base_frame(
+            x, y, h, x_for_fit, dropped_points,
+            predicted, leverage_label, model_label,
+            best_model_label, current_model_label,
+            cook_distance_label, influence_label
+        )
         # Patching the subplots
         ax_leverage.scatter([x_i], [y_i], facecolors='none', edgecolor="red", s=200)
         h_i = annotate_leverage(ax_leverage, x, x_i=x_i)
@@ -253,20 +317,27 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         ax_cook.plot(x_for_fit, predicted, c='red', alpha=1.0, zorder=5)
 
         fig_point.suptitle(f"2 - {excluding_title}", fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=1.2)
+
+        # Progress bar
+        draw_progress_bar(fig_point, frame_index, total_frames)
+
         raw_svg_file = Path(tmp_dir, f"32_cooks_distance_leverage_{mode}_{image_index}.svg")
         plt.savefig(raw_svg_file, bbox_inches='tight')
         plt.close()
         path_to_final_path = Path(tmp_dir, f"32_cooks_distance_leverage_{mode}_{image_index}.png")
         save_plot_according_to_template(raw_svg_file, path_to_final_path, template_name="template_small.svg")
         image_files.append(path_to_final_path)
+        frame_index += 1
 
         #################################
         # Checking the individual point #
         #################################
-        fig_point, ax_leverage, ax_model, ax_cook = generate_base_frame(x, y, h, x_for_fit, dropped_points,
-                                                                        predicted, leverage_label, model_label,
-                                                                        best_model_label, current_model_label,
-                                                                        cook_distance_label, influence_label)
+        fig_point, ax_leverage, ax_model, ax_cook = generate_base_frame(
+            x, y, h, x_for_fit, dropped_points,
+            predicted, leverage_label, model_label,
+            best_model_label, current_model_label,
+            cook_distance_label, influence_label
+        )
         # Patching the subplots
         ax_leverage.scatter([x_i], [y_i], facecolors='none', edgecolor="red", s=200)
         annotate_leverage(ax_leverage, x, x_i=x_i)
@@ -281,28 +352,37 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         ax_model.plot([x_i + 0.1, x_i + 0.2], [predicted[fit_array_index], predicted[fit_array_index]],
                       '--', c='red', linewidth=1)
         ax_model.legend(loc='upper left', prop={'family': FONTNAME, 'size': 8})
+
         ax_cook.scatter([x_i], [y_i], facecolors='none', edgecolor="red", s=200)
         d = calculate_cooks_distance(x_for_fit, y_for_fit)
         ax_cook.scatter(x_for_fit, y_for_fit, c=d, cmap='Reds', s=50, zorder=5,
                         edgecolor="black", linewidths=0.5, alpha=0.9, vmin=0, vmax=VMAX)
         ax_cook.plot(x_for_fit, predicted, c='red', alpha=1.0, zorder=5)
-        annotate_cook(ax_cook, h_i=h_i, p=2, y_i=y_i, pred_i=predicted[fit_array_index], y=y_for_fit, y_pred=predicted)
+        annotate_cook(ax_cook, h_i=h_i, p=2, y_i=y_i, pred_i=predicted[fit_array_index],
+                      y=y_for_fit, y_pred=predicted)
 
         fig_point.suptitle(f"3 - {excluding_title}", fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=1.2)
+
+        # Progress bar
+        draw_progress_bar(fig_point, frame_index, total_frames)
+
         raw_svg_file = Path(tmp_dir, f"32_cooks_distance_check_point_{mode}_{image_index}.svg")
         plt.savefig(raw_svg_file, bbox_inches='tight')
         plt.close()
         path_to_final_path = Path(tmp_dir, f"32_cooks_distance_check_point_{mode}_{image_index}.png")
         save_plot_according_to_template(raw_svg_file, path_to_final_path, template_name="template_small.svg")
         image_files.append(path_to_final_path)
+        frame_index += 1
 
         ##############
         # Next model #
         ##############
-        fig_point, ax_leverage, ax_model, ax_cook = generate_base_frame(x, y, h, x_for_fit, dropped_points,
-                                                                        predicted, leverage_label, model_label,
-                                                                        best_model_label, current_model_label,
-                                                                        cook_distance_label, influence_label)
+        fig_point, ax_leverage, ax_model, ax_cook = generate_base_frame(
+            x, y, h, x_for_fit, dropped_points,
+            predicted, leverage_label, model_label,
+            best_model_label, current_model_label,
+            cook_distance_label, influence_label
+        )
         # Patching the subplots
         ax_leverage.scatter([x_i], [y_i], facecolors='none', edgecolor="red", s=200)
         annotate_leverage(ax_leverage, x, x_i=x_i)
@@ -331,16 +411,22 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         ax_cook.scatter(x_for_fit, y_for_fit, c=d, cmap='Reds', s=50, zorder=5,
                         edgecolor="black", linewidths=0.5, alpha=0.9, vmin=0, vmax=VMAX)
         ax_cook.plot(x_for_fit, predicted, c='red', alpha=1.0, zorder=5)
-        annotate_cook(ax_cook, h_i=h_i, p=2, y_i=y_i, pred_i=predicted[fit_array_index], y=y_for_fit, y_pred=predicted)
+        annotate_cook(ax_cook, h_i=h_i, p=2, y_i=y_i, pred_i=predicted[fit_array_index],
+                      y=y_for_fit, y_pred=predicted)
 
         fig_point.suptitle(f"4 - {excluding_title}", fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=1.2)
+
+        # Progress bar
+        draw_progress_bar(fig_point, frame_index, total_frames)
+
         raw_svg_file = Path(tmp_dir, f"32_cooks_distance_next_model_{mode}_{image_index}.svg")
         plt.savefig(raw_svg_file, bbox_inches='tight')
         plt.close()
         path_to_final_path = Path(tmp_dir, f"32_cooks_distance_next_model_{mode}_{image_index}.png")
         save_plot_according_to_template(raw_svg_file, path_to_final_path, template_name="template_small.svg")
-
         image_files.append(path_to_final_path)
+        frame_index += 1
+
         image_index += 1
 
         if conclusion == "drop":

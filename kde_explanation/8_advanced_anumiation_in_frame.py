@@ -1,15 +1,16 @@
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Union
+import shutil
 
 import numpy as np
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 from matplotlib.collections import EllipseCollection, PatchCollection
 import matplotlib.patches as patches
 import matplotlib.colors as mcolors
+import imageio
 
 from scipy import stats
 from scipy.signal import savgol_filter
@@ -17,12 +18,11 @@ from scipy.ndimage import gaussian_filter1d
 from scipy.interpolate import UnivariateSpline
 from scipy.spatial import cKDTree
 
+from examples.utils import save_plot_according_to_template
 from kde_explanation.kde_utils import get_kde_simulation_path, get_kde_plots_path
 
-DPI                 = 120
-INTERVAL_MS         = 30
+DPI                 = 100
 FRAME_SKIP          = 115
-LINE_INTERP_STEPS   = 1
 
 PARTICLES_RADIUS    = 0.02
 GROUND_Y            = -5.0
@@ -33,7 +33,7 @@ ENVELOPE_DELAY_FRAMES   = 1
 ENVELOPE_LINEWIDTH      = 1.0
 ENVELOPE_COLOR          = 'red'
 ENVELOPE_ALPHA          = 0.7
-
+ANIM_DURATION           = 25
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
 
@@ -55,7 +55,6 @@ class S3Bucket:
         Creates a reusable boto3 S3 client
         """
         import boto3
-
         s3 = boto3.client("s3")
         return s3
 
@@ -85,8 +84,13 @@ def smooth_envelope(
         w_min = savgol_poly + 2 if (savgol_poly + 2) % 2 == 1 else savgol_poly + 3
         w = max(w, w_min)
         w = max(5, w)
-        if w >= 3 and w <= n and w % 2 == 1:
-            y_sm = savgol_filter(y_filled, window_length=w, polyorder=savgol_poly, mode="interp")
+        if 3 <= w <= n and w % 2 == 1:
+            y_sm = savgol_filter(
+                y_filled,
+                window_length=w,
+                polyorder=savgol_poly,
+                mode="interp",
+            )
         else:
             y_sm = y_filled
     elif method == "gaussian":
@@ -125,7 +129,6 @@ def frame_reader_parquet(parquet_dir: Path, frame_skip: int = 1):
     if frame_skip > 1:
         files = files[::frame_skip]
 
-    # Only load the columns we actually need
     cols = ["time_index", "coordinate_x", "coordinate_y", "type", "initial_circle"]
 
     for fpath in files:
@@ -133,25 +136,25 @@ def frame_reader_parquet(parquet_dir: Path, frame_skip: int = 1):
         if df.empty:
             continue
 
-        # Frame index is constant per file
         frame_idx = int(df["time_index"].iloc[0])
 
-        # Filter sand rows
         sand_df = df[df["type"] == "sand"]
         if not sand_df.empty:
-            # Ensure compact dtypes
-            sand_xy = sand_df[["coordinate_x", "coordinate_y"]].to_numpy(dtype=np.float32, copy=False)
-            # initial_circle is written as int32; keep it, fallback to -1 if anything goes wrong
+            sand_xy = sand_df[["coordinate_x", "coordinate_y"]].to_numpy(
+                dtype=np.float32,
+                copy=False,
+            )
             try:
-                labels = sand_df["initial_circle"].to_numpy(dtype=np.int32, copy=False)
+                labels = sand_df["initial_circle"].to_numpy(
+                    dtype=np.int32,
+                    copy=False,
+                )
             except Exception:
                 labels = np.full(sand_xy.shape[0], -1, dtype=np.int32)
         else:
-            # No sand this frame
             sand_xy = np.empty((0, 2), dtype=np.float32)
             labels = np.empty((0,), dtype=np.int32)
 
-        # Line: two rows with the same x; take the first if present
         line_df = df[df["type"] == "line"]
         line_x = float(line_df["coordinate_x"].iloc[0]) if not line_df.empty else -5.0
 
@@ -162,7 +165,7 @@ def list_s3_frames_sorted(s3, bucket: str, prefix: str) -> list[str]:
     """
     List S3 object keys under `prefix` that end with .parquet, sorted like list_frames_sorted()
     """
-    prefix = prefix.lstrip("/")  # S3 keys are not absolute
+    prefix = prefix.lstrip("/")
     if prefix and not prefix.endswith("/"):
         prefix += "/"
 
@@ -183,7 +186,7 @@ def list_s3_frames_sorted(s3, bucket: str, prefix: str) -> list[str]:
             break
 
     def key_func(k: str):
-        name = k.rsplit("/", 1)[-1]  # basename, e.g. 000123.parquet
+        name = k.rsplit("/", 1)[-1]
         stem = name[:-8] if name.endswith(".parquet") else name
         try:
             return 0, int(stem)
@@ -244,9 +247,15 @@ def frame_reader_parquet_s3(
 
         sand_df = df[df["type"] == "sand"]
         if not sand_df.empty:
-            sand_xy = sand_df[["coordinate_x", "coordinate_y"]].to_numpy(dtype=np.float32, copy=False)
+            sand_xy = sand_df[["coordinate_x", "coordinate_y"]].to_numpy(
+                dtype=np.float32,
+                copy=False,
+            )
             try:
-                labels = sand_df["initial_circle"].to_numpy(dtype=np.int32, copy=False)
+                labels = sand_df["initial_circle"].to_numpy(
+                    dtype=np.int32,
+                    copy=False,
+                )
             except Exception:
                 labels = np.full(sand_xy.shape[0], -1, dtype=np.int32)
         else:
@@ -269,7 +278,11 @@ def generate_synthetic_data(
     x = np.linspace(0, 10, n_samples)
     true_slope = 2.0
     true_intercept = 5.0
-    y = true_slope * x + true_intercept + rng.normal(0, noise_std, size=n_samples)
+    y = true_slope * x + true_intercept + rng.normal(
+        0,
+        noise_std,
+        size=n_samples,
+    )
     n_outliers = int(n_samples * outlier_fraction)
     outlier_indices = rng.choice(n_samples, size=n_outliers, replace=False)
     y[outlier_indices] += rng.normal(0, 20 * noise_std, size=n_outliers)
@@ -298,7 +311,9 @@ def compute_upper_envelope_connected(
     vel_eps: float = 1e-3,
     contact_tol: float = 1e-3
 ):
-    centers = np.linspace(x_min, x_max, n_bins, endpoint=False) + (x_max - x_min) / (2 * n_bins)
+    centers = np.linspace(
+        x_min, x_max, n_bins, endpoint=False
+    ) + (x_max - x_min) / (2 * n_bins)
 
     if sand_xy.size == 0:
         return centers, np.full(n_bins, ground_y, dtype=float)
@@ -316,7 +331,10 @@ def compute_upper_envelope_connected(
         static_mask = np.ones(xs.shape[0], dtype=bool)
     else:
         tree_prev = cKDTree(prev_sand_xy)
-        dist, idx = tree_prev.query(np.c_[xs, ys], distance_upper_bound=match_radius)
+        dist, idx = tree_prev.query(
+            np.c_[xs, ys],
+            distance_upper_bound=match_radius,
+        )
         has_match = np.isfinite(dist)
         static_mask = np.zeros(xs.shape[0], dtype=bool)
         if np.any(has_match):
@@ -344,7 +362,10 @@ def compute_upper_envelope_connected(
     connected[seed_inds] = True
     while stack:
         i = stack.pop()
-        nbrs = tree_stat.query_ball_point([xs_stat[i], ys_stat[i]], r=link_radius)
+        nbrs = tree_stat.query_ball_point(
+            [xs_stat[i], ys_stat[i]],
+            r=link_radius,
+        )
         for j in nbrs:
             if not connected[j]:
                 connected[j] = True
@@ -372,7 +393,7 @@ def compute_upper_envelope_connected(
         savgol_window=21,
         savgol_poly=3,
         gaussian_sigma=10.0,
-        spline_s=None
+        spline_s=None,
     )
     return centers, y
 
@@ -387,16 +408,28 @@ def annotations_by_language(mode: str):
     return title
 
 
-def compose_animation(
-    output_gif: Path,
+def compose_animation_frames(
+    frames_root: Path,
     s3_bucket_data: Union[S3Bucket, None] = None,
     folder_with_simulation: Union[Path, None] = None,
-    mode: str = "eng"
-):
+    mode: str = "eng",
+) -> list[Path]:
     """
-    Please run this script only after 6_advanced_simulation.py (that script produces simulation files)
-    Create animation based on simulation files
+    Generate PNG frames (already wrapped in template) into frames_root/png.
+    A single temporary SVG file is reused and overwritten for each frame.
+    Returns an ordered list of PNG frame paths.
     """
+    # Clean and (re)create root dir for this animation
+    if frames_root.exists():
+        shutil.rmtree(frames_root)
+    frames_root.mkdir(parents=True, exist_ok=True)
+
+    frames_png_dir = frames_root / "png"
+    frames_png_dir.mkdir(parents=True, exist_ok=True)
+
+    # Single temporary SVG file that will be overwritten on each frame
+    temp_svg_path = frames_root / "frame_temp.svg"
+
     if s3_bucket_data is None:
         print("Animation will be created from local simulation files")
         if folder_with_simulation is None:
@@ -427,7 +460,13 @@ def compose_animation(
 
     # Source circles
     circles = [patches.Circle((sx[i], sy[i]), CIRCLE_RADIUS) for i in range(n_circles)]
-    pc = PatchCollection(circles, facecolor='grey', edgecolor='white', linewidths=0.6, alpha=1.0)
+    pc = PatchCollection(
+        circles,
+        facecolor='grey',
+        edgecolor='white',
+        linewidths=0.6,
+        alpha=1.0,
+    )
     ax1.add_collection(pc)
 
     grey_rgba = mcolors.to_rgba('grey', alpha=1.0)
@@ -453,7 +492,7 @@ def compose_animation(
         transOffset=ax1.transData,
         facecolors=np.empty((0, 4)),
         edgecolors=np.empty((0, 4)),
-        linewidths=0.3
+        linewidths=0.3,
     )
     ax1.add_collection(ec)
 
@@ -482,13 +521,24 @@ def compose_animation(
         transform=ax2.transAxes,
         ha="center",
         va="top",
-        fontdict={'fontname': FONTNAME}
+        fontdict={'fontname': FONTNAME},
     )
-    env_line_left,  = ax1.plot([], [], color=ENVELOPE_COLOR,
-                               linewidth=ENVELOPE_LINEWIDTH, alpha=ENVELOPE_ALPHA)
-    env_line_right, = ax2_env.plot([], [], color=ENVELOPE_COLOR,
-                                   linewidth=ENVELOPE_LINEWIDTH, alpha=ENVELOPE_ALPHA)
+    env_line_left,  = ax1.plot(
+        [],
+        [],
+        color=ENVELOPE_COLOR,
+        linewidth=ENVELOPE_LINEWIDTH,
+        alpha=ENVELOPE_ALPHA,
+    )
+    env_line_right, = ax2_env.plot(
+        [],
+        [],
+        color=ENVELOPE_COLOR,
+        linewidth=ENVELOPE_LINEWIDTH,
+        alpha=ENVELOPE_ALPHA,
+    )
 
+    # Frames source
     if s3_bucket_data is None:
         frames_iter = frame_reader_parquet(folder_with_simulation, FRAME_SKIP)
     else:
@@ -496,12 +546,13 @@ def compose_animation(
             s3_client,
             s3_bucket_data.bucket,
             s3_bucket_data.prefix,
-            FRAME_SKIP
+            FRAME_SKIP,
         )
 
     frames_list = list(frames_iter)
     n_frames = len(frames_list)
     if n_frames == 0:
+        plt.close(fig)
         raise RuntimeError("Frames have not been found")
 
     # Precompute when the line crosses the rightmost circle boundary
@@ -537,8 +588,8 @@ def compose_animation(
     norm_sand = mcolors.Normalize(vmin=vmin, vmax=vmax)
     neutral_rgba = mcolors.to_rgba('#BBBBBB')
 
-    def recolor_circles_by_line(xline):
-        """Color the source circles: uncrossed ones — gray, crossed ones — coolwarm according to their rank"""
+    def recolor_circles_by_line(xline: float):
+        """Color the source circles: uncrossed ones — gray, crossed ones — coolwarm according to their rank."""
         edge_cols = base_edge_colors.copy()
         mask_crossed = sx < xline
         if np.any(mask_crossed):
@@ -574,7 +625,7 @@ def compose_animation(
         env_line_right.set_data([], [])
         return line1, line2, pc, ec, env_line_left, env_line_right
 
-    def animate(i):
+    def animate(i: int):
         # Map animation frame index to data frame index:
         # for i < n_frames we use i, for i >= n_frames we keep the last frame
         data_idx = i if i < n_frames else (n_frames - 1)
@@ -628,10 +679,11 @@ def compose_animation(
         env_x, env_y = compute_upper_envelope_connected(
             sand_xy,
             prev_sand_xy=prev_sand,
-            x_min=0.0, x_max=62.0,
+            x_min=0.0,
+            x_max=62.0,
             n_bins=ENVELOPE_BINS,
             r=PARTICLES_RADIUS,
-            ground_y=GROUND_Y
+            ground_y=GROUND_Y,
         )
 
         delayed_line_x = (
@@ -649,21 +701,52 @@ def compose_animation(
     repeat_extra = max(LAST_FRAMES_REPEAT - 1, 0)
     total_anim_frames = n_frames + repeat_extra
 
-    ani = animation.FuncAnimation(
-        fig=fig,
-        func=animate,
-        init_func=init,
-        frames=total_anim_frames,
-        interval=INTERVAL_MS,
-        blit=True
-    )
+    init()
+    png_frames: list[Path] = []
 
-    ani.save(output_gif, writer="pillow", dpi=DPI)
-    print(f"Saved gif animation in file: {output_gif}")
+    for i in range(total_anim_frames):
+        animate(i)
+
+        png_path = frames_png_dir / f"frame_{i:04d}.png"
+
+        # Save figure to a single temporary SVG file (overwritten each iteration)
+        fig.savefig(temp_svg_path, bbox_inches='tight')
+
+        # Wrap into template frame, same as in static plots
+        save_plot_according_to_template(
+            temp_svg_path,
+            png_path,
+            template_name="template_orange_small.svg",
+            dpi=DPI,
+        )
+        png_frames.append(png_path)
+
+    plt.close(fig)
+    print(f"Saved {total_anim_frames} framed PNG frames into: {frames_png_dir}")
+    print(f"Temporary SVG file (overwritten each frame) located at: {temp_svg_path}")
+    return png_frames
 
 
 if __name__ == "__main__":
     mode = "rus"
     s3_bucket = S3Bucket(bucket="linear-regression-kernel-density", prefix="simulation")
-    output_gif = Path(get_kde_plots_path(), f"final_simulation_{mode}.gif")
-    compose_animation(output_gif=output_gif, s3_bucket_data=s3_bucket, mode=mode)
+    plots_dir = get_kde_plots_path()
+
+    # All artifacts live under kde_plots
+    frames_root = Path(plots_dir, f"final_simulation_{mode}_frames")
+
+    # Generate framed PNG frames (and reuse a single temp SVG)
+    png_frames = compose_animation_frames(
+        frames_root=frames_root,
+        s3_bucket_data=s3_bucket,
+        mode=mode,
+    )
+
+    # Build GIF from framed PNGs
+    gif_path = Path(get_kde_plots_path(), f"final_simulation_{mode}_in_frame.gif")
+
+    with imageio.get_writer(gif_path, mode='I', duration=ANIM_DURATION, loop=0) as writer:
+        for img_path in png_frames:
+            writer.append_data(imageio.imread(img_path))
+
+    print(f"GIF saved at {gif_path}")

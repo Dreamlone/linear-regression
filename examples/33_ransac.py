@@ -62,10 +62,11 @@ def annotations_by_language(mode: str):
 
 
 def _fit_ols(x: np.ndarray, y: np.ndarray):
-    x = np.asarray(x, float); y = np.asarray(y, float)
+    x = np.asarray(x, float)
+    y = np.asarray(y, float)
     xm, ym = x.mean(), y.mean()
-    sxx = np.sum((x - xm)**2)
-    b1 = 0.0 if sxx == 0 else np.sum((x - xm)*(y - ym)) / sxx
+    sxx = np.sum((x - xm) ** 2)
+    b1 = 0.0 if sxx == 0 else np.sum((x - xm) * (y - ym)) / sxx
     b0 = ym - b1 * xm
     yhat = b0 + b1 * x
     return b0, b1, yhat
@@ -78,7 +79,13 @@ def _auto_threshold(y: np.ndarray, yhat: np.ndarray, factor: float = 2.0):
     return factor * sigma
 
 
-def _ransac_one_trial(x: np.ndarray, y: np.ndarray, min_samples: int, residual_threshold: float, rng: np.random.Generator):
+def _ransac_one_trial(
+    x: np.ndarray,
+    y: np.ndarray,
+    min_samples: int,
+    residual_threshold: float,
+    rng: np.random.Generator,
+):
     n = len(x)
     for _ in range(100):
         idx = rng.choice(n, size=min_samples, replace=False)
@@ -95,25 +102,27 @@ def _make_figure():
     fig = plt.figure(figsize=(12, 5))
     gs = fig.add_gridspec(1, 2, width_ratios=[3, 2])
     ax_plot = fig.add_subplot(gs[0, 0])
-    ax_tbl  = fig.add_subplot(gs[0, 1])
-    ax_plot.set_xlabel("x", fontdict={'fontsize': 12, 'fontname': FONTNAME})
-    ax_plot.set_ylabel("y", fontdict={'fontsize': 12, 'fontname': FONTNAME})
+    ax_tbl = fig.add_subplot(gs[0, 1])
+    ax_plot.set_xlabel("x", fontdict={"fontsize": 12, "fontname": FONTNAME})
+    ax_plot.set_ylabel("y", fontdict={"fontsize": 12, "fontname": FONTNAME})
     ax_plot.grid(alpha=0.2)
     ax_plot.set_xlim(0, 6)
     ax_plot.set_ylim(0, 90000)
-    ax_plot.set_xticks([1,2,3,4,5])
-    ax_plot.spines[['right','top']].set_visible(False)
+    ax_plot.set_xticks([1, 2, 3, 4, 5])
+    ax_plot.spines[["right", "top"]].set_visible(False)
     return fig, ax_plot, ax_tbl
 
 
 def _draw_table(ax_tbl, columns: list[str], data_rows: list[list[str]]):
     ax_tbl.clear()
     ax_tbl.axis("off")
-    tbl = ax_tbl.table(cellText=data_rows,
-                       colLabels=columns,
-                       loc='center',
-                       cellLoc='center',
-                       colLoc='center')
+    tbl = ax_tbl.table(
+        cellText=data_rows,
+        colLabels=columns,
+        loc="center",
+        cellLoc="center",
+        colLoc="center",
+    )
     tbl.scale(1, 3)
     tbl.auto_set_font_size(False)
     tbl.set_fontsize(10)
@@ -123,44 +132,176 @@ def _draw_table(ax_tbl, columns: list[str], data_rows: list[list[str]]):
 
 
 def _ensure_legend_order(ax, baseline_label: str, sample_fit_label: str, outliers_label: str):
-    """
-    Force legend order: [baseline, sample-fit, outliers, ...others...].
-    If some labels are missing, create proxy handles so the order stays consistent.
-    """
     handles, labels = ax.get_legend_handles_labels()
 
-    # Build unique label->handle (keep last occurrence)
     label2handle = {}
     for h, l in zip(handles, labels):
         label2handle[l] = h
 
-    # Proxies for required entries (if not present)
     if baseline_label not in label2handle:
-        label2handle[baseline_label] = Line2D([0], [0], linestyle='--', color='black')
-
+        label2handle[baseline_label] = Line2D([0], [0], linestyle="--", color="black")
     if sample_fit_label not in label2handle:
-        label2handle[sample_fit_label] = Line2D([0], [0], linestyle='-', color='orange', linewidth=2)
-
+        label2handle[sample_fit_label] = Line2D(
+            [0], [0], linestyle="-", color="orange", linewidth=2
+        )
     if outliers_label not in label2handle:
-        label2handle[outliers_label] = Line2D([0], [0], marker='o', linestyle='None',
-                                              markerfacecolor='grey', markeredgecolor='black', markersize=6)
+        label2handle[outliers_label] = Line2D(
+            [0],
+            [0],
+            marker="o",
+            linestyle="None",
+            markerfacecolor="grey",
+            markeredgecolor="black",
+            markersize=6,
+        )
 
-    # Desired order head
     head = [baseline_label, sample_fit_label, outliers_label]
     tail = [l for l in label2handle.keys() if l not in head]
 
     ordered_labels = head + tail
     ordered_handles = [label2handle[l] for l in ordered_labels]
 
-    ax.legend(ordered_handles, ordered_labels, loc='upper left',
-              prop={'family': FONTNAME, 'size': 9})
+    ax.legend(
+        ordered_handles,
+        ordered_labels,
+        loc="upper left",
+        prop={"family": FONTNAME, "size": 9},
+    )
+
+
+def _draw_common_background(
+    ax,
+    x,
+    y,
+    xx,
+    b0_base,
+    b1_base,
+    best_model_label,
+    sample_fit_label,
+    scatter_zorder=2,
+):
+    """Draw scatter and two baseline lines that are common to most frames."""
+    ax.scatter(
+        x,
+        y,
+        facecolors="white",
+        edgecolors="black",
+        linewidths=0.6,
+        s=POINT_SIZE,
+        zorder=scatter_zorder,
+    )
+    ax.plot(
+        [1, 5],
+        [11133.333333333334, 46600],
+        "--",
+        c="black",
+        zorder=1,
+        label=best_model_label,
+    )
+    ax.plot(
+        xx,
+        b0_base + b1_base * xx,
+        c="orange",
+        linewidth=1.0,
+        alpha=0.9,
+        zorder=1,
+        label=sample_fit_label,
+    )
+
+
+def draw_progress_bar(
+    fig,
+    current_step: int,
+    stage_numbers: list[int],
+    position=(0.07, -0.09, 0.18, 0.04),
+):
+    """
+    Tiny progress bar: one rectangle per logical step (values from stage_numbers).
+    Filled rectangles show stage_numbers[i] as a white digit.
+    """
+    total_steps = len(stage_numbers)
+    left, bottom, width, height = position
+    ax_bar = fig.add_axes([left, bottom, width, height])
+    ax_bar.set_xlim(0, total_steps)
+    ax_bar.set_ylim(0, 1)
+    ax_bar.axis("off")
+
+    for i, stage_num in enumerate(stage_numbers):
+        filled = i <= current_step
+        rect = Rectangle(
+            (i + 0.1, 0.1),
+            0.8,
+            0.8,
+            linewidth=0.5,
+            edgecolor="grey",
+            facecolor="grey" if filled else "none",
+            zorder=1,
+        )
+        ax_bar.add_patch(rect)
+
+        if filled and stage_num is not None:
+            ax_bar.text(
+                i + 0.5,
+                0.5,
+                str(stage_num),
+                ha="center",
+                va="center",
+                color="white",
+                fontsize=6,
+                fontname=FONTNAME,
+                zorder=2,
+            )
+
+
+def _prepare_trial(x, y, tau, rng):
+    """Compute all numerical ingredients for a single trial without plotting."""
+    b0_s, b1_s, yhat_all_s, inliers_s, picked_idx = _ransac_one_trial(
+        x, y, MIN_SAMPLES, tau, rng
+    )
+    out_s = ~inliers_s
+    inliers_mask = inliers_s
+
+    if inliers_mask.sum() >= MIN_SAMPLES:
+        b0_r, b1_r, _ = _fit_ols(x[inliers_mask], y[inliers_mask])
+    else:
+        b0_r, b1_r = b0_s, b1_s
+
+    yhat_all_r = b0_r + b1_r * x
+    out_r = np.abs(y - yhat_all_r) > tau
+    inlier_idx = np.where(~out_r)[0]
+
+    return {
+        "b0_s": b0_s,
+        "b1_s": b1_s,
+        "picked_idx": picked_idx,
+        "out_s": out_s,
+        "inliers_mask": inliers_mask,
+        "b0_r": b0_r,
+        "b1_r": b1_r,
+        "out_r": out_r,
+        "inlier_idx": inlier_idx,
+    }
 
 
 def plot_animation_ransac(mode: str):
-    """Visualization of the RANSAC algorithm"""
-    (best_model_label, sample_fit_label, model_label, refit_label,
-     title1, title2, title3, title4, title5, title6,
-     columns, outliers_label, final_frame_title, final_line_label, table_title_final) = annotations_by_language(mode)
+    """Visualization of the RANSAC algorithm with a compact progress bar."""
+    (
+        best_model_label,
+        sample_fit_label,
+        model_label,
+        refit_label,
+        title1,
+        title2,
+        title3,
+        title4,
+        title5,
+        title6,
+        columns,
+        outliers_label,
+        final_frame_title,
+        final_line_label,
+        table_title_final,
+    ) = annotations_by_language(mode)
 
     tmp_dir = get_tmp_animation_directory()
     if tmp_dir.exists() and len(list(tmp_dir.iterdir())) > 0:
@@ -169,177 +310,320 @@ def plot_animation_ransac(mode: str):
 
     rooms, good_prices, bad_prices_first, bad_prices_second = get_datasets()
     common_features = np.concatenate([rooms, rooms, rooms])
-    common_target  = np.concatenate([good_prices, bad_prices_first, bad_prices_second])
-    x, y, _, _ = split_train_test_manual(common_features, common_target, apply_distortion=True)
+    common_target = np.concatenate([good_prices, bad_prices_first, bad_prices_second])
+    x, y, _, _ = split_train_test_manual(
+        common_features, common_target, apply_distortion=True
+    )
 
-    rng = np.random.default_rng(RANDOM_STATE)
-    # OLS on all data (orange line)
+    # Baseline model and threshold
     b0_base, b1_base, yhat_base = _fit_ols(x, y)
     tau = _auto_threshold(y, yhat_base, factor=BAND_FACTOR)
     xx = np.array([x.min(), x.max()])
 
     table_rows = [["", ""] for _ in range(N_TRIALS)]
-    frames = []
+    frames: list[Path] = []
     frame_id = 0
 
-    final_models = [None] * N_TRIALS
-    final_counts = [0]    * N_TRIALS
+    final_models: list[tuple[float, float] | None] = [None] * N_TRIALS
+    final_counts = [0] * N_TRIALS
 
-    def _save(fig, name):
+    rng = np.random.default_rng(RANDOM_STATE)
+    trial_params: list[dict] = []
+
+    # Progress bar plan over logical steps:
+    # Each trial contributes 6 stages (1..6), then one final global stage 7.
+    stage_numbers: list[int] = []
+    for _ in range(N_TRIALS):
+        stage_numbers.extend([1, 2, 3, 4, 5, 6])
+    stage_numbers.append(7)
+
+    # Precompute trial numerical parameters
+    for _ in range(N_TRIALS):
+        params = _prepare_trial(x, y, tau, rng)
+        trial_params.append(params)
+
+    logical_step_index = -1  # index in stage_numbers for progress bar
+
+    def _save(fig, name: str, advance: bool = True):
+        """
+        Save frame as SVG/PNG and optionally advance logical progress step.
+        advance=False means this frame belongs to the same logical stage.
+        """
+        nonlocal logical_step_index
+        if advance:
+            logical_step_index += 1
+        draw_progress_bar(fig, logical_step_index, stage_numbers)
         svg_path = Path(tmp_dir, f"{name}.svg")
-        fig.savefig(svg_path, bbox_inches='tight')
+        fig.savefig(svg_path, bbox_inches="tight")
         plt.close(fig)
         out_png = Path(tmp_dir, f"{name}.png")
-        save_plot_according_to_template(svg_path, out_png, template_name="template_small.svg", dpi=DPI)
+        save_plot_according_to_template(
+            svg_path, out_png, template_name="template_small.svg", dpi=DPI
+        )
         frames.append(out_png)
 
+    # Draw frames for each trial
     for trial in range(N_TRIALS):
-        # 1) Raw data + baseline + sample-fit (orange)
+        params = trial_params[trial]
+        b0_s = params["b0_s"]
+        b1_s = params["b1_s"]
+        picked_idx = params["picked_idx"]
+        out_s = params["out_s"]
+        inliers_mask = params["inliers_mask"]
+        b0_r = params["b0_r"]
+        b1_r = params["b1_r"]
+        out_r = params["out_r"]
+        inlier_idx = params["inlier_idx"]
+
+        # 1) Raw data
         fig, ax, ax_tbl = _make_figure()
-        ax.scatter(x, y, facecolors='white', edgecolors='black', linewidths=0.6,
-                   s=POINT_SIZE, zorder=2)
-        ax.plot([1, 5], [11133.333333333334, 46600], '--', c='black',
-                zorder=1, label=best_model_label)
-        # sample-fit line (orange)
-        ax.plot(xx, b0_base + b1_base*xx, c='orange', linewidth=1.0, alpha=0.9,
-                zorder=1, label=sample_fit_label)
+        _draw_common_background(
+            ax, x, y, xx, b0_base, b1_base,
+            best_model_label, sample_fit_label, scatter_zorder=2
+        )
         _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
         _draw_table(ax_tbl, columns, table_rows)
-        fig.suptitle(title1, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=0.98)
-        _save(fig, f"33_ransac_base_{mode}_{frame_id}")
+        fig.suptitle(title1, fontsize=14,
+                     fontdict={"fontname": FONTNAME}, va="top", y=0.98)
+        _save(fig, f"33_ransac_base_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
             frames.append(Path(tmp_dir, f"33_ransac_base_{mode}_{frame_id}.png"))
         frame_id += 1
 
-        # 2) Random subset
+        # 2) Random subset for initialization
         fig, ax, ax_tbl = _make_figure()
-        ax.scatter(x, y, facecolors='white', edgecolors='black', linewidths=0.6,
-                   s=POINT_SIZE, zorder=2)
-        ax.plot([1, 5], [11133.333333333334, 46600], '--', c='black',
-                zorder=1, label=best_model_label)
-        ax.plot(xx, b0_base + b1_base*xx, c='orange', linewidth=1.0, alpha=0.9,
-                zorder=1, label=sample_fit_label)
-        b0_s, b1_s, _, _, picked_idx = _ransac_one_trial(x, y, MIN_SAMPLES, tau, rng)
-        ax.scatter(x[picked_idx], y[picked_idx], s=POINT_SIZE, color='red',
-                   edgecolors='black', linewidths=0.6, zorder=3)
+        _draw_common_background(
+            ax, x, y, xx, b0_base, b1_base,
+            best_model_label, sample_fit_label, scatter_zorder=2
+        )
+        ax.scatter(
+            x[picked_idx],
+            y[picked_idx],
+            s=POINT_SIZE,
+            color="red",
+            edgecolors="black",
+            linewidths=0.6,
+            zorder=3,
+        )
         _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
         _draw_table(ax_tbl, columns, table_rows)
-        fig.suptitle(title2, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=0.98)
-        _save(fig, f"33_ransac_subset_{mode}_{frame_id}")
+        fig.suptitle(title2, fontsize=14,
+                     fontdict={"fontname": FONTNAME}, va="top", y=0.98)
+        _save(fig, f"33_ransac_subset_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
             frames.append(Path(tmp_dir, f"33_ransac_subset_{mode}_{frame_id}.png"))
         frame_id += 1
 
-        # 3) Model from subset
+        # 3) Model fitted on subset
         fig, ax, ax_tbl = _make_figure()
-        ax.scatter(x, y, facecolors='white', edgecolors='black', linewidths=0.6,
-                   s=POINT_SIZE, zorder=2)
-        ax.plot([1, 5], [11133.333333333334, 46600], '--', c='black',
-                zorder=1, label=best_model_label)
-        ax.plot(xx, b0_base + b1_base*xx, c='orange', linewidth=1.0, alpha=0.9,
-                zorder=1, label=sample_fit_label)
-        ax.scatter(x[picked_idx], y[picked_idx], s=POINT_SIZE, color='red',
-                   edgecolors='black', linewidths=0.6, zorder=3)
-        ax.plot(xx, b0_s + b1_s*xx, c='red', alpha=0.9, linewidth=2.0,
-                label=model_label, zorder=4)
+        _draw_common_background(
+            ax, x, y, xx, b0_base, b1_base,
+            best_model_label, sample_fit_label, scatter_zorder=2
+        )
+        ax.scatter(
+            x[picked_idx],
+            y[picked_idx],
+            s=POINT_SIZE,
+            color="red",
+            edgecolors="black",
+            linewidths=0.6,
+            zorder=3,
+        )
+        ax.plot(
+            xx,
+            b0_s + b1_s * xx,
+            c="red",
+            alpha=0.9,
+            linewidth=2.0,
+            label=model_label,
+            zorder=4,
+        )
         _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
         eq_s = rf"${b0_s:.0f} + {b1_s:.0f}\cdot x$"
         table_rows[trial] = [eq_s, ""]
         _draw_table(ax_tbl, columns, table_rows)
-        fig.suptitle(title3, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=0.98)
-        _save(fig, f"33_ransac_model_{mode}_{frame_id}")
+        fig.suptitle(title3, fontsize=14,
+                     fontdict={"fontname": FONTNAME}, va="top", y=0.98)
+        _save(fig, f"33_ransac_model_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
             frames.append(Path(tmp_dir, f"33_ransac_model_{mode}_{frame_id}.png"))
         frame_id += 1
 
-        # 4) Outlier rejection
+        # 4) Outlier rejection based on subset model
         fig, ax, ax_tbl = _make_figure()
-        ax.scatter(x, y, facecolors='white', edgecolors='black', linewidths=0.6,
-                   s=POINT_SIZE, zorder=1)
-        ax.plot([1, 5], [11133.333333333334, 46600], '--', c='black',
-                zorder=1, label=best_model_label)
-        ax.plot(xx, b0_base + b1_base*xx, c='orange', linewidth=1.0, alpha=0.9,
-                zorder=1, label=sample_fit_label)
+        _draw_common_background(
+            ax, x, y, xx, b0_base, b1_base,
+            best_model_label, sample_fit_label, scatter_zorder=1
+        )
         y_line_s = b0_s + b1_s * xx
-        ax.plot(xx, y_line_s, c='red', alpha=0.9, linewidth=2.0,
-                label=model_label, zorder=3)
-        ax.plot(xx, y_line_s + tau, '--', c='red', alpha=0.6, linewidth=1.0, zorder=2)
-        ax.plot(xx, y_line_s - tau, '--', c='red', alpha=0.6, linewidth=1.0, zorder=2)
-        yhat_all_s = b0_s + b1_s * x
-        out_s = np.abs(y - yhat_all_s) > tau
+        ax.plot(
+            xx,
+            y_line_s,
+            c="red",
+            alpha=0.9,
+            linewidth=2.0,
+            label=model_label,
+            zorder=3,
+        )
+        ax.plot(
+            xx,
+            y_line_s + tau,
+            "--",
+            c="red",
+            alpha=0.6,
+            linewidth=1.0,
+            zorder=2,
+        )
+        ax.plot(
+            xx,
+            y_line_s - tau,
+            "--",
+            c="red",
+            alpha=0.6,
+            linewidth=1.0,
+            zorder=2,
+        )
         if out_s.any():
-            ax.scatter(x[out_s], y[out_s], s=POINT_SIZE, color='grey',
-                       edgecolors='black', linewidths=0.8, zorder=5, label=None)
+            ax.scatter(
+                x[out_s],
+                y[out_s],
+                s=POINT_SIZE,
+                color="grey",
+                edgecolors="black",
+                linewidths=0.8,
+                zorder=5,
+                label=None,
+            )
         _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
         _draw_table(ax_tbl, columns, table_rows)
-        fig.suptitle(title4, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=0.98)
-        _save(fig, f"33_ransac_reject1_{mode}_{frame_id}")
+        fig.suptitle(title4, fontsize=14,
+                     fontdict={"fontname": FONTNAME}, va="top", y=0.98)
+        _save(fig, f"33_ransac_reject1_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
             frames.append(Path(tmp_dir, f"33_ransac_reject1_{mode}_{frame_id}.png"))
         frame_id += 1
 
-        # 5) Train on non-outliers
-        inliers_mask = ~out_s
-        if inliers_mask.sum() >= MIN_SAMPLES:
-            b0_r, b1_r, _ = _fit_ols(x[inliers_mask], y[inliers_mask])
-        else:
-            b0_r, b1_r = b0_s, b1_s
+        # 5) Train on inliers only
         final_models[trial] = (b0_r, b1_r)
 
         fig, ax, ax_tbl = _make_figure()
-        ax.scatter(x, y, facecolors='white', edgecolors='black', linewidths=0.6,
-                   s=POINT_SIZE, zorder=1)
+        _draw_common_background(
+            ax, x, y, xx, b0_base, b1_base,
+            best_model_label, sample_fit_label, scatter_zorder=1
+        )
         if inliers_mask.any():
-            ax.scatter(x[inliers_mask], y[inliers_mask], s=POINT_SIZE, color='red',
-                       edgecolors='black', linewidths=0.6, zorder=2)
-        ax.plot([1, 5], [11133.333333333334, 46600], '--', c='black',
-                zorder=1, label=best_model_label)
-        ax.plot(xx, b0_base + b1_base*xx, c='orange', linewidth=1.0, alpha=0.9,
-                zorder=1, label=sample_fit_label)
-        ax.plot(xx, b0_s + b1_s*xx, c='red', alpha=0.3, linewidth=2.0,
-                label=model_label, zorder=3)
-        ax.plot(xx, b0_r + b1_r*xx, c='red', alpha=0.9, linewidth=2.0,
-                label=refit_label, zorder=4)
-        ax.plot(xx, y_line_s + tau, '--', c='red', alpha=0.6, linewidth=1.0, zorder=2)
-        ax.plot(xx, y_line_s - tau, '--', c='red', alpha=0.6, linewidth=1.0, zorder=2)
+            ax.scatter(
+                x[inliers_mask],
+                y[inliers_mask],
+                s=POINT_SIZE,
+                color="red",
+                edgecolors="black",
+                linewidths=0.6,
+                zorder=2,
+            )
+        ax.plot(
+            xx,
+            b0_s + b1_s * xx,
+            c="red",
+            alpha=0.3,
+            linewidth=2.0,
+            label=model_label,
+            zorder=3,
+        )
+        ax.plot(
+            xx,
+            b0_r + b1_r * xx,
+            c="red",
+            alpha=0.9,
+            linewidth=2.0,
+            label=refit_label,
+            zorder=4,
+        )
+        ax.plot(
+            xx,
+            y_line_s + tau,
+            "--",
+            c="red",
+            alpha=0.6,
+            linewidth=1.0,
+            zorder=2,
+        )
+        ax.plot(
+            xx,
+            y_line_s - tau,
+            "--",
+            c="red",
+            alpha=0.6,
+            linewidth=1.0,
+            zorder=2,
+        )
         _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
         eq_r = rf"${b0_r:.0f} + {b1_r:.0f}\cdot x$"
         table_rows[trial] = [eq_r, table_rows[trial][1]]
         _draw_table(ax_tbl, columns, table_rows)
-        fig.suptitle(title5, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=0.98)
-        _save(fig, f"33_ransac_refit_{mode}_{frame_id}")
+        fig.suptitle(title5, fontsize=14,
+                     fontdict={"fontname": FONTNAME}, va="top", y=0.98)
+        _save(fig, f"33_ransac_refit_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
             frames.append(Path(tmp_dir, f"33_ransac_refit_{mode}_{frame_id}.png"))
         frame_id += 1
 
-        # 6) Recheck with refit model
+        # 6) Recheck with refitted model (logical stage 6)
         fig, ax, ax_tbl = _make_figure()
-        ax.scatter(x, y, facecolors='white', edgecolors='black', linewidths=0.6,
-                   s=POINT_SIZE, zorder=1)
-        ax.plot([1, 5], [11133.333333333334, 46600], '--', c='black',
-                zorder=1, label=best_model_label)
-        ax.plot(xx, b0_base + b1_base*xx, c='orange', linewidth=1.0, alpha=0.9,
-                zorder=1, label=sample_fit_label)
+        _draw_common_background(
+            ax, x, y, xx, b0_base, b1_base,
+            best_model_label, sample_fit_label, scatter_zorder=1
+        )
         y_line_r = b0_r + b1_r * xx
-        ax.plot(xx, y_line_r, c='red', alpha=0.9, linewidth=2.0,
-                label=refit_label, zorder=3)
-        ax.plot(xx, y_line_r + tau, '--', c='red', alpha=0.6, linewidth=1.0, zorder=2)
-        ax.plot(xx, y_line_r - tau, '--', c='red', alpha=0.6, linewidth=1.0, zorder=2)
-        yhat_all_r = b0_r + b1_r * x
-        out_r = np.abs(y - yhat_all_r) > tau
+        ax.plot(
+            xx,
+            y_line_r,
+            c="red",
+            alpha=0.9,
+            linewidth=2.0,
+            label=refit_label,
+            zorder=3,
+        )
+        ax.plot(
+            xx,
+            y_line_r + tau,
+            "--",
+            c="red",
+            alpha=0.6,
+            linewidth=1.0,
+            zorder=2,
+        )
+        ax.plot(
+            xx,
+            y_line_r - tau,
+            "--",
+            c="red",
+            alpha=0.6,
+            linewidth=1.0,
+            zorder=2,
+        )
         if out_r.any():
-            ax.scatter(x[out_r], y[out_r], s=POINT_SIZE, color='grey',
-                       edgecolors='black', linewidths=0.8, zorder=5, label=None)
+            ax.scatter(
+                x[out_r],
+                y[out_r],
+                s=POINT_SIZE,
+                color="grey",
+                edgecolors="black",
+                linewidths=0.8,
+                zorder=5,
+                label=None,
+            )
         _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
         _draw_table(ax_tbl, columns, table_rows)
-        fig.suptitle(title6, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=0.98)
-        _save(fig, f"33_ransac_reject2_{mode}_{frame_id}")
+        fig.suptitle(title6, fontsize=14,
+                     fontdict={"fontname": FONTNAME}, va="top", y=0.98)
+        # This is logical stage 6, so advance=True
+        _save(fig, f"33_ransac_reject2_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
             frames.append(Path(tmp_dir, f"33_ransac_reject2_{mode}_{frame_id}.png"))
         frame_id += 1
 
-        # Fast counting (lexsort by x, then y)
-        inlier_idx = np.where(~out_r)[0]
+        # Fast counting: many frames but progress bar does not move
         if inlier_idx.size > 0:
             order = np.lexsort((y[inlier_idx], x[inlier_idx]))
             inlier_ordered = inlier_idx[order]
@@ -347,91 +631,166 @@ def plot_animation_ransac(mode: str):
 
             for k in range(1, inlier_ordered.size + 1):
                 fig, ax, ax_tbl = _make_figure()
-                ax.scatter(x, y, facecolors='white', edgecolors='black', linewidths=0.6,
-                           s=POINT_SIZE, zorder=1)
-                ax.plot([1, 5], [11133.333333333334, 46600], '--', c='black',
-                        zorder=1, label=best_model_label)
-                ax.plot(xx, b0_base + b1_base*xx, c='orange', linewidth=1.0, alpha=0.9,
-                        zorder=1, label=sample_fit_label)
-                ax.plot(xx, y_line_r, c='red', alpha=0.9, linewidth=2.0,
-                        label=refit_label, zorder=3)
-                ax.plot(xx, y_line_r + tau, '--', c='red', alpha=0.6, linewidth=1.0, zorder=2)
-                ax.plot(xx, y_line_r - tau, '--', c='red', alpha=0.6, linewidth=1.0, zorder=2)
+                _draw_common_background(
+                    ax, x, y, xx, b0_base, b1_base,
+                    best_model_label, sample_fit_label, scatter_zorder=1
+                )
+                ax.plot(
+                    xx,
+                    y_line_r,
+                    c="red",
+                    alpha=0.9,
+                    linewidth=2.0,
+                    label=refit_label,
+                    zorder=3,
+                )
+                ax.plot(
+                    xx,
+                    y_line_r + tau,
+                    "--",
+                    c="red",
+                    alpha=0.6,
+                    linewidth=1.0,
+                    zorder=2,
+                )
+                ax.plot(
+                    xx,
+                    y_line_r - tau,
+                    "--",
+                    c="red",
+                    alpha=0.6,
+                    linewidth=1.0,
+                    zorder=2,
+                )
                 if out_r.any():
-                    ax.scatter(x[out_r], y[out_r], s=POINT_SIZE, color='grey',
-                               edgecolors='black', linewidths=0.8, zorder=5, label=None)
+                    ax.scatter(
+                        x[out_r],
+                        y[out_r],
+                        s=POINT_SIZE,
+                        color="grey",
+                        edgecolors="black",
+                        linewidths=0.8,
+                        zorder=5,
+                        label=None,
+                    )
 
                 sel = inlier_ordered[:k]
                 for j, idx_pt in enumerate(sel, start=1):
                     off_x = dx if (j % 2 == 1) else -dx
-                    ax.text(x[idx_pt] + off_x, y[idx_pt] + dy, f"{j}",
-                            ha="center", va="bottom", fontsize=9, fontname=FONTNAME, color='red')
+                    ax.text(
+                        x[idx_pt] + off_x,
+                        y[idx_pt] + dy,
+                        f"{j}",
+                        ha="center",
+                        va="bottom",
+                        fontsize=9,
+                        fontname=FONTNAME,
+                        color="red",
+                    )
 
                 _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
                 _draw_table(ax_tbl, columns, table_rows)
-                fig.suptitle(title6, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=0.98)
-                _save(fig, f"33_ransac_count_{mode}_{frame_id}_{k}")
+                fig.suptitle(title6, fontsize=14,
+                             fontdict={"fontname": FONTNAME}, va="top", y=0.98)
+                # Same logical stage 6: advance=False
+                _save(fig, f"33_ransac_count_{mode}_{frame_id}_{k}", advance=False)
 
             n_inliers_r = int(inlier_ordered.size)
             final_counts[trial] = n_inliers_r
             table_rows[trial] = [table_rows[trial][0], f"{n_inliers_r}"]
 
             fig, ax, ax_tbl = _make_figure()
-            ax.scatter(x, y, facecolors='white', edgecolors='black', linewidths=0.6,
-                       s=POINT_SIZE, zorder=1)
-            ax.plot([1, 5], [11133.333333333334, 46600], '--', c='black',
-                    zorder=1, label=best_model_label)
-            ax.plot(xx, b0_base + b1_base*xx, c='orange', linewidth=1.0, alpha=0.9,
-                    zorder=1, label=sample_fit_label)
-            ax.plot(xx, y_line_r, c='red', alpha=0.9, linewidth=2.0,
-                    label=refit_label, zorder=3)
-            ax.plot(xx, y_line_r + tau, '--', c='red', alpha=0.6, linewidth=1.0, zorder=2)
-            ax.plot(xx, y_line_r - tau, '--', c='red', alpha=0.6, linewidth=1.0, zorder=2)
+            _draw_common_background(
+                ax, x, y, xx, b0_base, b1_base,
+                best_model_label, sample_fit_label, scatter_zorder=1
+            )
+            ax.plot(
+                xx,
+                y_line_r,
+                c="red",
+                alpha=0.9,
+                linewidth=2.0,
+                label=refit_label,
+                zorder=3,
+            )
+            ax.plot(
+                xx,
+                y_line_r + tau,
+                "--",
+                c="red",
+                alpha=0.6,
+                linewidth=1.0,
+                zorder=2,
+            )
+            ax.plot(
+                xx,
+                y_line_r - tau,
+                "--",
+                c="red",
+                alpha=0.6,
+                linewidth=1.0,
+                zorder=2,
+            )
             if out_r.any():
-                ax.scatter(x[out_r], y[out_r], s=POINT_SIZE, color='grey',
-                           edgecolors='black', linewidths=0.8, zorder=5, label=None)
+                ax.scatter(
+                    x[out_r],
+                    y[out_r],
+                    s=POINT_SIZE,
+                    color="grey",
+                    edgecolors="black",
+                    linewidths=0.8,
+                    zorder=5,
+                    label=None,
+                )
             _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
             _draw_table(ax_tbl, columns, table_rows)
-            fig.suptitle(title6, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=0.98)
-            _save(fig, f"33_ransac_table_update_{mode}_{frame_id}")
+            fig.suptitle(title6, fontsize=14,
+                         fontdict={"fontname": FONTNAME}, va="top", y=0.98)
+            # Still logical stage 6: advance=False
+            _save(fig, f"33_ransac_table_update_{mode}_{frame_id}", advance=False)
             for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
                 frames.append(Path(tmp_dir, f"33_ransac_table_update_{mode}_{frame_id}.png"))
             frame_id += 1
         else:
             final_counts[trial] = 0
             fig, ax, ax_tbl = _make_figure()
-            ax.scatter(x, y, facecolors='white', edgecolors='black', linewidths=0.6,
-                       s=POINT_SIZE, zorder=1)
-            ax.plot([1, 5], [11133.333333333334, 46600], '--', c='black',
-                    zorder=1, label=best_model_label)
-            ax.plot(xx, b0_base + b1_base*xx, c='orange', linewidth=1.0, alpha=0.9,
-                    zorder=1, label=sample_fit_label)
+            _draw_common_background(
+                ax, x, y, xx, b0_base, b1_base,
+                best_model_label, sample_fit_label, scatter_zorder=1
+            )
             _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
             _draw_table(ax_tbl, columns, table_rows)
-            fig.suptitle(title6, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=0.98)
-            _save(fig, f"33_ransac_table_update_{mode}_{frame_id}")
+            fig.suptitle(title6, fontsize=14,
+                         fontdict={"fontname": FONTNAME}, va="top", y=0.98)
+            # Also stays at logical stage 6
+            _save(fig, f"33_ransac_table_update_{mode}_{frame_id}", advance=False)
             for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
                 frames.append(Path(tmp_dir, f"33_ransac_table_update_{mode}_{frame_id}.png"))
             frame_id += 1
 
-    # --- FINAL SELECTION FRAME ---
+    # Final frame: choose best model (stage 7)
     counts_int = [int(c) if str(c).strip().isdigit() else 0 for (_, c) in table_rows]
     best_trial = int(np.argmax(counts_int)) if len(counts_int) > 0 else 0
     best_b0, best_b1 = final_models[best_trial]
 
     fig, ax, ax_tbl = _make_figure()
-    ax.scatter(x, y, facecolors='white', edgecolors='black', linewidths=0.6,
-               s=POINT_SIZE, zorder=1)
-    ax.plot([1, 5], [11133.333333333334, 46600], '--', c='black',
-            zorder=1, label=best_model_label)
-    ax.plot(xx, b0_base + b1_base*xx, c='orange', linewidth=1.0, alpha=0.9,
-            zorder=1, label=sample_fit_label)
-    ax.plot(xx, best_b0 + best_b1*xx, c='red', alpha=0.95, linewidth=2.2,
-            label=final_line_label, zorder=3)
+    _draw_common_background(
+        ax, x, y, xx, b0_base, b1_base,
+        best_model_label, sample_fit_label, scatter_zorder=1
+    )
+    ax.plot(
+        xx,
+        best_b0 + best_b1 * xx,
+        c="red",
+        alpha=0.95,
+        linewidth=2.2,
+        label=final_line_label,
+        zorder=3,
+    )
     _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
 
     tbl = _draw_table(ax_tbl, columns, table_rows)
-    ax_tbl.set_title(table_title_final, fontname=FONTNAME, color='red', y=0.85)
+    ax_tbl.set_title(table_title_final, fontname=FONTNAME, color="red", y=0.85)
 
     fig.canvas.draw()
     row_to_highlight = best_trial + 1
@@ -443,18 +802,27 @@ def plot_animation_ransac(mode: str):
     y0 = row_cells[0].get_y()
     w = sum(c.get_width() for c in row_cells)
     h = row_cells[0].get_height()
-    outline = Rectangle((x0, y0), w, h,
-                        fill=False, edgecolor='red', linewidth=1.5,
-                        transform=ax_tbl.transAxes, zorder=11)
+    outline = Rectangle(
+        (x0, y0),
+        w,
+        h,
+        fill=False,
+        edgecolor="red",
+        linewidth=1.5,
+        transform=ax_tbl.transAxes,
+        zorder=11,
+    )
     ax_tbl.add_patch(outline)
 
-    fig.suptitle(final_frame_title, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=0.98)
-    _save(fig, f"33_ransac_final_choice_{mode}_{frame_id}")
+    fig.suptitle(final_frame_title, fontsize=14,
+                 fontdict={"fontname": FONTNAME}, va="top", y=0.98)
+    # Final logical stage 7: advance=True
+    _save(fig, f"33_ransac_final_choice_{mode}_{frame_id}", advance=True)
     for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER * 2):
         frames.append(Path(tmp_dir, f"33_ransac_final_choice_{mode}_{frame_id}.png"))
 
     gif_path = Path(get_plots_path(), f"33_ransac_{mode}.gif")
-    with imageio.get_writer(gif_path, mode='I', duration=ANIM_DURATION, loop=0) as writer:
+    with imageio.get_writer(gif_path, mode="I", duration=ANIM_DURATION, loop=0) as writer:
         for img in frames:
             writer.append_data(imageio.imread(img))
     print(f"GIF saved at {gif_path}")

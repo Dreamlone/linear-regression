@@ -376,7 +376,7 @@ def plot_new_extended_dataset(mode: str = "eng"):
 
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME}, va="top")
 
-    raw_svg_file = Path(get_plots_path(), f"37_eda_extended_dataset_{mode}.svg", bbox_inches='tight')
+    raw_svg_file = Path(get_plots_path(), f"37_eda_extended_dataset_{mode}.svg")
     final_plot = Path(get_plots_path(), f"37_eda_extended_dataset_{mode}.png")
     plt.savefig(raw_svg_file)
     plt.close()
