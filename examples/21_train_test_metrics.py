@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from scipy.stats import alpha
 from sklearn.model_selection import train_test_split
 
 from examples.paths import get_plots_path
@@ -19,16 +18,18 @@ FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
 TRAIN_COLOR = "orange"
 TEST_COLOR = "grey"
 
+PREDICTION_INTERVAL_CONFIDENCE = 0.95
+
 
 def _plot_metrics(ax, rooms: np.array, actual: np.array, predicted: np.array, dataset_name: str):
     """ Metrics visualization """
     # First - correlation coefficient
-    ax2 = ax.twinx() # R2
-    ax3 = ax2.twinx() # Bias
-    ax4 = ax3.twinx() # MAE
-    ax5 = ax4.twinx() # RMSE
-    ax6 = ax5.twinx() # MAPE
-    ax7 = ax6.twinx() # SMAPE
+    ax2 = ax.twinx()  # R2
+    ax3 = ax2.twinx()  # Bias
+    ax4 = ax3.twinx()  # MAE
+    ax5 = ax4.twinx()  # RMSE
+    ax6 = ax5.twinx()  # MAPE
+    ax7 = ax6.twinx()  # SMAPE
     bar_width = 0.6
 
     feature_corr = stats.pearsonr(rooms, actual)
@@ -147,7 +148,7 @@ def _plot_metrics(ax, rooms: np.array, actual: np.array, predicted: np.array, da
         edgecolor='green',
         facecolor='none'
     )
-    green_line = patches.Rectangle((x_start, 0), width, 0,linewidth=1, edgecolor='green',
+    green_line = patches.Rectangle((x_start, 0), width, 0, linewidth=1, edgecolor='green',
                                    facecolor='none', alpha=0.5)
     ax5.add_patch(rect)
     ax5.add_patch(green_line)
@@ -215,6 +216,55 @@ def _fit_the_model(rooms: np.array, actual_prices: np.array):
     predicted_prices = [(intercept + slope * room) for room in rooms]
     return np.array(predicted_prices), intercept, slope
 
+def _compute_prediction_interval(
+    x_all: np.array,
+    x_train: np.array,
+    y_train: np.array,
+    intercept: float,
+    slope: float,
+    confidence_level: float = PREDICTION_INTERVAL_CONFIDENCE,
+):
+    """
+    Compute prediction interval for simple linear regression (one feature).
+    Interval is based on training data only.
+    """
+    x_train = np.ravel(x_train)
+    y_train = np.ravel(y_train)
+
+    predicted_train = intercept + slope * x_train
+    residuals = y_train - predicted_train
+    sample_size = len(x_train)
+    degrees_of_freedom = sample_size - 2
+
+    # Residual standard error
+    residual_variance = np.sum(residuals ** 2) / degrees_of_freedom
+    residual_std = np.sqrt(residual_variance)
+
+    # Geometry in x
+    mean_x_train = np.mean(x_train)
+    sum_squares_x = np.sum((x_train - mean_x_train) ** 2)
+
+    # t critical value for two-sided interval
+    alpha_level = 1.0 - confidence_level
+    t_critical = stats.t.ppf(1.0 - alpha_level / 2.0, df=degrees_of_freedom)
+
+    x_all = np.ravel(x_all)
+    predicted_all = intercept + slope * x_all
+
+    standard_error_prediction = residual_std * np.sqrt(
+        1.0
+        + 1.0 / sample_size
+        + (x_all - mean_x_train) ** 2 / sum_squares_x
+    )
+
+    margin = t_critical * standard_error_prediction
+
+    lower_bound = predicted_all - margin
+    upper_bound = predicted_all + margin
+
+    return lower_bound, upper_bound
+
+
 
 def annotations_by_language(mode: str):
     if mode == "eng":
@@ -240,14 +290,74 @@ def annotations_by_language(mode: str):
     return title, x_label, y_label, train_label, test_label, x_label_residuals, y_label_residuals, metrics
 
 
-def _plot_predicted_with_actual(ax, x_train, x_test, y_train, y_test, rooms,
-                                predicted, y_label, x_label, dataset_name, train_label: str, test_label: str):
-    """ Draw a simple predicted and actual values plot """
-    ax.scatter(x_train, y_train, s=30, color=TRAIN_COLOR, label=train_label, edgecolor="black", alpha=0.6)
-    ax.scatter(x_test, y_test, s=30, color=TEST_COLOR, label=test_label, edgecolor="black", alpha=0.6)
+def _plot_predicted_with_actual(
+    ax,
+    x_train,
+    x_test,
+    y_train,
+    y_test,
+    rooms,
+    predicted,
+    prediction_interval_lower,
+    prediction_interval_upper,
+    y_label,
+    x_label,
+    dataset_name,
+    train_label: str,
+    test_label: str
+):
+    """ Draw a simple predicted and actual values plot with prediction interval """
+    # Train and test points
+    ax.scatter(
+        x_train,
+        y_train,
+        s=30,
+        color=TRAIN_COLOR,
+        label=train_label,
+        edgecolor="black",
+        alpha=0.6,
+        zorder=3,
+    )
+    ax.scatter(
+        x_test,
+        y_test,
+        s=30,
+        color=TEST_COLOR,
+        label=test_label,
+        edgecolor="black",
+        alpha=0.6,
+        zorder=3,
+    )
     ax.legend(loc='upper left', prop={'family': FONTNAME})
 
-    ax.plot(rooms, predicted, '--', c="black")
+    # Prediction interval band
+    ax.fill_between(
+        rooms,
+        prediction_interval_lower,
+        prediction_interval_upper,
+        color="red",
+        alpha=0.1,
+        zorder=1,
+    )
+    ax.plot(
+        rooms,
+        prediction_interval_lower,
+        color="red",
+        linewidth=1,
+        alpha=0.5,
+        zorder=1,
+    )
+    ax.plot(
+        rooms,
+        prediction_interval_upper,
+        color="red",
+        linewidth=1,
+        alpha=0.5,
+        zorder=1,
+    )
+
+    # Regression line
+    ax.plot(rooms, predicted, '--', c="black", zorder=2)
 
     ax.grid(color='grey', alpha=0.1)
     ax.set_ylim(0, 65000)
@@ -316,9 +426,33 @@ def plot_metrics_per_train_test_datasets(mode: str = "eng"):
                                                             test_size=0.4, random_state=10)
         model_predicted_train, intercept, slope = _fit_the_model(x_train, y_train)
         model_predicted_test = [(intercept + slope * room) for room in x_test]
-        model_predicted_all = [(intercept + slope * room) for room in rooms]
-        _plot_predicted_with_actual(first_row_ax, x_train, x_test, y_train, y_test, rooms, model_predicted_all,
-                                    y_label, x_label, titles[column_id], train_label, test_label)
+        model_predicted_all = np.array([(intercept + slope * room) for room in rooms])
+
+        prediction_interval_lower, prediction_interval_upper = _compute_prediction_interval(
+            x_all=rooms,
+            x_train=x_train,
+            y_train=y_train,
+            intercept=intercept,
+            slope=slope,
+            confidence_level=PREDICTION_INTERVAL_CONFIDENCE,
+        )
+
+        _plot_predicted_with_actual(
+            first_row_ax,
+            x_train,
+            x_test,
+            y_train,
+            y_test,
+            rooms,
+            model_predicted_all,
+            prediction_interval_lower,
+            prediction_interval_upper,
+            y_label,
+            x_label,
+            titles[column_id],
+            train_label,
+            test_label,
+        )
         first_row_ax.set_xticks([1, 2, 3, 4, 5])
         first_row_ax.tick_params(axis='x', labelsize=6)
         first_row_ax.tick_params(axis='y', labelsize=6)
