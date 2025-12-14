@@ -1,18 +1,22 @@
+import shutil
 from pathlib import Path
 
+import imageio
 from matplotlib import patches
 from matplotlib.gridspec import GridSpec
 from scipy import stats
 
 import numpy as np
 import matplotlib.pyplot as plt
-from examples.paths import get_plots_path
+from examples.paths import get_plots_path, get_tmp_animation_directory
 from examples.utils import get_datasets, save_plot_according_to_template, COLOR_BY_DATASET
 
 np.random.seed(1999)
 
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
+ANIM_DURATION = 600
+DPI = 150
 
 
 def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "",
@@ -42,7 +46,7 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
     def draw_continuous_slider(y_center, label, value, vmin, vmax, fmt="{:.0f}"):
         """Draw a single continuous slider."""
         # Background label
-        ax.text(-0.4, y_center, label, va="center", ha="left", **label_font)
+        ax.text(-0.5, y_center, label, va="center", ha="left", **label_font)
 
         # Slider track (light grey rectangle)
         track_width = slider_right - slider_left
@@ -95,7 +99,7 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
 
         # Current value text on the right
         ax.text(
-            1.2,
+            1.3,
             y_center,
             fmt.format(value),
             va="center",
@@ -105,7 +109,7 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
 
     def draw_discrete_slider(y_center, label, value, options):
         """Draw a discrete slider with several fixed positions."""
-        ax.text(-0.4, y_center, label, va="center", ha="left", **label_font)
+        ax.text(-0.5, y_center, label, va="center", ha="left", **label_font)
 
         # Slider line
         ax.plot(
@@ -153,14 +157,14 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
                 f"{option:.2f}",
                 va="top",
                 ha="center",
-                fontsize=8,
+                fontsize=10,
                 fontname=FONTNAME,
                 color="black" if is_selected else "0.4",
             )
 
         # Current value text on the right (duplicates highlight)
         ax.text(
-            1.2,
+            1.3,
             y_center,
             f"{value:.2f}",
             va="center",
@@ -265,7 +269,7 @@ def _plot_residuals(ax, actual_v, predicted_v, x_label, y_label):
                alpha=0.4, zorder=2)
     ax.plot([-5, 105], [0, 0], '--', color="black", alpha=0.3, zorder=2)
 
-    ax.grid(color='grey', alpha=0.1, zorder=1)
+    ax.grid(color='grey', alpha=0.5, zorder=1)
     ax.set_ylim(-75, 75)
     ax.set_xlim(-5, 105)
     ax.set_xlabel(x_label, fontdict=FONTDICT)
@@ -318,204 +322,233 @@ def generate_dataset(n: int, noise_component: float = None):
         y = np.copy(x)
     else:
         # Use 50 (centroid) for proper scaling
-        y = x + (50 * np.random.normal(0, noise_component, n))
+        rng = np.random.default_rng(seed=1999)
+        y = x + (50 * rng.normal(0, noise_component, n))
     return x, y
 
 
+def generate_cases():
+    ns = [30, 31, 32, 33, 34,
+          35, 36, 37, 38, 39,
+          40, 40, 40, 40, 40,
+          40, 40, 40, 40, 40,
+          40, 40, 40, 40, 40]
+    noises = [0.0, 0.01, 0.02, 0.03, 0.04,
+              0.05, 0.06, 0.07, 0.08, 0.09,
+              0.10, 0.11, 0.12, 0.13, 0.14,
+              0.13, 0.12, 0.11, 0.10, 0.10,
+              0.10, 0.10, 0.10, 0.10, 0.10]
+    confidence_levels = [0.90, 0.90, 0.90, 0.90, 0.90,
+                         0.90, 0.90, 0.90, 0.90, 0.90,
+                         0.90, 0.90, 0.90, 0.90, 0.90,
+                         0.95, 0.95, 0.95, 0.95, 0.95,
+                         0.99, 0.99, 0.99, 0.99, 0.99]
+    xs = [70, 70, 70, 70, 70,
+          70, 70, 70, 70, 70,
+          71, 72, 73, 74, 75,
+          75, 75, 75, 74, 73,
+          72, 71, 70, 69, 68]
+    for case in range(len(ns)):
+        yield ns[case], noises[case], confidence_levels[case], xs[case]
+
+
 def plot_prediction_intervals(mode: str = "eng"):
-    """ Shows prediction intervals for A, B and C models with different confidence levels """
     (x_label_res, y_label_res, title, interval_label, model_label, n_component_label,
      noise_component_label, conf_component_label) = annotations_by_language(mode)
 
-    # Get datasets and build models
-    n_value = 80
-    noise_component = 0.3
-    x, y = generate_dataset(n=n_value, noise_component=noise_component)
-    confidence_level = 0.99
-    x_point_to_show = 70
+    tmp_dir = get_tmp_animation_directory()
+    if tmp_dir.exists() and len(list(tmp_dir.iterdir())) > 0:
+        shutil.rmtree(tmp_dir)
+    tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    predicted, intercept, slope = _get_predicted(x, y)
-    predicted_lower, predicted_upper = _compute_prediction_interval(
-        x_train=x,
-        y_train=y,
-        intercept=intercept,
-        slope=slope,
-        confidence_level=confidence_level,
-    )
-    prediction_point_to_show = intercept + slope * x_point_to_show
+    i = 0
+    frames = []
+    for n_value, noise_component, confidence_level, x_point_to_show in generate_cases():
+        x, y = generate_dataset(n=n_value, noise_component=noise_component)
 
-    ###############################
-    # Fit models from statsmodels #
-    ###############################
-    import statsmodels.api as sm
-    alpha = 1 - confidence_level
+        predicted, intercept, slope = _get_predicted(x, y)
+        predicted_lower, predicted_upper = _compute_prediction_interval(
+            x_train=x,
+            y_train=y,
+            intercept=intercept,
+            slope=slope,
+            confidence_level=confidence_level,
+        )
+        prediction_point_to_show = intercept + slope * x_point_to_show
 
-    # x_train, y_train — твои данные (1D или 2D для X)
-    x_train = x.reshape(-1, 1)  # для парной регрессии
-    x_train = sm.add_constant(x_train)
-    model = sm.OLS(y, x_train).fit()
-    pred = model.get_prediction(x_train)
-    pred_df = pred.summary_frame(alpha=alpha)
-    predicted_lower_c, predicted_upper_c = np.array(pred_df["obs_ci_lower"]), np.array(pred_df["obs_ci_upper"])
+        fig_size = (16, 12)
+        fig = plt.figure(figsize=fig_size)
+        gs = GridSpec(4, 3, figure=fig)
+        gs.update(hspace=0.7, wspace=0.7)
 
-    fig_size = (16, 14)
-    fig = plt.figure(figsize=fig_size)
-    gs = GridSpec(4, 3, figure=fig)
-    gs.update(hspace=0.7, wspace=0.7)
+        ax_intervals = fig.add_subplot(gs[0:2, 0:2])
+        ax_residuals = fig.add_subplot(gs[2:4, 0:2])
+        ax_parameters = fig.add_subplot(gs[0, 2])
+        ax_calculations = fig.add_subplot(gs[1:4, 2])
 
-    ax_intervals = fig.add_subplot(gs[0:2, 0:2])
-    ax_residuals = fig.add_subplot(gs[2:4, 0:2])
-    ax_parameters = fig.add_subplot(gs[0, 2])
-    ax_calculations = fig.add_subplot(gs[1:4, 2])
+        fig.suptitle(title, fontsize=18, fontdict={'fontname': FONTNAME}, y=0.97, x=0.55)
 
-    fig.suptitle(title, fontsize=18, fontdict={'fontname': FONTNAME}, y=0.97)
+        ax_intervals.scatter(x, y, s=30, c="grey", alpha=0.5, edgecolor="black", zorder=3)
+        ax_intervals.grid(color='grey', alpha=0.5, zorder=2)
+        ax_intervals.plot(x, predicted, '--', c="black", zorder=3, label=model_label)
+        ax_intervals.fill_between(x, predicted_lower, predicted_upper, color="red", alpha=0.1, zorder=1,
+                                  label=interval_label)
+        ax_intervals.plot(x, predicted_lower, color="red", linewidth=1, alpha=0.5, zorder=1)
+        ax_intervals.plot(x, predicted_upper, color="red", linewidth=1, alpha=0.5, zorder=1)
+        ax_intervals.set_ylim(-75, 175)
+        ax_intervals.set_xlim(-5, 105)
+        ax_intervals.legend(loc='upper left', prop={'family': FONTNAME, 'size': 14})
+        ax_intervals.set_ylabel("y", fontsize=14, fontdict=FONTDICT)
+        ax_intervals.set_xlabel("x", fontsize=14, fontdict=FONTDICT)
+        ax_intervals.plot([-5, x_point_to_show],
+                          [prediction_point_to_show, prediction_point_to_show], c='grey', alpha=0.8, zorder=2)
+        ax_intervals.plot([x_point_to_show, x_point_to_show],
+                          [-75, prediction_point_to_show], c='grey', alpha=0.8, zorder=2)
+        # Draw x_0 label
+        ax_intervals.scatter(x_point_to_show, -50, s=500, c="white", alpha=1.0, zorder=3)
+        ax_intervals.text(x_point_to_show, -50, r"$x_0$",
+                          va="center", ha="center", fontsize=14, fontname=FONTNAME, zorder=4)
 
-    ax_intervals.scatter(x, y, s=30, c="grey", alpha=0.5, edgecolor="black", zorder=3)
-    ax_intervals.grid(color='grey', alpha=0.1, zorder=2)
-    ax_intervals.plot(x, predicted, '--', c="black", zorder=3, label=model_label)
-    ax_intervals.fill_between(x, predicted_lower, predicted_upper, color="red", alpha=0.1, zorder=1,
-                              label=interval_label)
-    ax_intervals.plot(x, predicted_lower, color="red", linewidth=1, alpha=0.5, zorder=1)
-    ax_intervals.plot(x, predicted_upper, color="red", linewidth=1, alpha=0.5, zorder=1)
-    ax_intervals.set_ylim(-75, 175)
-    ax_intervals.set_xlim(-5, 105)
-    ax_intervals.legend(loc='upper left', prop={'family': FONTNAME, 'size': 14})
-    ax_intervals.set_ylabel("y", fontsize=14, fontdict=FONTDICT)
-    ax_intervals.set_xlabel("x", fontsize=14, fontdict=FONTDICT)
-    ax_intervals.plot([-5, x_point_to_show],
-                      [prediction_point_to_show, prediction_point_to_show], c='grey', alpha=0.8, zorder=2)
-    ax_intervals.plot([x_point_to_show, x_point_to_show],
-                      [-75, prediction_point_to_show], c='grey', alpha=0.8, zorder=2)
-    # Draw x_0 label
-    ax_intervals.scatter(x_point_to_show, -50, s=500, c="white", alpha=1.0, zorder=3)
-    ax_intervals.text(x_point_to_show, -50, r"$x_0$",
-                      va="center", ha="center", fontsize=14, fontname=FONTNAME, zorder=4)
+        # Draw a prediction for this label
+        ax_intervals.scatter(10, prediction_point_to_show, s=1500, c="white", alpha=1.0, zorder=3)
+        ax_intervals.text(10, prediction_point_to_show, r"$\hat y(x_0)$",
+                          va="center", ha="center", fontsize=14, fontname=FONTNAME, zorder=4)
 
-    # Draw a prediction for this label
-    ax_intervals.scatter(10, prediction_point_to_show, s=1500, c="white", alpha=1.0, zorder=3)
-    ax_intervals.text(10, prediction_point_to_show, r"$\hat y(x_0)$",
-                      va="center", ha="center", fontsize=14, fontname=FONTNAME, zorder=4)
+        # Draw sliders with default values:
+        draw_parameter_sliders(
+            ax_parameters,
+            n_value=n_value,
+            n_min=10,
+            n_max=100,
+            n_label=n_component_label,
+            noise_value=noise_component,
+            noise_min=0.0,
+            noise_max=0.5,
+            noise_label=noise_component_label,
+            confidence_value=confidence_level,
+            confidence_options=(0.90, 0.95, 0.99),
+            confidence_label=conf_component_label
+        )
 
-    # TODO delete this part - I made just to verify that calculations are correct
-    ax_intervals.plot(x, predicted_lower_c, color="purple", linewidth=1, alpha=0.5, zorder=1)
-    ax_intervals.plot(x, predicted_upper_c, color="purple", linewidth=1, alpha=0.5, zorder=1)
+        residuals = _plot_residuals(ax_residuals, y, predicted, x_label_res, y_label_res)
+        ax_residuals.plot([prediction_point_to_show, prediction_point_to_show], [-75, 0], c='grey', alpha=0.8)
+        ax_residuals.scatter(prediction_point_to_show, -60, s=500, c="white", alpha=1.0, zorder=3)
+        ax_residuals.text(prediction_point_to_show, -60, r"$\hat y(x_0)$",
+                          va="center", ha="center", fontsize=14, fontname=FONTNAME, zorder=4)
 
-    # Draw sliders with default values:
-    draw_parameter_sliders(
-        ax_parameters,
-        n_value=n_value,
-        n_min=10,
-        n_max=100,
-        n_label=n_component_label,
-        noise_value=noise_component,
-        noise_min=0.0,
-        noise_max=0.5,
-        noise_label=noise_component_label,
-        confidence_value=confidence_level,
-        confidence_options=(0.90, 0.95, 0.99),
-        confidence_label=conf_component_label
-    )
+        ax_calculations.axis("off")
+        lines = []
 
-    residuals = _plot_residuals(ax_residuals, y, predicted, x_label_res, y_label_res)
-    ax_residuals.plot([prediction_point_to_show, prediction_point_to_show], [-75, 0], c='grey', alpha=0.8)
-    ax_residuals.scatter(prediction_point_to_show, -60, s=500, c="white", alpha=1.0, zorder=3)
-    ax_residuals.text(prediction_point_to_show, -60, r"$\hat y(x_0)$",
-                      va="center", ha="center", fontsize=14, fontname=FONTNAME, zorder=4)
+        # Заголовок
+        lines.append(r"Расчёт предсказательного интервала")
+        lines.append("")  # пустая строка
 
-    ax_calculations.axis("off")
-    lines = []
+        lines.append(r"1. Модель:")
+        lines.append(r"   $\hat y = b_0 + b_1 x$")
+        sign = "+" if slope >= 0 else "-"
+        lines.append(
+            rf"   $\hat y = {intercept:.1f} {sign} {abs(slope):.1f} \cdot x$"
+        )
+        lines.append("")
 
-    # Заголовок
-    lines.append(r"Расчёт предсказательного интервала")
-    lines.append("")  # пустая строка
+        lines.append(r"2. Остатки:")
+        lines.append(r"   $e = y - \hat y$")
+        lines.append("")
 
-    lines.append(r"1. Модель:")
-    lines.append(r"   $\hat y = b_0 + b_1 x$")
-    sign = "+" if slope >= 0 else "-"
-    lines.append(
-        rf"   $\hat y = {intercept:.2f} {sign} {abs(slope):.2f} \cdot x$"
-    )
-    lines.append("")
+        lines.append(r"3. Оценка шума (остаточное стандартное отклонение):")
+        s = np.sqrt(np.sum(residuals ** 2) / (n_value - 2))
+        lines.append(
+            rf"   $s = \sqrt{{\dfrac{{\sum e^2}}{{n - 2}}}} = {s:.1f}$"
+        )
+        lines.append("")
 
-    lines.append(r"2. Остатки:")
-    lines.append(r"   $e = y - \hat y$")
-    lines.append("")
+        s = np.sqrt(np.sum(residuals ** 2) / (n_value - 2))
+        mean_x = np.mean(x)
+        sum_squares_x = np.sum((x - mean_x) ** 2)
+        se_pred_x0 = s * np.sqrt(
+            1.0
+            + 1.0 / n_value
+            + (x_point_to_show - mean_x) ** 2 / sum_squares_x
+        )
+        lines.append(
+            rf"4. Стандартная ошибка предсказания в точке $x_0$ "
+            rf"($x_0 = {x_point_to_show:.0f}$):"
+        )
+        lines.append(r"   $se_{\mathrm{predicted}}(x_0) = " 
+                     r"s \sqrt{1 + \dfrac{1}{n} + \dfrac{(x_0 - \bar x)^2}{\sum (x - \bar x)^2}}$")
+        lines.append(
+            rf"   $se_{{\mathrm{{predicted}}}}(x_0) = "
+            rf"{s:.1f} \cdot \sqrt{{1 + \dfrac{{1}}{{{n_value}}} + "
+            rf"\dfrac{{({x_point_to_show:.1f} - {mean_x:.1f})^2}}{{{sum_squares_x:.1f}}}}}"
+            rf" = {se_pred_x0:.1f}$"
+        )
+        lines.append("")
 
-    lines.append(r"3. Оценка шума (остаточное стандартное отклонение):")
-    s = np.sqrt(np.sum(residuals ** 2) / (n_value - 2))
-    lines.append(
-        rf"   $s = \sqrt{{\dfrac{{\sum e^2}}{{n - 2}}}} = {s:.2f}$"
-    )
-    lines.append("")
+        dof = n_value - 2
+        alpha_level = 1.0 - confidence_level
+        t_crit = stats.t.ppf(1.0 - alpha_level / 2.0, df=dof)
+        y_hat_0 = intercept + slope * x_point_to_show
+        margin_x0 = t_crit * se_pred_x0
 
-    s = np.sqrt(np.sum(residuals ** 2) / (n_value - 2))
-    mean_x = np.mean(x_train)
-    sum_squares_x = np.sum((x_train - mean_x) ** 2)
-    se_pred_x0 = s * np.sqrt(
-        1.0
-        + 1.0 / n_value
-        + (x_point_to_show - mean_x) ** 2 / sum_squares_x
-    )
-    lines.append(
-        rf"4. Стандартная ошибка предсказания в точке $x_0$ "
-        rf"($x_0 = {x_point_to_show:.0f}$):"
-    )
-    lines.append(
-        rf"   $se_{{\mathrm{{predicted}}}}(x_0) = "
-        rf"{s:.2f} \cdot \sqrt{{1 + \dfrac{{1}}{{{n_value}}} + "
-        rf"\dfrac{{({x_point_to_show:.2f} - {mean_x:.2f})^2}}{{{sum_squares_x:.2f}}}}}"
-        rf" = {se_pred_x0:.2f}$"
-    )
-    lines.append("")
+        lower_x0 = y_hat_0 - margin_x0
+        upper_x0 = y_hat_0 + margin_x0
+        ax_intervals.scatter([x_point_to_show, x_point_to_show], [lower_x0, upper_x0],
+                             marker="x", s=50, c="black", alpha=1.0, zorder=3)
+        lines.append(
+            rf"5. Границы предсказательного интервала ({int(confidence_level * 100)}%):"
+        )
 
-    dof = n_value - 2
-    alpha_level = 1.0 - confidence_level
-    t_crit = stats.t.ppf(1.0 - alpha_level / 2.0, df=dof)
-    y_hat_0 = intercept + slope * x_point_to_show
-    margin_x0 = t_crit * se_pred_x0
+        # Нижняя граница
+        lines.append(
+            rf"   Нижняя: "
+            rf"$\hat y_0 - t_{{\alpha/2,\,{dof}}} \cdot se_{{\mathrm{{pred}}}}(x_0)"
+            rf" = {y_hat_0:.0f} - {t_crit:.1f} \cdot {se_pred_x0:.1f}"
+            rf" = {lower_x0:.1f}$"
+        )
 
-    lower_x0 = y_hat_0 - margin_x0
-    upper_x0 = y_hat_0 + margin_x0
-    ax_intervals.scatter([x_point_to_show, x_point_to_show], [lower_x0, upper_x0],
-                         marker="x", s=50, c="black", alpha=1.0, zorder=3)
-    lines.append(
-        rf"5. Границы предсказательного интервала ({int(confidence_level * 100)}\%):"
-    )
+        # Верхняя граница
+        lines.append(
+            rf"   Верхняя: "
+            rf"$\hat y_0 + t_{{\alpha/2,\,{dof}}} \cdot se_{{\mathrm{{pred}}}}(x_0)"
+            rf" = {y_hat_0:.0f} + {t_crit:.1f} \cdot {se_pred_x0:.1f}"
+            rf" = {upper_x0:.1f}$"
+        )
+        lines.append("")
 
-    lines.append(
-        rf"   $\hat y_0 \pm t_{{\alpha/2,\,{dof}}} \cdot se_{{\mathrm{{pred}}}}(x_0)"
-        rf" = {y_hat_0:.2f} \pm {t_crit:.2f} \cdot {se_pred_x0:.2f}"
-        rf" = [{lower_x0:.2f};\, {upper_x0:.2f}]$"
-    )
-    lines.append("")
+        lines.append(r"Где:")
+        lines.append(r"   $x$ — значения признака;")
+        lines.append(r"   $y$ — реальные значения отклика;")
+        lines.append(r"   $\hat y$ (predicted) — прогноз модели;")
+        lines.append(r"   $b_0$ (intercept) и $b_1$ (slope) — коэффициенты модели;")
+        lines.append(r"   $n$ — размер выборки.")
 
-    lines.append(r"Где:")
-    lines.append(r"   $x$ — значения признака;")
-    lines.append(r"   $y$ — реальные значения отклика;")
-    lines.append(r"   $\hat y$ (predicted) — прогноз модели;")
-    lines.append(r"   $b_0$ (intercept) и $b_1$ (slope) — коэффициенты модели;")
-    lines.append(r"   $n$ — размер выборки.")
+        text = "\n".join(lines)
 
-    text = "\n".join(lines)
+        ax_calculations.text(
+            -0.5,
+            1.0,
+            text,
+            transform=ax_calculations.transAxes,
+            va="top",
+            fontsize=12,
+            fontname=FONTNAME,
+        )
 
-    ax_calculations.text(
-        -0.2,
-        1.0,
-        text,
-        transform=ax_calculations.transAxes,
-        va="top",
-        fontsize=13,
-        fontname=FONTNAME,
-    )
+        raw_svg_file = Path(tmp_dir, f"20_1_prediction_intervals_{mode}.svg")
+        plt.savefig(raw_svg_file, bbox_inches="tight")
+        plt.close()
 
-    raw_svg_file = Path(get_plots_path(), f"20_1_prediction_intervals_{mode}.svg")
-    plt.savefig(raw_svg_file, bbox_inches="tight")
-    plt.close()
+        final_plot = Path(tmp_dir, f"20_1_prediction_intervals_{mode}_{i}.png")
+        save_plot_according_to_template(raw_svg_file, final_plot, dpi=DPI)
+        frames.append(final_plot)
+        i += 1
 
-    save_plot_according_to_template(
-        raw_svg_file,
-        Path(get_plots_path(), f"20_1_prediction_intervals_{mode}.png"),
-    )
+    gif_path = Path(get_plots_path(), f"20_1_prediction_intervals_{mode}.gif")
+    with imageio.get_writer(gif_path, mode='I', duration=ANIM_DURATION, loop=0) as writer:
+        for img in frames:
+            writer.append_data(imageio.imread(img))
+    print(f"GIF saved at {gif_path}")
+    shutil.rmtree(tmp_dir)
 
 
 if __name__ == "__main__":
