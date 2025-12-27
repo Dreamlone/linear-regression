@@ -3,10 +3,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
 
 from examples.paths import get_plots_path
-from examples.utils import save_plot_according_to_template, get_datasets, split_train_test_manual, get_extended_dataset
+from examples.utils import save_plot_according_to_template, split_train_test_manual, get_extended_dataset
 
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
@@ -17,19 +16,15 @@ MAX_Y = 70000
 def annotations_by_language(mode: str):
     if mode == "eng":
         title = ""
-        degree_prefix = ""
-        table_note = ""
     elif mode == "rus":
-        title = "Полиномиальное преобразование"
-        degree_prefix = "Степень полинома"
-        table_note = "показаны первые 5 строк датасета"
+        title = "Пример многомерной регрессии"
     else:
         raise NotImplementedError(f"Language {mode} is not supported")
-    return title, degree_prefix, table_note
+    return title
 
 
 def plot_new_extended_dataset(mode: str = "eng"):
-    title, degree_prefix, table_note = annotations_by_language(mode)
+    title = annotations_by_language(mode)
 
     dataset = get_extended_dataset()
     features = np.array(dataset[["rooms", "area", "metro_distance", "city", "ac_in_apartment"]])

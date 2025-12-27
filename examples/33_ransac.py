@@ -169,52 +169,15 @@ def _ensure_legend_order(ax, baseline_label: str, sample_fit_label: str, outlier
     )
 
 
-def _draw_common_background(
-    ax,
-    x,
-    y,
-    xx,
-    b0_base,
-    b1_base,
-    best_model_label,
-    sample_fit_label,
-    scatter_zorder=2,
-):
+def _draw_common_background(ax, x, y, xx, b0_base, b1_base, best_model_label, sample_fit_label, scatter_zorder=2):
     """Draw scatter and two baseline lines that are common to most frames."""
-    ax.scatter(
-        x,
-        y,
-        facecolors="white",
-        edgecolors="black",
-        linewidths=0.6,
-        s=POINT_SIZE,
-        zorder=scatter_zorder,
-    )
-    ax.plot(
-        [1, 5],
-        [11133.333333333334, 46600],
-        "--",
-        c="black",
-        zorder=1,
-        label=best_model_label,
-    )
-    ax.plot(
-        xx,
-        b0_base + b1_base * xx,
-        c="orange",
-        linewidth=1.0,
-        alpha=0.9,
-        zorder=1,
-        label=sample_fit_label,
-    )
+    ax.scatter(x, y, facecolors="white", edgecolors="black", linewidths=0.6, s=POINT_SIZE,
+               zorder=scatter_zorder)
+    ax.plot([1, 5], [11133.333333333334, 46600], "--", c="black", zorder=1, label=best_model_label)
+    ax.plot(xx, b0_base + b1_base * xx, c="orange", linewidth=1.0, alpha=0.9, zorder=1, label=sample_fit_label)
 
 
-def draw_progress_bar(
-    fig,
-    current_step: int,
-    stage_numbers: list[int],
-    position=(0.07, -0.09, 0.18, 0.04),
-):
+def draw_progress_bar(fig, current_step: int, stage_numbers: list[int], position=(0.07, -0.09, 0.18, 0.04)):
     """
     Tiny progress bar: one rectangle per logical step (values from stage_numbers).
     Filled rectangles show stage_numbers[i] as a white digit.
@@ -228,36 +191,18 @@ def draw_progress_bar(
 
     for i, stage_num in enumerate(stage_numbers):
         filled = i <= current_step
-        rect = Rectangle(
-            (i + 0.1, 0.1),
-            0.8,
-            0.8,
-            linewidth=0.5,
-            edgecolor="grey",
-            facecolor="grey" if filled else "none",
-            zorder=1,
-        )
+        rect = Rectangle((i + 0.1, 0.1), 0.8, 0.8, linewidth=0.5, edgecolor="grey",
+                         facecolor="grey" if filled else "none", zorder=1)
         ax_bar.add_patch(rect)
 
         if filled and stage_num is not None:
-            ax_bar.text(
-                i + 0.5,
-                0.5,
-                str(stage_num),
-                ha="center",
-                va="center",
-                color="white",
-                fontsize=6,
-                fontname=FONTNAME,
-                zorder=2,
-            )
+            ax_bar.text(i + 0.5, 0.5, str(stage_num), ha="center", va="center", color="white",
+                        fontsize=6, fontname=FONTNAME, zorder=2)
 
 
 def _prepare_trial(x, y, tau, rng):
     """Compute all numerical ingredients for a single trial without plotting."""
-    b0_s, b1_s, yhat_all_s, inliers_s, picked_idx = _ransac_one_trial(
-        x, y, MIN_SAMPLES, tau, rng
-    )
+    b0_s, b1_s, yhat_all_s, inliers_s, picked_idx = _ransac_one_trial(x, y, MIN_SAMPLES, tau, rng)
     out_s = ~inliers_s
     inliers_mask = inliers_s
 
@@ -270,17 +215,9 @@ def _prepare_trial(x, y, tau, rng):
     out_r = np.abs(y - yhat_all_r) > tau
     inlier_idx = np.where(~out_r)[0]
 
-    return {
-        "b0_s": b0_s,
-        "b1_s": b1_s,
-        "picked_idx": picked_idx,
-        "out_s": out_s,
-        "inliers_mask": inliers_mask,
-        "b0_r": b0_r,
-        "b1_r": b1_r,
-        "out_r": out_r,
-        "inlier_idx": inlier_idx,
-    }
+    return {"b0_s": b0_s, "b1_s": b1_s, "picked_idx": picked_idx, "out_s": out_s,
+            "inliers_mask": inliers_mask, "b0_r": b0_r, "b1_r": b1_r, "out_r": out_r,
+            "inlier_idx": inlier_idx}
 
 
 def plot_animation_ransac(mode: str):
@@ -704,44 +641,12 @@ def plot_animation_ransac(mode: str):
                 ax, x, y, xx, b0_base, b1_base,
                 best_model_label, sample_fit_label, scatter_zorder=1
             )
-            ax.plot(
-                xx,
-                y_line_r,
-                c="red",
-                alpha=0.9,
-                linewidth=2.0,
-                label=refit_label,
-                zorder=3,
-            )
-            ax.plot(
-                xx,
-                y_line_r + tau,
-                "--",
-                c="red",
-                alpha=0.6,
-                linewidth=1.0,
-                zorder=2,
-            )
-            ax.plot(
-                xx,
-                y_line_r - tau,
-                "--",
-                c="red",
-                alpha=0.6,
-                linewidth=1.0,
-                zorder=2,
-            )
+            ax.plot(xx,vy_line_r, c="red", alpha=0.9, linewidth=2.0, label=refit_label, zorder=3)
+            ax.plot(xx, y_line_r + tau, "--", c="red", alpha=0.6, linewidth=1.0, zorder=2)
+            ax.plot(xx, y_line_r - tau, "--", c="red", alpha=0.6, linewidth=1.0, zorder=2)
             if out_r.any():
-                ax.scatter(
-                    x[out_r],
-                    y[out_r],
-                    s=POINT_SIZE,
-                    color="grey",
-                    edgecolors="black",
-                    linewidths=0.8,
-                    zorder=5,
-                    label=None,
-                )
+                ax.scatter(x[out_r], y[out_r], s=POINT_SIZE, color="grey", edgecolors="black",
+                           linewidths=0.8, zorder=5, label=None)
             _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
             _draw_table(ax_tbl, columns, table_rows)
             fig.suptitle(title6, fontsize=14,
@@ -774,19 +679,8 @@ def plot_animation_ransac(mode: str):
     best_b0, best_b1 = final_models[best_trial]
 
     fig, ax, ax_tbl = _make_figure()
-    _draw_common_background(
-        ax, x, y, xx, b0_base, b1_base,
-        best_model_label, sample_fit_label, scatter_zorder=1
-    )
-    ax.plot(
-        xx,
-        best_b0 + best_b1 * xx,
-        c="red",
-        alpha=0.95,
-        linewidth=2.2,
-        label=final_line_label,
-        zorder=3,
-    )
+    _draw_common_background(ax, x, y, xx, b0_base, b1_base, best_model_label, sample_fit_label, scatter_zorder=1)
+    ax.plot(xx, best_b0 + best_b1 * xx, c="red", alpha=0.95, linewidth=2.2, label=final_line_label, zorder=3)
     _ensure_legend_order(ax, best_model_label, sample_fit_label, outliers_label)
 
     tbl = _draw_table(ax_tbl, columns, table_rows)
@@ -802,16 +696,8 @@ def plot_animation_ransac(mode: str):
     y0 = row_cells[0].get_y()
     w = sum(c.get_width() for c in row_cells)
     h = row_cells[0].get_height()
-    outline = Rectangle(
-        (x0, y0),
-        w,
-        h,
-        fill=False,
-        edgecolor="red",
-        linewidth=1.5,
-        transform=ax_tbl.transAxes,
-        zorder=11,
-    )
+    outline = Rectangle((x0, y0), w, h, fill=False, edgecolor="red", linewidth=1.5,
+                        transform=ax_tbl.transAxes, zorder=11)
     ax_tbl.add_patch(outline)
 
     fig.suptitle(final_frame_title, fontsize=14,

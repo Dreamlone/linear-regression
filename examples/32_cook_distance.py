@@ -5,7 +5,7 @@ import imageio
 import numpy as np
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches  # <-- added for progress bar
+import matplotlib.patches as patches
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
 from examples.utils import save_plot_according_to_template, get_datasets, split_train_test_manual
