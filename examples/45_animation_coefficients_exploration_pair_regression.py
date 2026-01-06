@@ -45,7 +45,7 @@ class Annotations:
         if slope_raw < 0:
             label = label.replace(" + ", " - ")
 
-        return label, intercept_raw, slope_raw
+        return label
 
     def bake_scatter_label_scaled(self, intercept: float, slope: float):
         label = self.scatter_label_scaled.replace("INTERCEPT", f"{intercept:.1f}")
@@ -193,12 +193,12 @@ def explore_coefficients_landscape(mode: str = "eng", metric: str = "mae"):
         {"start": [-1.5, 0.0], "end": [-0.3, 1.0]},
         {"start": [-0.3, 1.0], "end": [1.2, 1.0]},
     ]
-    # Used to be 30
-    cases_to_visualize = compose_cases_to_explore(steps_per_section=3, sections=sections)
+    cases_to_visualize = compose_cases_to_explore(steps_per_section=30, sections=sections)
     tmp_dir = get_tmp_animation_directory()
     if len(list(tmp_dir.iterdir())) > 1:
         # Clean the directory
         shutil.rmtree(tmp_dir)
+        tmp_dir = get_tmp_animation_directory()
 
     (dataframe, features, target, features_scaled, target_scaled,
      features_scaler, target_scaler) = generate_df_coefficients_vs_error(metric)
@@ -259,11 +259,7 @@ def explore_coefficients_landscape(mode: str = "eng", metric: str = "mae"):
         ax.set_ylim(-5000, 75000)
         ax.set_xlim(0.5, 5.5)
         ax.grid(color='grey', alpha=0.7)
-        raw_label, intercept_raw, slope_raw = annotations.bake_scatter_label_raw(intercept_i, slope_i,
-                                                                                 features_scaler, target_scaler)
-
-        rw_predicted = [intercept_raw + slope_raw * i for i in [1, 5]]
-        ax.plot([1, 5], rw_predicted, c='black')
+        raw_label = annotations.bake_scatter_label_raw(intercept_i, slope_i, features_scaler, target_scaler)
 
         scaled_label = annotations.bake_scatter_label_scaled(intercept_i, slope_i)
         ax.set_title(f"{scaled_label}\n\n{raw_label}", fontdict={'fontsize': 12, 'fontname': FONTNAME})

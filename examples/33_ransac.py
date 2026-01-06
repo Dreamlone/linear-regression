@@ -641,7 +641,7 @@ def plot_animation_ransac(mode: str):
                 ax, x, y, xx, b0_base, b1_base,
                 best_model_label, sample_fit_label, scatter_zorder=1
             )
-            ax.plot(xx,vy_line_r, c="red", alpha=0.9, linewidth=2.0, label=refit_label, zorder=3)
+            ax.plot(xx, y_line_r, c="red", alpha=0.9, linewidth=2.0, label=refit_label, zorder=3)
             ax.plot(xx, y_line_r + tau, "--", c="red", alpha=0.6, linewidth=1.0, zorder=2)
             ax.plot(xx, y_line_r - tau, "--", c="red", alpha=0.6, linewidth=1.0, zorder=2)
             if out_r.any():

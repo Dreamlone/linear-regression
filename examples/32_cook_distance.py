@@ -311,8 +311,6 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         ax_leverage.scatter([x_i], [y_i], facecolors='none', edgecolor="red", s=200)
         h_i = annotate_leverage(ax_leverage, x, x_i=x_i)
 
-        ax_model.scatter([x_i], [y_i], facecolors='none', edgecolor="red", s=200)
-        ax_cook.scatter([x_i], [y_i], facecolors='none', edgecolor="red", s=200)
         ax_model.legend(loc='upper left', prop={'family': FONTNAME, 'size': 8})
         ax_cook.plot(x_for_fit, predicted, c='red', alpha=1.0, zorder=5)
 
