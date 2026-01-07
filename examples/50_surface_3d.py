@@ -9,8 +9,8 @@ from examples.paths import get_plots_path, get_tmp_animation_directory
 from examples.utils import save_plot_according_to_template
 
 FONTNAME = "Comic Sans MS"
-ANIM_DURATION = 350
-DPI = 90
+ANIM_DURATION = 150
+DPI = 100
 
 
 def draw_arrow(
@@ -134,8 +134,11 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
         tmp_dir = get_tmp_animation_directory()
 
     image_files = []
-    first_view_id = 40
-    for view_id in range(first_view_id, first_view_id + 360, 10):
+    first_view_id = 39
+    frames_one_way = 25
+    view_ids = list(range(first_view_id, first_view_id + frames_one_way, 1))
+    view_ids = view_ids + list(range(first_view_id + frames_one_way - 2, first_view_id, -1))
+    for view_id, view in enumerate(view_ids):
         figure = plt.figure(figsize=(16, 7))
         gs = figure.add_gridspec(1, 2, width_ratios=[1.15, 2])
         ax_features = figure.add_subplot(gs[0, 0], projection="3d")
@@ -146,7 +149,7 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
         # Axes: x1, x2, y (and color shows y)
         y_min, y_max = 0.0, 20.0
         norm = plt.Normalize(vmin=y_min, vmax=y_max)
-        cmap = plt.cm.viridis
+        cmap = plt.cm.cividis
 
         ax_features.scatter(
             x1_feature,
@@ -183,9 +186,11 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
         ax_features.set_xlabel(x1_label, fontname=FONTNAME, fontsize=12, labelpad=8)
         ax_features.set_ylabel(x2_label, fontname=FONTNAME, fontsize=12, labelpad=8)
         ax_features.set_zlabel(y_label, fontname=FONTNAME, fontsize=12, labelpad=8)
-        ax_features.set_title(scatter_title, fontname=FONTNAME, fontsize=12, pad=10)
+        ax_features.set_title(f"{scatter_title}\n{b0_ols:.1f} + {b1_ols:.1f}$x_1$ + {b2_ols:.1f}$x_2$",
+                              fontname=FONTNAME, fontsize=12, pad=10)
 
-        ax_features.view_init(elev=18, azim=view_id)
+        # Apply shift for the nice view
+        ax_features.view_init(elev=18, azim=view - 170)
 
         for axis in [ax_features.xaxis, ax_features.yaxis, ax_features.zaxis]:
             for tick in axis.get_ticklabels():
@@ -229,7 +234,7 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
         ax_vectors.set_zlabel(obj3_label, fontname=FONTNAME, fontsize=12)
         ax_vectors.set_title(vector_title, fontname=FONTNAME, fontsize=12)
 
-        ax_vectors.view_init(elev=28, azim=view_id)
+        ax_vectors.view_init(elev=28, azim=view)
 
         # Col(X) surface in R^3:
         # Since we want a 2D surface in 3D, we parametrize it with two coefficients.
@@ -307,7 +312,7 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
         figure.suptitle(title, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", x=0.5, y=0.97)
 
         raw_svg_file = Path(tmp_dir, f"50_surface_3d_{mode}_raw.svg")
-        if view_id == first_view_id:
+        if view == first_view_id:
             figure.canvas.draw()
             renderer = figure.canvas.get_renderer()
 
