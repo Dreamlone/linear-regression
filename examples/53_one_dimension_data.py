@@ -25,8 +25,8 @@ FONTNAME = "Comic Sans MS"
 class RusAnnotations:
     title: str = ("Временно упростим задачу, оптимизируем только один коэффициент $b_0$"
                   "\nОпределяем направление следующего шага"
-                  "\nЕсли MSE при увеличении $b_0$ падает, то продолжаем двигаться в ту же сторону, если "
-                  "ошибка растет, то в другую")
+                  "\nЕсли MSE в текущей точке падает по сравнению с предыдущей, то продолжаем движение в ту же "
+                  "сторону, если ошибка растет, то в другую")
     landscape_title: str = "Ландшафт функционала ошибки"
     landscape_x_axis: str = "Сдвиг\nстандартизированный\n($b_0$)"
     landscape_y_axis: str = "Наклон\nстандартизированный\n($b_1$)"
@@ -246,6 +246,21 @@ def add_curved_arrow(
     )
 
 
+def add_arrow_on_model(ax_model, x_from, y_from, x_to, y_to, color: str, arc_rad: float = 0.0):
+    ax_model.annotate(
+        "",
+        xy=(x_to, y_to),
+        xytext=(x_from, y_from),
+        arrowprops={
+            "arrowstyle": "->",
+            "color": color,
+            "lw": 1.0,
+            "connectionstyle": f"arc3,rad={arc_rad}",
+        },
+        zorder=10,
+    )
+
+
 def show_one_slice(mode: str = "eng"):
     annotations = annotations_by_language(mode)
 
@@ -311,7 +326,10 @@ def show_one_slice(mode: str = "eng"):
     f_green_left = float(slice_errors[idx_green_left])
     f_green_left_left = float(slice_errors[idx_green_left - 1])
 
-    add_curved_arrow(ax_slice, intercept_green, mse_green, x_green_left_left, f_green_left_left, arc_rad=0.25, color="#15D600")
+    add_curved_arrow(ax_slice, intercept_green, mse_green, x_green_left_left, f_green_left_left, arc_rad=0.25,
+                     color="#15D600")
+    add_curved_arrow(ax_slice=ax_slice, x_from=x_green_left, y_from=f_green_left, x_to=intercept_green,
+                     y_to=mse_green, arc_rad=+0.35, color="#15D600")
 
     # Yellow point neighbors: intercept_values[idx_yellow-1] (left) and intercept_values[idx_yellow+1] (right)
     idx_yellow_left = idx_yellow - 1
@@ -323,6 +341,8 @@ def show_one_slice(mode: str = "eng"):
 
     add_curved_arrow(ax_slice, intercept_yellow, mse_yellow, x_yellow_right, f_yellow_right, arc_rad=-0.25,
                      color="gold")
+    add_curved_arrow(ax_slice, x_yellow_left, f_yellow_left, intercept_yellow, mse_yellow, arc_rad=-0.25,
+                     color="gold")
     ax_slice.text(intercept_green - 0.2, mse_green + 0.05, f"{mse_green:.1f}",
                   fontsize=10, fontname=FONTNAME, ha="center", va="bottom", color="#15D600", zorder=6)
     ax_slice.text(x_green_left + 0.2, f_green_left - 0.3, f"{f_green_left:.1f}",
@@ -331,27 +351,10 @@ def show_one_slice(mode: str = "eng"):
     diff_green = mse_green - f_green_left
     calculations = rf"${mse_green:.1f} - {f_green_left:.1f} = {diff_green:.1f}$"
 
-    ax_slice.text(
-        intercept_green - 1.15,
-        0.5 * (f_green_left + mse_green),
-        calculations,
-        fontsize=8,
-        fontname=FONTNAME,
-        ha="center",
-        va="center",
-        zorder=6,
-    )
-    ax_slice.text(
-        intercept_green - 0.5,
-        0.5 * (f_green_left + mse_green),
-        "[",
-        fontsize=42,
-        fontname=FONTNAME,
-        ha="center",
-        va="center",
-        color="#15D600",
-        zorder=10,
-    )
+    ax_slice.text(intercept_green - 1.15, 0.5 * (f_green_left + mse_green), calculations, fontsize=8,
+                  fontname=FONTNAME, ha="center", va="center", zorder=6)
+    ax_slice.text(intercept_green - 0.5, 0.5 * (f_green_left + mse_green), "[", fontsize=42, fontname=FONTNAME,
+                  ha="center", va="center", color="#15D600", zorder=10)
 
     # The equation
     eq = r"$f_i - f_{i-1}$"
@@ -366,33 +369,16 @@ def show_one_slice(mode: str = "eng"):
     diff_yellow = mse_yellow - f_yellow_left
     calculations = rf"${mse_yellow:.1f} - {f_yellow_left:.1f} = {diff_yellow:.1f}$"
 
-    ax_slice.text(
-        intercept_yellow + 1.15,
-        0.5 * (f_yellow_left + mse_yellow),
-        calculations,
-        fontsize=8,
-        fontname=FONTNAME,
-        ha="center",
-        va="center",
-        zorder=6,
-    )
-    ax_slice.text(
-        intercept_yellow + 0.4,
-        0.5 * (f_yellow_left + mse_yellow),
-        "]",
-        fontsize=35,
-        fontname=FONTNAME,
-        ha="center",
-        va="center",
-        color="gold",
-        zorder=10,
-    )
-    ax_slice.scatter(x_yellow_left, f_yellow_left, c="gold", s=70, edgecolor="black", linewidth=0.8, zorder=7, alpha=0.5)
-    ax_slice.scatter(x_green_left, f_green_left, c="#15D600", s=70, edgecolor="black", linewidth=0.8, zorder=7, alpha=0.5)
-    ax_landscape.scatter(x_yellow_left, slope_i, f_yellow_left, c="gold", s=50, edgecolor="black",
-                         linewidth=0.8, depthshade=False, zorder=6, alpha=0.5)
-    ax_landscape.scatter(x_green_left, slope_i, f_green_left, c="#15D600", s=50, edgecolor="black",
-                         linewidth=0.8, depthshade=False, zorder=6, alpha=0.5)
+    ax_slice.text(intercept_yellow + 1.15, 0.5 * (f_yellow_left + mse_yellow), calculations, fontsize=8,
+                  fontname=FONTNAME, ha="center", va="center", zorder=6)
+    ax_slice.text(intercept_yellow + 0.4, 0.5 * (f_yellow_left + mse_yellow), "]", fontsize=35, fontname=FONTNAME,
+                  ha="center", va="center", color="gold", zorder=10)
+    circle = Circle((x_green_left, f_green_left), radius=0.1, fill=False, edgecolor="#15D600",
+                    linewidth=1, zorder=8)
+    ax_slice.add_patch(circle)
+    circle = Circle((x_yellow_left, f_yellow_left), radius=0.1, fill=False, edgecolor="gold", linewidth=1,
+                    zorder=8)
+    ax_slice.add_patch(circle)
 
     ax_model.scatter(features_scaled, target_scaled, s=40, c="white", edgecolor="black", zorder=2)
 
@@ -405,20 +391,71 @@ def show_one_slice(mode: str = "eng"):
     ax_slice.axvline(0, linestyle='--', c='black', linewidth=1.5, zorder=5, alpha=0.6)
 
     x_line = np.array([[-1.5], [1.5]])
+    predicted_green_old = x_green_left + slope_i * x_line
     predicted_green_line = intercept_green + slope_i * x_line
     predicted_green_lin_new = x_green_left_left + slope_i * x_line
+    predicted_yellow_old = x_yellow_left + slope_i * x_line
     predicted_yellow_line = intercept_yellow + slope_i * x_line
     predicted_yellow_line_new = x_yellow_right + slope_i * x_line
 
     ax_model.plot(np.ravel(x_line), np.ravel(predicted_green_line), c="black", linewidth=2.5, zorder=2)
     ax_model.plot(np.ravel(x_line), np.ravel(predicted_green_line), c="#15D600", linewidth=2, zorder=3, alpha=0.8)
     ax_model.plot(np.ravel(x_line), np.ravel(predicted_green_lin_new), '--',
-                  c="#15D600", linewidth=1, zorder=3, alpha=0.5)
+                  c="#15D600", linewidth=1, zorder=3, alpha=0.9)
+    ax_model.plot(np.ravel(x_line), np.ravel(predicted_green_old), c="#15D600", linewidth=1, zorder=3, alpha=0.9)
 
     ax_model.plot(np.ravel(x_line), np.ravel(predicted_yellow_line), c="black", linewidth=2.5, zorder=2)
     ax_model.plot(np.ravel(x_line), np.ravel(predicted_yellow_line), c="gold", linewidth=2, zorder=3, alpha=0.5)
+    ax_model.plot(np.ravel(x_line), np.ravel(predicted_yellow_old), c="gold", linewidth=1, zorder=3, alpha=0.9)
     ax_model.plot(np.ravel(x_line), np.ravel(predicted_yellow_line_new), '--',
-                  c="gold", linewidth=1, zorder=3, alpha=0.5)
+                  c="gold", linewidth=1, zorder=3, alpha=0.9)
+
+    x_center = 0.0
+    y_yellow_old_center = float(x_yellow_left + slope_i * x_center)
+    y_yellow_center = float(intercept_yellow + slope_i * x_center)
+    y_yellow_new_center = float(x_yellow_right + slope_i * x_center)
+    add_arrow_on_model(
+        ax_model=ax_model,
+        x_from=x_center,
+        y_from=y_yellow_old_center,
+        x_to=x_center,
+        y_to=y_yellow_center,
+        color="gold",
+        arc_rad=0.02,
+    )
+    add_arrow_on_model(
+        ax_model=ax_model,
+        x_from=x_center,
+        y_from=y_yellow_center,
+        x_to=x_center,
+        y_to=y_yellow_new_center,
+        color="gold",
+        arc_rad=0.02,
+    )
+
+    x_center = 0.0
+    y_green_old_center = float(x_green_left + slope_i * x_center)
+    y_green_center = float(intercept_green + slope_i * x_center)
+    y_green_new_center = float(x_green_left_left + slope_i * x_center)
+
+    add_arrow_on_model(
+        ax_model=ax_model,
+        x_from=x_center,
+        y_from=y_green_old_center,
+        x_to=x_center,
+        y_to=y_green_center,
+        color="#15D600",
+        arc_rad=0.0,
+    )
+    add_arrow_on_model(
+        ax_model=ax_model,
+        x_from=x_center + 0.1,
+        y_from=y_green_center,
+        x_to=x_center + 0.1,
+        y_to=y_green_new_center,
+        color="#15D600",
+        arc_rad=0.0,
+    )
 
     # Text labels for the model lines
     x_text = -1.85
@@ -426,9 +463,9 @@ def show_one_slice(mode: str = "eng"):
     y_text_yellow = -2.5
 
     ax_model.text(x_text, y_text_green, rf"$\hat{{y}} = {intercept_green:.2f} + {slope_i:.2f}x$",
-                  fontname=FONTNAME, fontsize=10, color="#15D600", zorder=10)
+                  fontname=FONTNAME, fontsize=10, color="black", zorder=10)
     ax_model.text(x_text, y_text_yellow, rf"$\hat{{y}} = {intercept_yellow:.2f} + {slope_i:.2f}x$",
-                  fontname=FONTNAME, fontsize=10, color="gold", zorder=10)
+                  fontname=FONTNAME, fontsize=10, color="black", zorder=10)
 
     ax_model.set_xlabel(annotations.scatter_x_axis, fontdict={"fontsize": 10, "fontname": FONTNAME})
     ax_model.set_ylabel(annotations.scatter_y_axis, fontdict={"fontsize": 10, "fontname": FONTNAME})

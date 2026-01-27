@@ -1,17 +1,19 @@
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Optional
 
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.colors import Normalize
+from matplotlib.patches import Circle
 import pandas as pd
 import numpy as np
 from scipy.interpolate import griddata
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import StandardScaler
 import imageio.v2 as imageio
+from matplotlib.lines import Line2D
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
 from examples.utils import save_plot_according_to_template, split_train_test_manual, get_extended_dataset
@@ -36,6 +38,7 @@ class RusAnnotations:
     scatter_title: str = "Модель с выбранными коэффициентами"
     scatter_x_axis: str = "Количество комнат стандартизированное\n(x)"
     scatter_y_axis: str = "Стоимость, стандартизированная\n(y)"
+    latest_point: str = "Предыдущая итерация"
 
 
 @dataclass
@@ -50,6 +53,7 @@ class EngAnnotations:
     scatter_title: str = ""
     scatter_x_axis: str = "Number of the rooms in the apartment, scaled (x)"
     scatter_y_axis: str = "Price, scaled (y)"
+    latest_point: str = ""
 
 
 def annotations_by_language(mode: str):
@@ -193,6 +197,9 @@ def create_axes(fig):
 
     ax_slice.tick_params(axis="both", which="major", labelsize=11)
     ax_model.tick_params(axis="both", which="major", labelsize=11)
+
+    ax_slice.set_ylim(0, 4.5)
+    ax_slice.set_xlim(-2.2, 2.2)
     return ax_landscape, ax_slice, ax_model
 
 
@@ -228,7 +235,10 @@ def compute_slice_errors(
     target_scaled: np.ndarray,
 ) -> np.ndarray:
     return np.array(
-        [mean_squared_error(target_scaled, intercept_value + slope_fixed * features_scaled) for intercept_value in intercept_values],
+        [
+            mean_squared_error(target_scaled, intercept_value + slope_fixed * features_scaled)
+            for intercept_value in intercept_values
+        ],
         dtype=float,
     )
 
@@ -239,24 +249,23 @@ def find_minimum_by_raw_differences(
     max_iterations: int,
 ) -> Tuple[List[int], List[int], List[int]]:
     """
-    Discrete search using only raw differences between neighbouring MSE values.
+    Discrete search using only raw differences between neighbour MSE values.
 
-    Requirements implemented:
-      - First move is forced to the right (index + 1) if possible.
-      - If a move makes MSE worse, the algorithm reverses direction next step
-        (so it does NOT probe further in the "bad" direction; no 14 after 13).
-      - Stop to avoid oscillations: if from the same "turn point" both sides were worse,
-        return to the turn point and stop.
-
-    Counting:
-      - mse_evaluations increases only when we visit a NEW index for the first time in this run.
-      - Returning to an already visited index does NOT increase the counter.
+    Behaviour:
+      - First move is forced to the right if possible.
+      - Walk while MSE decreases.
+      - If a step makes it worse: reverse and step back.
+      - If stepping back returns to an already visited point, stop
+        (removes extra oscillation frames).
     """
     n_points = int(len(slice_errors))
     if not (0 <= start_index < n_points):
         raise ValueError("start_index is out of bounds.")
 
     current_index = int(start_index)
+    direction = +1
+
+    visited = {current_index}
     evaluated = {current_index}
     eval_count = 1
 
@@ -264,45 +273,32 @@ def find_minimum_by_raw_differences(
     move_directions: List[int] = []
     mse_evaluations: List[int] = [eval_count]
 
-    # Turn-tracking to stop oscillations at discrete optimum
-    turn_index = None
-    turn_sides = set()  # {+1, -1}
-
     def append_step(new_index: int, move_dir: int):
         nonlocal current_index, eval_count
         current_index = int(new_index)
         path_indices.append(current_index)
         move_directions.append(int(move_dir))
+
         if current_index not in evaluated:
             evaluated.add(current_index)
             eval_count += 1
+        visited.add(current_index)
         mse_evaluations.append(eval_count)
 
-    direction = +1  # default: first move right
-
-    # ---- Forced first move to the right if possible ----
+    # forced first move to the right
     first_next = current_index + 1
     if first_next < n_points:
         from_index = current_index
         append_step(first_next, +1)
-
         diff = float(slice_errors[current_index] - slice_errors[from_index])
-        if diff > 0.0:
-            # worse after moving right -> remember turn point and reverse (no probing further right)
-            turn_index = from_index
-            turn_sides = {+1}
-            direction = -1
-        else:
-            direction = +1
+        direction = -1 if diff > 0.0 else +1
     else:
-        direction = -1  # cannot move right
+        direction = -1
 
-    # ---- Main loop ----
     for _ in range(max_iterations):
         from_index = current_index
         next_index = from_index + direction
 
-        # Boundary: reverse once if needed
         if next_index < 0 or next_index >= n_points:
             direction *= -1
             next_index = from_index + direction
@@ -310,27 +306,23 @@ def find_minimum_by_raw_differences(
                 break
 
         append_step(next_index, direction)
-
         diff = float(slice_errors[current_index] - slice_errors[from_index])
+
         if diff <= 0.0:
-            # improvement -> keep direction
             continue
 
-        # worse -> reverse next step, and update turn info at the better point (from_index)
-        if (turn_index is None) or (turn_index != from_index):
-            turn_index = from_index
-            turn_sides = {direction}
-        else:
-            turn_sides.add(direction)
-
+        # worse -> reverse and step back
         direction *= -1
+        back_index = current_index + direction
 
-        # if both sides worse from the same turn point -> return to turn point and stop
-        if len(turn_sides) == 2:
-            if current_index != turn_index:
-                back_dir = -1 if turn_index < current_index else +1
-                append_step(turn_index, back_dir)
+        if back_index < 0 or back_index >= n_points:
             break
+
+        if back_index in visited:
+            append_step(back_index, direction)
+            break
+
+        append_step(back_index, direction)
 
     return path_indices, move_directions, mse_evaluations
 
@@ -348,12 +340,6 @@ class FrameContext:
 
 
 def draw_next_direction_arrow(ax_slice, next_direction: int):
-    """
-    Arrow meaning: direction of the NEXT step from the current point.
-      +1 -> right
-      -1 -> left
-       0 -> no movement (stop/pause)
-    """
     if next_direction == 0:
         return
 
@@ -380,9 +366,20 @@ def draw_next_direction_arrow(ax_slice, next_direction: int):
     )
 
 
+def compute_optimal_intercept_for_fixed_slope(
+    features_scaled: np.ndarray,
+    target_scaled: np.ndarray,
+    slope_fixed: float,
+) -> float:
+    x_values = np.ravel(features_scaled).astype(float)
+    y_values = np.ravel(target_scaled).astype(float)
+    return float(np.mean(y_values) - slope_fixed * np.mean(x_values))
+
+
 def render_frame(
     context: FrameContext,
     intercept_index: int,
+    prev_intercept_index: Optional[int],
     output_png: Path,
     color: str,
     next_direction: int,
@@ -424,9 +421,33 @@ def render_frame(
         z_base=z_base,
     )
 
+    # Slice plot
     ax_slice.plot(context.intercept_values, context.slice_errors, color="black", linewidth=2.0, zorder=2)
     ax_slice.scatter(context.intercept_values, context.slice_errors, marker="x", color="black", s=25, zorder=3)
     ax_slice.scatter(intercept_value, mse_value, c=color, s=70, edgecolor="black", linewidth=0.8, zorder=7)
+
+    # Previous visited point highlighted by a circle
+    if prev_intercept_index is not None:
+        prev_x = float(context.intercept_values[int(prev_intercept_index)])
+        prev_y = float(context.slice_errors[int(prev_intercept_index)])
+        circle_prev = Circle((prev_x, prev_y), radius=0.1, fill=False, edgecolor=color, linewidth=1, zorder=8)
+        ax_slice.add_patch(circle_prev)
+        legend_handle = Line2D(
+            [0], [0],
+            marker="o",
+            linestyle="None",
+            markerfacecolor="none",
+            markeredgecolor=color,
+            markeredgewidth=1.0,
+            markersize=8,
+            label=context.annotations.latest_point,
+        )
+        ax_slice.legend(
+            handles=[legend_handle],
+            loc="upper center",
+            frameon=True,
+            fontsize=9,
+        )
 
     ax_slice.grid(color="grey", alpha=0.3, zorder=1)
     ax_slice.set_title(
@@ -437,15 +458,26 @@ def render_frame(
     )
     ax_slice.set_xlabel(context.annotations.slice_x_axis, fontdict={"fontsize": 10, "fontname": FONTNAME})
     ax_slice.set_ylabel(context.annotations.slice_y_axis, fontdict={"fontsize": 10, "fontname": FONTNAME})
-    ax_slice.axvline(0, linestyle="--", c="black", linewidth=1.5, zorder=5, alpha=0.6)
+    opt_b0 = compute_optimal_intercept_for_fixed_slope(
+        context.features_scaled, context.target_scaled, context.slope_value
+    )
+    ax_slice.axvline(opt_b0, linestyle="--", c="black", linewidth=1.5, zorder=5, alpha=0.6)
 
-    # Arrow shows NEXT movement direction
     draw_next_direction_arrow(ax_slice, next_direction)
 
+    # Model plot
     ax_model.scatter(context.features_scaled, context.target_scaled, s=40, c="white", edgecolor="black", zorder=2)
+
     x_line = np.array([[-1.5], [1.5]])
     predicted_model = intercept_value + context.slope_value * x_line
-    ax_model.plot(np.ravel(x_line), np.ravel(predicted_model), c=color, linewidth=2, zorder=2)
+    ax_model.plot(np.ravel(x_line), np.ravel(predicted_model), c="black", linewidth=2.5, zorder=2)
+    ax_model.plot(np.ravel(x_line), np.ravel(predicted_model), c=color, linewidth=2, zorder=3, alpha=0.8)
+
+    # Previous model line (same color)
+    if prev_intercept_index is not None:
+        prev_intercept_value = float(context.intercept_values[int(prev_intercept_index)])
+        predicted_prev = prev_intercept_value + context.slope_value * x_line
+        ax_model.plot(np.ravel(x_line), np.ravel(predicted_prev), c=color, linewidth=1, zorder=3, alpha=0.9)
 
     ax_model.set_xlabel(context.annotations.scatter_x_axis, fontdict={"fontsize": 10, "fontname": FONTNAME})
     ax_model.set_ylabel(context.annotations.scatter_y_axis, fontdict={"fontsize": 10, "fontname": FONTNAME})
@@ -520,14 +552,15 @@ def show_one_slice(mode: str = "eng"):
             max_iterations=max_number_of_iterations,
         )
 
-        # For each frame, show the NEXT step direction (not the previous step direction)
         for step_idx, intercept_index in enumerate(path_indices):
+            prev_index = int(path_indices[step_idx - 1]) if step_idx > 0 else None
             next_dir = int(move_directions[step_idx]) if step_idx < len(move_directions) else 0
 
             frame_png = Path(tmp_dir, f"54_frame_{frame_idx}.png")
             render_frame(
                 context=context,
                 intercept_index=int(intercept_index),
+                prev_intercept_index=prev_index,
                 output_png=frame_png,
                 color=color,
                 next_direction=next_dir,
@@ -536,13 +569,15 @@ def show_one_slice(mode: str = "eng"):
             image_files.append(frame_png)
             frame_idx += 1
 
-        # Pause frames at the end: grey point, no arrow, keep last counter for this run
+        # Pause frames at the end: keep showing previous point/line too
         last_eval = int(mse_evaluations[-1])
+        pause_prev = int(path_indices[-2]) if len(path_indices) > 1 else None
         for _ in [1, 2]:
             frame_png = Path(tmp_dir, f"54_frame_{frame_idx}.png")
             render_frame(
                 context=context,
                 intercept_index=int(path_indices[-1]),
+                prev_intercept_index=None,
                 output_png=frame_png,
                 color="grey",
                 next_direction=0,
