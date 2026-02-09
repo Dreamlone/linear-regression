@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from examples.paths import get_plots_path
-from examples.utils import save_plot_according_to_template, split_train_test_manual, get_extended_dataset
+from examples.utils import save_plot_according_to_template, take_sample_manual, get_extended_dataset
 
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
@@ -49,7 +49,7 @@ def plot_correlation_matrix(mode: str = "eng"):
     features_names = ["rooms", "area", "metro_distance"]
     features = np.array(dataset[features_names])
     target = np.array(dataset["price"])
-    x, y, _, _ = split_train_test_manual(features, target, apply_distortion=True)
+    x, y, _, _ = take_sample_manual(features, target, apply_distortion=True)
 
     df = pd.DataFrame(x, columns=features_names)
     df["price"] = y

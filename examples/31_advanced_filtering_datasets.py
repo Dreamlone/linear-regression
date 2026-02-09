@@ -17,7 +17,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import LocalOutlierFactor
 
 from examples.paths import get_plots_path
-from examples.utils import save_plot_according_to_template, get_datasets, split_train_test_manual, \
+from examples.utils import save_plot_according_to_template, get_datasets, take_sample_manual, \
     symmetric_mean_absolute_percentage_error
 
 FONTNAME = "Comic Sans MS"
@@ -468,7 +468,7 @@ def plot_filtering_method_and_models(mode: str = "eng"):
     rooms, good_prices, bad_prices_first, bad_prices_second = get_datasets()
     common_features = np.concat([rooms, rooms, rooms])
     common_target = np.concat([good_prices, bad_prices_first, bad_prices_second])
-    x, y, distorted_x, distorted_y = split_train_test_manual(common_features, common_target, apply_distortion=True)
+    x, y, distorted_x, distorted_y = take_sample_manual(common_features, common_target, apply_distortion=True)
 
     fig_size = (11, 10)
     fig = plt.figure(figsize=fig_size)

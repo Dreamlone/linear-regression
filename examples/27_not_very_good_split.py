@@ -7,7 +7,7 @@ from sklearn.metrics import root_mean_squared_error
 from sklearn.model_selection import train_test_split
 
 from examples.paths import get_plots_path
-from examples.utils import get_datasets, save_plot_according_to_template, split_train_test_manual
+from examples.utils import get_datasets, save_plot_according_to_template, take_sample_manual
 
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
@@ -76,7 +76,7 @@ def plot_all_datasets_in_one(mode: str = "eng", apply_distortion: bool = False):
     common_features = np.concat([rooms, rooms, rooms])
     common_target = np.concat([good_prices, bad_prices_first, bad_prices_second])
 
-    x_sampled, y_sampled, distorted_x, distorted_y = split_train_test_manual(common_features, common_target, apply_distortion)
+    x_sampled, y_sampled, distorted_x, distorted_y = take_sample_manual(common_features, common_target, apply_distortion)
     predicted, intercept, slope = _get_predicted(x_sampled, y_sampled)
 
     print("--- METRICS ---")

@@ -1,6 +1,5 @@
 import shutil
 from dataclasses import dataclass
-from itertools import product
 from pathlib import Path
 from typing import List, Tuple, Optional
 
@@ -11,15 +10,14 @@ import pandas as pd
 import imageio.v2 as imageio
 import numpy as np
 from scipy.interpolate import griddata
-from sklearn.metrics import root_mean_squared_error
 from sklearn.preprocessing import StandardScaler
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
-from examples.utils import save_plot_according_to_template, split_train_test_manual, get_extended_dataset
+from examples.utils import save_plot_according_to_template, take_sample_manual, get_extended_dataset
 
 
-MIN_COEFFICIENT_BORDER = -2
-MAX_COEFFICIENT_BORDER = 2
+MIN_COEFFICIENT_BORDER = -5
+MAX_COEFFICIENT_BORDER = 5
 GRID_SIZE = 15
 ANIMATION_DURATION: int = 1100
 FONTNAME = "Comic Sans MS"
@@ -27,21 +25,19 @@ FONTNAME = "Comic Sans MS"
 
 @dataclass
 class RusAnnotations:
-    landscape_title: str = "Ландшафт функционала ошибки"
+    title: str = "Оптимизация коэффициентов градиентным спуском (Tukey biweight)"
+    landscape_title: str = "Ландшафт функции потерь Tukey biweight"
     best_model: str = "Лучшая модель"
-    map_x_axis: str = "Сдвиг\nстандартизированный\n($b_0$)"
-    map_y_axis: str = "Наклон\nстандартизированный\n($b_1$)"
+    map_x_axis: str = "Сдвиг ($b_0$)"
+    map_y_axis: str = "Наклон ($b_1$)"
     scatter_title: str = "Модель с выбранными коэффициентами"
     scatter_x_axis: str = "Количество комнат стандартизированное\n(x)"
     scatter_y_axis: str = "Стоимость, стандартизированная\n(y)"
 
-    @staticmethod
-    def get_title() -> str:
-        return "Оптимизация коэффициентов градиентным спуском"
-
 
 @dataclass
 class EngAnnotations:
+    title: str = ""
     landscape_title: str = ""
     best_model: str = ""
     map_x_axis: str = r"Intercept scaled ($b_0$)"
@@ -49,10 +45,6 @@ class EngAnnotations:
     scatter_title: str = ""
     scatter_x_axis: str = "Number of the rooms in the apartment, scaled (x)"
     scatter_y_axis: str = "Price, scaled (y)"
-
-    @staticmethod
-    def get_title() -> str:
-        return ""
 
 
 def annotations_by_language(mode: str):
@@ -63,13 +55,82 @@ def annotations_by_language(mode: str):
     raise NotImplementedError(f"Language {mode} is not supported")
 
 
+def tukey_rho_and_psi(residual: np.ndarray, c: float) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Tukey biweight (bisquare) robust loss.
+
+    Let u = r / c.
+    rho(r) = (c^2/6) * (1 - (1 - u^2)^3)   for |u| < 1
+           =  c^2/6                       for |u| >= 1
+
+    psi(r) = d rho / d r = r * (1 - (r/c)^2)^2   for |r| < c
+           = 0                                   for |r| >= c
+    """
+    r = residual.astype(float)
+    c = float(c)
+    if c <= 0:
+        raise ValueError("tukey_c must be positive.")
+
+    u = r / c
+    mask = np.abs(u) < 1.0
+
+    rho = np.empty_like(r, dtype=float)
+    psi = np.zeros_like(r, dtype=float)
+
+    # rho inside
+    one_minus_u2 = 1.0 - u[mask] ** 2
+    rho[mask] = (c ** 2 / 6.0) * (1.0 - one_minus_u2 ** 3)
+
+    # rho outside (constant)
+    rho[~mask] = (c ** 2 / 6.0)
+
+    # psi inside
+    psi[mask] = r[mask] * (one_minus_u2 ** 2)
+
+    return rho, psi
+
+
+def tukey_loss_and_gradients(
+    intercept_value: float,
+    slope_value: float,
+    features_scaled: np.ndarray,
+    target_scaled: np.ndarray,
+    tukey_c: float,
+) -> Tuple[float, float, float]:
+    """
+    Objective: mean Tukey biweight loss over residuals r = y_hat - y,
+    where y_hat = b0 + b1*x.
+
+    grad wrt b0: mean( psi(r) )
+    grad wrt b1: mean( psi(r) * x )
+    """
+    x_values = np.ravel(features_scaled).astype(float)
+    y_values = np.ravel(target_scaled).astype(float)
+
+    predicted = float(intercept_value) + float(slope_value) * x_values
+    residual = predicted - y_values
+
+    rho, psi = tukey_rho_and_psi(residual=residual, c=float(tukey_c))
+
+    loss_value = float(np.mean(rho))
+    grad_b0 = float(np.mean(psi))
+    grad_b1 = float(np.mean(psi * x_values))
+
+    return loss_value, grad_b0, grad_b1
+
+
+def clip_to_bounds(value: float) -> float:
+    return float(np.clip(value, MIN_COEFFICIENT_BORDER, MAX_COEFFICIENT_BORDER))
+
+
 def generate_df_coefficients_vs_error(
     grid_size: int = GRID_SIZE,
+    tukey_c: float = 4.685,
 ) -> Tuple[pd.DataFrame, np.ndarray, np.ndarray]:
     dataset = get_extended_dataset()
     features = np.array(dataset["rooms"])
     target = np.array(dataset["price"])
-    x_values, y_values, _, _ = split_train_test_manual(features, target, apply_distortion=True)
+    x_values, y_values, _, _ = take_sample_manual(features, target, apply_distortion=True)
 
     features_scaler = StandardScaler()
     features_scaled = features_scaler.fit_transform(x_values.reshape(-1, 1))
@@ -78,14 +139,19 @@ def generate_df_coefficients_vs_error(
     target_scaled = target_scaler.fit_transform(y_values.reshape(-1, 1))
 
     rows = []
-    intercept_grid = np.linspace(MIN_COEFFICIENT_BORDER, MAX_COEFFICIENT_BORDER, grid_size)
-    slope_grid = np.linspace(MIN_COEFFICIENT_BORDER, MAX_COEFFICIENT_BORDER, grid_size)
+    intercept_grid = np.linspace(MIN_COEFFICIENT_BORDER, MAX_COEFFICIENT_BORDER, int(grid_size))
+    slope_grid = np.linspace(MIN_COEFFICIENT_BORDER, MAX_COEFFICIENT_BORDER, int(grid_size))
 
     for intercept in intercept_grid:
         for slope in slope_grid:
-            predicted_scaled = intercept + slope * features_scaled
-            metric_value = root_mean_squared_error(target_scaled, predicted_scaled)
-            rows.append([float(intercept), float(slope), float(metric_value)])
+            loss_value, _, _ = tukey_loss_and_gradients(
+                intercept_value=float(intercept),
+                slope_value=float(slope),
+                features_scaled=features_scaled,
+                target_scaled=target_scaled,
+                tukey_c=float(tukey_c),
+            )
+            rows.append([float(intercept), float(slope), float(loss_value)])
 
     dataframe = pd.DataFrame(rows, columns=["intercept", "slope", "metric"])
     return dataframe, features_scaled, target_scaled
@@ -129,45 +195,6 @@ def create_axes(fig):
     return ax_landscape, ax_map, ax_model
 
 
-def rmse_and_gradients(
-    intercept_value: float,
-    slope_value: float,
-    features_scaled: np.ndarray,
-    target_scaled: np.ndarray,
-    eps: float = 1e-12,
-) -> Tuple[float, float, float]:
-    """
-    RMSE(b0, b1) = sqrt( mean( (y - (b0 + b1*x))^2 ) )
-
-    residual = y_hat - y
-    MSE = mean(residual^2)
-    RMSE = sqrt(MSE)
-
-    grad_RMSE:
-      dRMSE/db0 = (1/(n*RMSE)) sum(residual)
-      dRMSE/db1 = (1/(n*RMSE)) sum(residual*x)
-    """
-    x_values = np.ravel(features_scaled).astype(float)
-    y_values = np.ravel(target_scaled).astype(float)
-
-    predicted = float(intercept_value) + float(slope_value) * x_values
-    residual = predicted - y_values
-
-    mse_value = float(np.mean(residual ** 2))
-    rmse_value = float(np.sqrt(mse_value))
-    denom = float(max(rmse_value, eps))
-    n = float(len(x_values))
-
-    grad_b0 = float((1.0 / (n * denom)) * np.sum(residual))
-    grad_b1 = float((1.0 / (n * denom)) * np.sum(residual * x_values))
-
-    return rmse_value, grad_b0, grad_b1
-
-
-def clip_to_bounds(value: float) -> float:
-    return float(np.clip(value, MIN_COEFFICIENT_BORDER, MAX_COEFFICIENT_BORDER))
-
-
 def gradient_descent_path(
     start_b0: float,
     start_b1: float,
@@ -179,6 +206,7 @@ def gradient_descent_path(
     step_tol: float,
     backtracking_max_tries: int,
     backtracking_shrink: float,
+    tukey_c: float,
 ) -> List[Tuple[float, float]]:
     if learning_rate <= 0:
         raise ValueError("learning_rate must be positive.")
@@ -189,35 +217,35 @@ def gradient_descent_path(
     current_b1 = clip_to_bounds(float(start_b1))
     path: List[Tuple[float, float]] = [(current_b0, current_b1)]
 
-    for _ in range(max_iterations):
-        rmse_current, grad_b0, grad_b1 = rmse_and_gradients(
-            current_b0, current_b1, features_scaled, target_scaled
+    for _ in range(int(max_iterations)):
+        loss_current, grad_b0, grad_b1 = tukey_loss_and_gradients(
+            current_b0, current_b1, features_scaled, target_scaled, tukey_c=float(tukey_c)
         )
-        grad_norm = float(np.hypot(grad_b0, grad_b1))
+        grad_norm = float(np.hypot(float(grad_b0), float(grad_b1)))
 
         # Stop 1: gradient norm small
-        if grad_norm < grad_tol:
+        if grad_norm < float(grad_tol):
             break
 
-        # Backtracking line-search: ensure RMSE decreases
+        # Backtracking line-search: ensure loss decreases
         lr_try = float(learning_rate)
         accepted = False
         next_b0, next_b1 = current_b0, current_b1
 
-        for _ in range(backtracking_max_tries):
-            candidate_b0 = clip_to_bounds(current_b0 - lr_try * grad_b0)
-            candidate_b1 = clip_to_bounds(current_b1 - lr_try * grad_b1)
+        for _ in range(int(backtracking_max_tries)):
+            candidate_b0 = clip_to_bounds(current_b0 - lr_try * float(grad_b0))
+            candidate_b1 = clip_to_bounds(current_b1 - lr_try * float(grad_b1))
 
-            rmse_candidate, _, _ = rmse_and_gradients(
-                candidate_b0, candidate_b1, features_scaled, target_scaled
+            loss_candidate, _, _ = tukey_loss_and_gradients(
+                candidate_b0, candidate_b1, features_scaled, target_scaled, tukey_c=float(tukey_c)
             )
 
-            if rmse_candidate <= rmse_current:
+            if float(loss_candidate) <= float(loss_current):
                 next_b0, next_b1 = candidate_b0, candidate_b1
                 accepted = True
                 break
 
-            lr_try *= backtracking_shrink
+            lr_try *= float(backtracking_shrink)
 
         # Stop 2: cannot find improvement
         if not accepted:
@@ -228,13 +256,13 @@ def gradient_descent_path(
         path.append((current_b0, current_b1))
 
         # Stop 3: step tiny
-        if step_size < step_tol:
+        if step_size < float(step_tol):
             break
 
     return path
 
 
-def plot_rmse_surface(
+def plot_objective_surface(
     ax_landscape,
     errors_surface: np.ndarray,
     intercept_values: np.ndarray,
@@ -275,13 +303,13 @@ def plot_rmse_surface(
     return mappable
 
 
-def render_landscape_marker(ax_landscape, intercept_value: float, slope_value: float, rmse_value: float):
-    x_min, x_max = ax_landscape.get_xlim()
-    y_min, y_max = ax_landscape.get_ylim()
+def render_landscape_marker(ax_landscape, intercept_value: float, slope_value: float, loss_value: float):
+    _, x_max = ax_landscape.get_xlim()
+    y_min, _ = ax_landscape.get_ylim()
     z_min, z_max = ax_landscape.get_zlim()
 
     z_span = z_max - z_min
-    point_z = float(rmse_value) + 0.06 * z_span
+    point_z = float(loss_value) + 0.06 * z_span
     text_z = point_z + 0.09 * z_span
 
     ax_landscape.plot([intercept_value, intercept_value], [slope_value, slope_value], [point_z, z_min],
@@ -306,7 +334,7 @@ def render_landscape_marker(ax_landscape, intercept_value: float, slope_value: f
         float(intercept_value),
         float(slope_value),
         float(text_z),
-        f"{rmse_value:.2f}",
+        f"{loss_value:.2f}",
         color="red",
         fontsize=12,
         fontname=FONTNAME,
@@ -323,9 +351,9 @@ def render_landscape(
     annotations,
     intercept_value: float,
     slope_value: float,
-    rmse_value: float,
+    loss_value: float,
 ):
-    mappable = plot_rmse_surface(
+    mappable = plot_objective_surface(
         ax_landscape=ax_landscape,
         errors_surface=errors_surface,
         intercept_values=intercept_values,
@@ -334,7 +362,7 @@ def render_landscape(
     )
 
     cbar = fig.colorbar(mappable, ax=ax_landscape, shrink=0.8, pad=0.2)
-    cbar.ax.set_title("RMSE", pad=8, fontdict={"fontsize": 10, "fontname": FONTNAME})
+    cbar.ax.set_title("Tukey", pad=8, fontdict={"fontsize": 10, "fontname": FONTNAME})
 
     ax_landscape.view_init(elev=28, azim=125)
     ax_landscape.invert_xaxis()
@@ -349,8 +377,39 @@ def render_landscape(
         y=1.485,
     )
 
-    render_landscape_marker(ax_landscape, intercept_value, slope_value, rmse_value)
+    render_landscape_marker(ax_landscape, intercept_value, slope_value, loss_value)
     return mappable
+
+
+def draw_antigrad_arrow_on_map(
+    ax_map,
+    current_b0: float,
+    current_b1: float,
+    grad_b0: float,
+    grad_b1: float,
+):
+    anti_b0 = -float(grad_b0)
+    anti_b1 = -float(grad_b1)
+    norm = float(np.hypot(anti_b0, anti_b1))
+    if norm <= 0.0:
+        return
+
+    arrow_len = 0.8
+    dx = (anti_b0 / norm) * arrow_len
+    dy = (anti_b1 / norm) * arrow_len
+
+    x0 = float(current_b0)
+    y0 = float(current_b1)
+    x1 = float(x0 + dx)
+    y1 = float(y0 + dy)
+
+    ax_map.annotate(
+        "",
+        xy=(x1, y1),
+        xytext=(x0, y0),
+        arrowprops=dict(arrowstyle="-|>", color="red", lw=2.0, mutation_scale=16),
+        zorder=20,
+    )
 
 
 def render_map(
@@ -358,21 +417,23 @@ def render_map(
     annotations,
     current_b0: float,
     current_b1: float,
-    current_rmse: float,
+    current_loss: float,
     explored_b0: List[float],
     explored_b1: List[float],
-    explored_rmse: List[float],
+    explored_loss: List[float],
     mappable,
     iteration_count: int,
+    show_antigrad_arrow: bool,
+    grad_b0: float,
+    grad_b1: float,
 ):
     ax_map.grid(color="grey", alpha=0.3, zorder=1)
 
-    # Explored points (trajectory history)
-    if len(explored_rmse) > 0:
+    if len(explored_loss) > 0:
         ax_map.scatter(
             explored_b0,
             explored_b1,
-            c=explored_rmse,
+            c=explored_loss,
             cmap=mappable.cmap,
             norm=mappable.norm,
             s=110,
@@ -381,17 +442,25 @@ def render_map(
         )
         ax_map.plot(explored_b0, explored_b1, "-", color="black", linewidth=1.0, alpha=0.35, zorder=2)
 
-    # Current point (red)
     ax_map.scatter(float(current_b0), float(current_b1), c="red", s=140, zorder=4, edgecolor="black")
     ax_map.text(
         float(current_b0) + 0.15,
         float(current_b1) + 0.06,
-        f"{current_rmse:.2f}",
+        f"{current_loss:.2f}",
         fontsize=12,
         color="red",
         fontname=FONTNAME,
         zorder=5,
     )
+
+    if show_antigrad_arrow:
+        draw_antigrad_arrow_on_map(
+            ax_map=ax_map,
+            current_b0=float(current_b0),
+            current_b1=float(current_b1),
+            grad_b0=float(grad_b0),
+            grad_b1=float(grad_b1),
+        )
 
     ax_map.set_xlabel(annotations.map_x_axis, fontdict={"fontsize": 10, "fontname": FONTNAME})
     ax_map.set_ylabel(annotations.map_y_axis, fontdict={"fontsize": 10, "fontname": FONTNAME})
@@ -416,7 +485,7 @@ def render_model(
     current_b1: float,
     explored_b0: List[float],
     explored_b1: List[float],
-    explored_rmse: List[float],
+    explored_loss: List[float],
     mappable,
 ):
     ax_model.scatter(features_scaled, target_scaled, s=40, c="white", edgecolor="black", zorder=2)
@@ -424,9 +493,8 @@ def render_model(
     x_line = np.array([[-1.5], [1.5]])
     x_line_flat = [-1.5, 1.5]
 
-    # Previous models as dashed lines (faint), colored by their RMSE
-    if len(explored_rmse) > 0:
-        old_colors = mappable.to_rgba(explored_rmse)
+    if len(explored_loss) > 0:
+        old_colors = mappable.to_rgba(explored_loss)
         for b0_old, b1_old, color_old in zip(explored_b0, explored_b1, old_colors):
             predicted_old = float(b0_old) + float(b1_old) * x_line
             ax_model.plot(
@@ -438,7 +506,6 @@ def render_model(
                 zorder=2,
             )
 
-    # Current model (red)
     predicted_current = float(current_b0) + float(current_b1) * x_line
     ax_model.plot(x_line_flat, np.ravel(predicted_current), c="red", linewidth=2.5, zorder=3)
 
@@ -461,11 +528,18 @@ def generate_frame(
     annotations,
     explored_b0: List[float],
     explored_b1: List[float],
-    explored_rmse: List[float],
+    explored_loss: List[float],
     iteration_count: int,
+    grad_tol: float,
+    tukey_c: float,
     map_title_override: Optional[str] = None,
 ):
-    rmse_value, _, _ = rmse_and_gradients(current_b0, current_b1, features_scaled, target_scaled)
+    loss_value, grad_b0, grad_b1 = tukey_loss_and_gradients(
+        current_b0, current_b1, features_scaled, target_scaled, tukey_c=float(tukey_c)
+    )
+    grad_norm = float(np.hypot(float(grad_b0), float(grad_b1)))
+
+    show_antigrad_arrow = (grad_norm >= float(grad_tol)) and (map_title_override is None)
 
     fig = plt.figure(figsize=(16, 4))
     ax_landscape, ax_map, ax_model = create_axes(fig)
@@ -480,7 +554,7 @@ def generate_frame(
         annotations=annotations,
         intercept_value=current_b0,
         slope_value=current_b1,
-        rmse_value=rmse_value,
+        loss_value=loss_value,
     )
 
     render_map(
@@ -488,12 +562,15 @@ def generate_frame(
         annotations=annotations,
         current_b0=current_b0,
         current_b1=current_b1,
-        current_rmse=rmse_value,
+        current_loss=loss_value,
         explored_b0=explored_b0,
         explored_b1=explored_b1,
-        explored_rmse=explored_rmse,
+        explored_loss=explored_loss,
         mappable=mappable,
         iteration_count=iteration_count,
+        show_antigrad_arrow=bool(show_antigrad_arrow),
+        grad_b0=float(grad_b0),
+        grad_b1=float(grad_b1),
     )
 
     if map_title_override is not None:
@@ -514,12 +591,12 @@ def generate_frame(
         current_b1=current_b1,
         explored_b0=explored_b0,
         explored_b1=explored_b1,
-        explored_rmse=explored_rmse,
+        explored_loss=explored_loss,
         mappable=mappable,
     )
 
     fig.suptitle(
-        annotations.get_title(),
+        annotations.title,
         fontsize=16,
         fontdict={"fontname": FONTNAME},
         va="top",
@@ -527,10 +604,10 @@ def generate_frame(
         y=1.2,
     )
 
-    return fig, float(rmse_value)
+    return fig, float(loss_value)
 
 
-def show_optimal_b_search_gradient(
+def show_optimal_b_search_gradient_tukey(
     mode: str = "rus",
     learning_rate: float = 0.4,
     start_b0: float = 1.2,
@@ -542,6 +619,7 @@ def show_optimal_b_search_gradient(
     backtracking_shrink: float = 0.5,
     pause_frames: int = 3,
     surface_grid_size: int = GRID_SIZE,
+    tukey_c: float = 4.685,
 ):
     annotations = annotations_by_language(mode)
 
@@ -550,12 +628,13 @@ def show_optimal_b_search_gradient(
         shutil.rmtree(tmp_dir)
     tmp_dir = get_tmp_animation_directory()
 
-    dataframe, features_scaled, target_scaled = generate_df_coefficients_vs_error(grid_size=surface_grid_size)
+    dataframe, features_scaled, target_scaled = generate_df_coefficients_vs_error(
+        grid_size=int(surface_grid_size),
+        tukey_c=float(tukey_c),
+    )
 
-    # Precompute surface once (stable colors)
     errors_surface, intercept_values, slope_values = compute_surface_from_dataframe(dataframe)
 
-    # Build gradient descent trajectory
     path = gradient_descent_path(
         start_b0=float(start_b0),
         start_b1=float(start_b1),
@@ -567,19 +646,19 @@ def show_optimal_b_search_gradient(
         step_tol=float(step_tol),
         backtracking_max_tries=int(backtracking_max_tries),
         backtracking_shrink=float(backtracking_shrink),
+        tukey_c=float(tukey_c),
     )
 
     image_files: List[Path] = []
     explored_b0: List[float] = []
     explored_b1: List[float] = []
-    explored_rmse: List[float] = []
+    explored_loss: List[float] = []
 
-    # Overwrite the same SVG each frame (as in your pipeline)
-    raw_svg_file = Path(tmp_dir, f"58_optimization_gradient_{mode}.svg")
+    # Overwrite the same SVG each frame
+    raw_svg_file = Path(tmp_dir, f"61_optimization_gradient_tukey_{mode}.svg")
 
     for frame_index, (current_b0, current_b1) in enumerate(path):
-        # "iterations done so far" = frame_index
-        fig, rmse_value = generate_frame(
+        fig, loss_value = generate_frame(
             current_b0=float(current_b0),
             current_b1=float(current_b1),
             errors_surface=errors_surface,
@@ -590,15 +669,17 @@ def show_optimal_b_search_gradient(
             annotations=annotations,
             explored_b0=explored_b0,
             explored_b1=explored_b1,
-            explored_rmse=explored_rmse,
+            explored_loss=explored_loss,
             iteration_count=int(frame_index),
+            grad_tol=float(grad_tol),
+            tukey_c=float(tukey_c),
             map_title_override=None,
         )
 
         plt.savefig(raw_svg_file, bbox_inches="tight")
         plt.close(fig)
 
-        frame_png = Path(tmp_dir, f"58_optimization_gradient_{mode}_{frame_index}.png")
+        frame_png = Path(tmp_dir, f"61_optimization_gradient_tukey_{mode}_{frame_index}.png")
         save_plot_according_to_template(
             raw_svg_file,
             frame_png,
@@ -607,14 +688,14 @@ def show_optimal_b_search_gradient(
         )
         image_files.append(frame_png)
 
-        # Update explored AFTER saving the frame
         explored_b0.append(float(current_b0))
         explored_b1.append(float(current_b1))
-        explored_rmse.append(float(rmse_value))
+        explored_loss.append(float(loss_value))
 
-    # Final frame: mark as best model (last point)
+    # Final frame: mark as best model
     if len(path) > 0:
         last_b0, last_b1 = path[-1]
+        print(f"Best b_0 = {last_b0}, best b_1 = {last_b1}")
         fig, _ = generate_frame(
             current_b0=float(last_b0),
             current_b1=float(last_b1),
@@ -626,15 +707,17 @@ def show_optimal_b_search_gradient(
             annotations=annotations,
             explored_b0=explored_b0,
             explored_b1=explored_b1,
-            explored_rmse=explored_rmse,
+            explored_loss=explored_loss,
             iteration_count=int(len(path)),
+            grad_tol=float(grad_tol),
+            tukey_c=float(tukey_c),
             map_title_override=annotations.best_model,
         )
 
         plt.savefig(raw_svg_file, bbox_inches="tight")
         plt.close(fig)
 
-        final_png = Path(tmp_dir, f"58_optimization_gradient_{mode}_{len(image_files)}.png")
+        final_png = Path(tmp_dir, f"61_optimization_gradient_tukey_{mode}_{len(image_files)}.png")
         save_plot_according_to_template(
             raw_svg_file,
             final_png,
@@ -644,7 +727,8 @@ def show_optimal_b_search_gradient(
         for _ in range(int(pause_frames)):
             image_files.append(final_png)
 
-    gif_path = Path(get_plots_path(), f"58_optimization_gradient_{mode}.gif")
+    prefix = f"{start_b0}_{start_b1}".replace(".", "_")
+    gif_path = Path(get_plots_path(), f"61_optimization_gradient_tukey_{prefix}_{mode}.gif")
     with imageio.get_writer(gif_path, mode="I", duration=ANIMATION_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -654,13 +738,15 @@ def show_optimal_b_search_gradient(
 
 
 if __name__ == "__main__":
-    show_optimal_b_search_gradient(
-        mode="rus",
-        learning_rate=0.4,
-        start_b0=1.2,
-        start_b1=-0.5,
-        max_iterations=10,
-        grad_tol=0.02,
-        step_tol=1e-4,
-        pause_frames=3,
-    )
+    for start_b0, start_b1 in [[-1.4, -4.0], [-2.0, 1.0]]:
+        show_optimal_b_search_gradient_tukey(
+            mode="rus",
+            learning_rate=6.0,
+            start_b0=start_b0,
+            start_b1=start_b1,
+            max_iterations=10,
+            grad_tol=0.01,
+            step_tol=0.001,
+            pause_frames=3,
+            tukey_c=2.5,
+        )

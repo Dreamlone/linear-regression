@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from examples.paths import get_plots_path, get_plots_templates_path
+from sklearn.model_selection import train_test_split
 
 COLOR_BY_DATASET = {"A": "green",
                     "B": "orange",
@@ -81,7 +82,7 @@ def extract_row(array: np.array, i_to_pick: int):
         return array[i_to_pick]
 
 
-def split_train_test_manual(features: np.array, target: np.array, apply_distortion: bool):
+def take_sample_manual(features: np.array, target: np.array, apply_distortion: bool):
     """ Function for 'bad' sampling with not vary good data """
     distorted_x, distorted_y = None, None
     ids_to_pick = [0, 1, 3, 7, 8, 11, 15, 18, 21, 22, 23, 26, 27, 28, 29, 32, 35, 38, 41, 44]
@@ -112,6 +113,38 @@ def split_train_test_manual(features: np.array, target: np.array, apply_distorti
         distorted_x, distorted_y = np.array(distorted_x), np.array(distorted_y)
 
     return x_sampled, y_sampled, distorted_x, distorted_y
+
+
+def split_train_test_manual(
+    features: np.ndarray,
+    target: np.ndarray,
+    test_size: float = 0.3,
+    random_state: int = 40,
+    shuffle: bool = True,
+):
+    """Split data into train/test with a fixed random seed.
+
+    Returns:
+        x_train, y_train, x_test, y_test
+    """
+    features_array = np.asarray(features)
+    target_array = np.asarray(target)
+
+    if features_array.shape[0] != target_array.shape[0]:
+        raise ValueError("features and target must have the same number of rows")
+
+    # Set numpy seed for full reproducibility in any downstream random ops
+    np.random.seed(int(random_state))
+
+    x_train, x_test, y_train, y_test = train_test_split(
+        features_array,
+        target_array,
+        test_size=float(test_size),
+        random_state=int(random_state),
+        shuffle=bool(shuffle),
+    )
+
+    return x_train, y_train, x_test, y_test
 
 
 def symmetric_mean_absolute_percentage_error(actual, predicted):

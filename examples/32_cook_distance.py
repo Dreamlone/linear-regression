@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
-from examples.utils import save_plot_according_to_template, get_datasets, split_train_test_manual
+from examples.utils import save_plot_according_to_template, get_datasets, take_sample_manual
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -242,7 +242,7 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
     rooms, good_prices, bad_prices_first, bad_prices_second = get_datasets()
     common_features = np.concat([rooms, rooms, rooms])
     common_target = np.concat([good_prices, bad_prices_first, bad_prices_second])
-    x, y, distorted_x, distorted_y = split_train_test_manual(common_features, common_target, apply_distortion=True)
+    x, y, distorted_x, distorted_y = take_sample_manual(common_features, common_target, apply_distortion=True)
 
     h = calculate_leverage(x)
 

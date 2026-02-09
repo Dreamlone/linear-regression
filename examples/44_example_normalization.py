@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from examples.paths import get_plots_path
-from examples.utils import save_plot_according_to_template, get_extended_dataset, split_train_test_manual
+from examples.utils import save_plot_according_to_template, get_extended_dataset, take_sample_manual
 
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
@@ -74,7 +74,7 @@ def plot_normalization_effect(mode: str = "eng"):
     features_names = ["rooms", "metro_distance"]
     features = np.array(dataset[features_names])
     target = np.array(dataset["price"])
-    x, y, _, _ = split_train_test_manual(features, target, apply_distortion=True)
+    x, y, _, _ = take_sample_manual(features, target, apply_distortion=True)
 
     fig_size = (18, 9)
     fig, axs = plt.subplots(2, 3, figsize=fig_size)

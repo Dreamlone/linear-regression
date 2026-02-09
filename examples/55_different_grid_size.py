@@ -15,7 +15,7 @@ from sklearn.preprocessing import StandardScaler
 import imageio.v2 as imageio
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
-from examples.utils import save_plot_according_to_template, split_train_test_manual, get_extended_dataset
+from examples.utils import save_plot_according_to_template, take_sample_manual, get_extended_dataset
 
 MIN_COEFFICIENT_BORDER = -2
 MAX_COEFFICIENT_BORDER = 2
@@ -81,7 +81,7 @@ def load_scaled_data() -> Tuple[np.ndarray, np.ndarray]:
     dataset = get_extended_dataset()
     features = np.array(dataset["rooms"])
     target = np.array(dataset["price"])
-    x, y, _, _ = split_train_test_manual(features, target, apply_distortion=True)
+    x, y, _, _ = take_sample_manual(features, target, apply_distortion=True)
 
     features_scaler = StandardScaler()
     features_scaled = features_scaler.fit_transform(x.reshape(-1, 1))

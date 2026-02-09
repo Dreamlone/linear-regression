@@ -6,7 +6,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 
 from examples.paths import get_plots_path
-from examples.utils import save_plot_according_to_template, get_datasets, split_train_test_manual
+from examples.utils import save_plot_according_to_template, get_datasets, take_sample_manual
 
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
@@ -156,7 +156,7 @@ def plot_poly_features_models(mode: str = "eng"):
     rooms, good_prices, bad_prices_first, bad_prices_second = get_datasets()
     common_features = np.concatenate([rooms, rooms, rooms])
     common_target = np.concatenate([good_prices, bad_prices_first, bad_prices_second])
-    x, y, _, _ = split_train_test_manual(common_features, common_target, apply_distortion=True)
+    x, y, _, _ = take_sample_manual(common_features, common_target, apply_distortion=True)
 
     fig_size = (14, 8)
     fig, axs = plt.subplots(2, 3, figsize=fig_size)

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from examples.paths import get_plots_path, get_tmp_animation_directory
-from examples.utils import save_plot_according_to_template, get_datasets, split_train_test_manual
+from examples.utils import save_plot_according_to_template, get_datasets, take_sample_manual
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -248,7 +248,7 @@ def plot_animation_ransac(mode: str):
     rooms, good_prices, bad_prices_first, bad_prices_second = get_datasets()
     common_features = np.concatenate([rooms, rooms, rooms])
     common_target = np.concatenate([good_prices, bad_prices_first, bad_prices_second])
-    x, y, _, _ = split_train_test_manual(
+    x, y, _, _ = take_sample_manual(
         common_features, common_target, apply_distortion=True
     )
 

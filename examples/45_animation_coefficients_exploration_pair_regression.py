@@ -11,7 +11,7 @@ from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
 from sklearn.preprocessing import StandardScaler
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
-from examples.utils import save_plot_according_to_template, split_train_test_manual, get_extended_dataset
+from examples.utils import save_plot_according_to_template, take_sample_manual, get_extended_dataset
 
 MIN_COEFFICIENT_BORDER = -2
 MAX_COEFFICIENT_BORDER = 2
@@ -135,7 +135,7 @@ def generate_df_coefficients_vs_error(metric: str):
     dataset = get_extended_dataset()
     features = np.array(dataset["rooms"])
     target = np.array(dataset["price"])
-    x, y, _, _ = split_train_test_manual(features, target, apply_distortion=True)
+    x, y, _, _ = take_sample_manual(features, target, apply_distortion=True)
 
     # Apply scaling on both features and target
     features_scaler = StandardScaler()

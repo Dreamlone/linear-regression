@@ -7,7 +7,7 @@ from scipy import stats
 from sklearn.metrics import r2_score, mean_absolute_error, root_mean_squared_error, mean_absolute_percentage_error
 
 from examples.paths import get_plots_path
-from examples.utils import save_plot_according_to_template, get_datasets, split_train_test_manual, \
+from examples.utils import save_plot_according_to_template, get_datasets, take_sample_manual, \
     symmetric_mean_absolute_percentage_error
 
 FONTNAME = "Comic Sans MS"
@@ -229,7 +229,7 @@ def plot_ransac_and_cooks_models(mode: str = "eng"):
     rooms, good_prices, bad_prices_first, bad_prices_second = get_datasets()
     common_features = np.concatenate([rooms, rooms, rooms])
     common_target = np.concatenate([good_prices, bad_prices_first, bad_prices_second])
-    x, y, _, _ = split_train_test_manual(common_features, common_target, apply_distortion=True)
+    x, y, _, _ = take_sample_manual(common_features, common_target, apply_distortion=True)
 
     fig_size = (12, 9)
     fig, axs = plt.subplots(2, 3, figsize=fig_size)
