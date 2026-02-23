@@ -9,13 +9,13 @@ from scipy import stats
 import numpy as np
 import matplotlib.pyplot as plt
 from examples.paths import get_plots_path, get_tmp_animation_directory
-from examples.utils import get_datasets, save_plot_according_to_template, COLOR_BY_DATASET
+from examples.utils import save_plot_according_to_template
 
 np.random.seed(1999)
 
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
-ANIM_DURATION = 600
+ANIM_DURATION = 800
 DPI = 150
 
 

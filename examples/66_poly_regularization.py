@@ -25,7 +25,7 @@ ALPHA_MIN: float = 0.02
 ALPHA_MAX: float = 1.12
 FRAMES: int = 35
 
-ANIM_DURATION = 500
+ANIM_DURATION = 150
 PAUSE_FRAMES: int = 20
 
 # Synthetic data controls
@@ -358,16 +358,13 @@ def animate_poly_regularization(
         frame_files.append(frame_png)
 
     # Pause on last frame
-    if len(frame_files) > 0:
-        for _ in range(int(PAUSE_FRAMES)):
-            frame_files.append(frame_files[-1])
+    for _ in range(int(PAUSE_FRAMES)):
+        frame_files.append(frame_files[-1])
 
     # Save GIF
     gif_path = Path(get_plots_path(), f"66_poly_regularization_{mode}.gif")
 
-    duration_sec = float(ANIM_DURATION) / 1000.0
-
-    with imageio.get_writer(gif_path, mode="I", duration=duration_sec, loop=0) as writer:
+    with imageio.get_writer(gif_path, mode="I", duration=ANIM_DURATION, loop=0) as writer:
         for frame_png in frame_files:
             writer.append_data(imageio.imread(frame_png))
 
