@@ -75,3 +75,8 @@ Start the exploration with `examples` folder
   year         = {2025}
 }
 ```
+
+## WIP
+
+The source code is still being improved, but I hope that the implementation of a clean architecture can be done calmly 
+after the articles are published.

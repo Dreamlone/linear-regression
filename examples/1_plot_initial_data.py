@@ -8,10 +8,10 @@ from examples.utils import save_plot_according_to_template
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        table_data = [["Rooms in the apartment", "Price, $"]]
-        x_label = "Number of the rooms in the apartment"
+        table_data = [["Number of rooms", "Price, $"]]
+        x_label = "Number of rooms"
         y_label = "Price, $"
-        title = "Dependence of apartment price on room number"
+        title = "Apartment price vs. number of rooms"
     elif mode == "rus":
         table_data = [["Количество комнат в квартире", "Стоимость, $"]]
         x_label = "Количество комнат в квартире"
