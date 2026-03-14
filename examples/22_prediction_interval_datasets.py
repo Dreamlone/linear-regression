@@ -103,10 +103,10 @@ def _compute_prediction_interval(
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        x_label = "Number of the rooms in the apartment"
+        x_label = "Number of rooms"
         y_label = "Price, $"
-        title = ""
-        confidence_label = "Уровень доверия"
+        title = "Prediction intervals for models A, B & C"
+        confidence_label = "Confidence levels "
     elif mode == "rus":
         x_label = "Количество комнат в квартире"
         y_label = "Стоимость, $"
@@ -196,15 +196,16 @@ def plot_prediction_intervals(mode: str = "eng"):
                                     predicted_bad_second_upper, show_name, show_x_label)
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME}, y=0.96)
 
-    raw_svg_file = Path(get_plots_path(), f"20_2_prediction_intervals_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"22_prediction_intervals_datasets_{mode}.svg")
     plt.savefig(raw_svg_file, bbox_inches="tight")
     plt.close()
 
     save_plot_according_to_template(
         raw_svg_file,
-        Path(get_plots_path(), f"20_2_prediction_intervals_{mode}.png"),
+        Path(get_plots_path(), f"22_prediction_intervals_datasets_{mode}.png"),
     )
 
 
 if __name__ == "__main__":
     plot_prediction_intervals("rus")
+    plot_prediction_intervals("eng")

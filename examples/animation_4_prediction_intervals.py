@@ -15,8 +15,12 @@ np.random.seed(1999)
 
 FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
-ANIM_DURATION = 800
+ANIM_DURATION = 1800
 DPI = 150
+
+FIXED_INTERCEPT = 0.0
+FIXED_SLOPE = 1.0
+RNG_SEED = 1999
 
 
 def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "",
@@ -27,13 +31,11 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
     ax.set_ylim(0, 1)
     ax.axis("off")
 
-    # Common layout for sliders
     slider_left = 0.25
     slider_right = 0.95
     slider_track_height = 0.02
     handle_radius = 0.015
 
-    # Vertical positions for three sliders (from top to bottom)
     y_positions = {
         "n": 0.78,
         "noise": 0.50,
@@ -45,10 +47,8 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
 
     def draw_continuous_slider(y_center, label, value, vmin, vmax, fmt="{:.0f}"):
         """Draw a single continuous slider."""
-        # Background label
         ax.text(-0.5, y_center, label, va="center", ha="left", **label_font)
 
-        # Slider track (light grey rectangle)
         track_width = slider_right - slider_left
         track_bottom = y_center - slider_track_height / 2.0
         track_rect = patches.FancyBboxPatch(
@@ -63,17 +63,15 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
         )
         ax.add_patch(track_rect)
 
-        # Normalized position of the handle
         if vmax > vmin:
             norm_value = (value - vmin) / (vmax - vmin)
         else:
             norm_value = 0.0
-        norm_value = max(0.0, min(1.0, norm_value))  # clip to [0, 1]
+        norm_value = max(0.0, min(1.0, norm_value))
 
         handle_x = slider_left + norm_value * track_width
         handle_y = y_center
 
-        # Active track (filled from left to handle)
         active_rect = patches.FancyBboxPatch(
             (slider_left, track_bottom),
             (handle_x - slider_left),
@@ -86,7 +84,6 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
         )
         ax.add_patch(active_rect)
 
-        # Handle
         handle = patches.Circle(
             (handle_x, handle_y),
             radius=handle_radius,
@@ -97,7 +94,6 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
         )
         ax.add_patch(handle)
 
-        # Current value text on the right
         ax.text(
             1.3,
             y_center,
@@ -111,7 +107,6 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
         """Draw a discrete slider with several fixed positions."""
         ax.text(-0.5, y_center, label, va="center", ha="left", **label_font)
 
-        # Slider line
         ax.plot(
             [slider_left, slider_right],
             [y_center, y_center],
@@ -126,7 +121,6 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
 
         track_width = slider_right - slider_left
 
-        # Draw discrete positions
         for option in options:
             index = options.index(option)
             if num_options == 1:
@@ -135,7 +129,7 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
                 norm_pos = index / (num_options - 1)
             x_pos = slider_left + norm_pos * track_width
 
-            is_selected = (abs(option - value) < 1e-6)
+            is_selected = abs(option - value) < 1e-6
 
             marker_facecolor = "tab:red" if is_selected else "white"
             marker_edgecolor = "tab:red" if is_selected else "0.5"
@@ -150,7 +144,6 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
                 zorder=2 if is_selected else 1.5,
             )
 
-            # Option label below the marker
             ax.text(
                 x_pos,
                 y_center - 0.07,
@@ -162,7 +155,6 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
                 color="black" if is_selected else "0.4",
             )
 
-        # Current value text on the right (duplicates highlight)
         ax.text(
             1.3,
             y_center,
@@ -172,7 +164,6 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
             **value_font,
         )
 
-    # Draw individual sliders
     draw_continuous_slider(
         y_center=y_positions["n"],
         label=n_label,
@@ -199,21 +190,6 @@ def draw_parameter_sliders(ax, n_value=30, n_min=30, n_max=100, n_label: str = "
     )
 
 
-def _get_predicted(rooms: np.array, actual_prices: np.array):
-    """ Build the model using analytical solution for one feature model """
-    mean_x = np.mean(rooms)  # Average number of rooms
-    mean_y = np.mean(actual_prices)  # Average price
-
-    numerator = np.sum((rooms - mean_x) * (actual_prices - mean_y))
-    denominator = np.sum((rooms - mean_x) ** 2)
-    slope = numerator / denominator
-    intercept = mean_y - slope * mean_x
-
-    print(f"Model b0 + b1 * x: {intercept} + {slope} * x")
-    predicted_prices = [(intercept + slope * room) for room in rooms]
-    return np.array(predicted_prices), intercept, slope
-
-
 def _compute_prediction_interval(
     x_train: np.array,
     y_train: np.array,
@@ -233,15 +209,12 @@ def _compute_prediction_interval(
     sample_size = len(x_train)
     degrees_of_freedom = sample_size - 2
 
-    # Residual standard error
     residual_variance = np.sum(residuals ** 2) / degrees_of_freedom
     residual_std = np.sqrt(residual_variance)
 
-    # Geometry in x
     mean_x_train = np.mean(x_train)
     sum_squares_x = np.sum((x_train - mean_x_train) ** 2)
 
-    # t critical value for two-sided interval
     alpha_level = 1.0 - confidence_level
     t_critical = stats.t.ppf(1.0 - alpha_level / 2.0, df=degrees_of_freedom)
 
@@ -280,27 +253,78 @@ def _plot_residuals(ax, actual_v, predicted_v, x_label, y_label):
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        x_label_res = "Number of the rooms in the apartment"
-        y_label_res = "Price, $"
-        title = ""
-        interval_label = "Уровень доверия"
+        x_label_res = "Predictions"
+        y_label_res = "Residuals (actual - predicted)"
+        title = "Data, model and prediction intervals"
+        interval_label = "Prediction interval"
         model_label = "Model"
         n_component = "n (sample size)"
         noise_component = "noise"
         conf_component = "confidence level"
+        calculations_title = "Prediction interval calculation"
+        model_title = "1. Model:"
+        residuals_title = "2. Residuals:"
+        noise_title = "3. Noise estimate (residual standard deviation):"
+        se_title_template = "4. Prediction standard error at point $x_0$ ($x_0 = {x0:.0f}$):"
+        bounds_title_template = "5. Prediction interval bounds ({confidence:.0f}%):"
+        lower_label = "Lower"
+        upper_label = "Upper"
+        where_label = "Where:"
+        x_desc = "$x$ is the feature values;"
+        y_desc = "$y$ is the actual target values;"
+        yhat_desc = "$\\hat y$ (predicted) is the model prediction;"
+        coef_desc = "$b_0$ (intercept) and $b_1$ (slope) are the model coefficients;"
+        n_desc = "$n$ is the sample size."
     elif mode == "rus":
         x_label_res = "Предсказания"
         y_label_res = "Остатки (реальные - предсказанные)"
-        title = "Данные - модель - предсказательные интервалы"
+        title = "Данные, модель и предсказательные интервалы"
         interval_label = "Предсказательный интервал"
         model_label = "Модель"
         n_component = "n (размер выборки)"
         noise_component = "шум"
         conf_component = "уровень доверия"
-
+        calculations_title = "Расчёт предсказательного интервала"
+        model_title = "1. Модель:"
+        residuals_title = "2. Остатки:"
+        noise_title = "3. Оценка шума (остаточное стандартное отклонение):"
+        se_title_template = "4. Стандартная ошибка предсказания в точке $x_0$ ($x_0 = {x0:.0f}$):"
+        bounds_title_template = "5. Границы предсказательного интервала ({confidence:.0f}%):"
+        lower_label = "Нижняя"
+        upper_label = "Верхняя"
+        where_label = "Где:"
+        x_desc = "$x$ — значения признака;"
+        y_desc = "$y$ — реальные значения отклика;"
+        yhat_desc = "$\\hat y$ (predicted) — прогноз модели;"
+        coef_desc = "$b_0$ (intercept) и $b_1$ (slope) — коэффициенты модели;"
+        n_desc = "$n$ — размер выборки."
     else:
         raise NotImplementedError(f"Language {mode} is not supported")
-    return x_label_res, y_label_res, title, interval_label, model_label, n_component, noise_component, conf_component
+
+    return {
+        "x_label_res": x_label_res,
+        "y_label_res": y_label_res,
+        "title": title,
+        "interval_label": interval_label,
+        "model_label": model_label,
+        "n_component": n_component,
+        "noise_component": noise_component,
+        "conf_component": conf_component,
+        "calculations_title": calculations_title,
+        "model_title": model_title,
+        "residuals_title": residuals_title,
+        "noise_title": noise_title,
+        "se_title_template": se_title_template,
+        "bounds_title_template": bounds_title_template,
+        "lower_label": lower_label,
+        "upper_label": upper_label,
+        "where_label": where_label,
+        "x_desc": x_desc,
+        "y_desc": y_desc,
+        "yhat_desc": yhat_desc,
+        "coef_desc": coef_desc,
+        "n_desc": n_desc,
+    }
 
 
 def add_row_label(fig: plt.Figure, gs: plt.GridSpec, row_index: int, text: str):
@@ -316,45 +340,47 @@ def add_row_label(fig: plt.Figure, gs: plt.GridSpec, row_index: int, text: str):
     )
 
 
-def generate_dataset(n: int, noise_component: float = None):
+def generate_dataset(
+    n: int,
+    noise_component: float = None,
+    intercept: float = FIXED_INTERCEPT,
+    slope: float = FIXED_SLOPE,
+):
     x = np.linspace(0, 100, n)
-    if noise_component is None:
-        y = np.copy(x)
+    y_true = intercept + slope * x
+
+    if noise_component is None or noise_component == 0:
+        y = np.copy(y_true)
     else:
-        # Use 50 (centroid) for proper scaling
-        rng = np.random.default_rng(seed=1999)
-        y = x + (50 * rng.normal(0, noise_component, n))
+        rng = np.random.default_rng(seed=RNG_SEED)
+        y = y_true + 50 * rng.normal(0, noise_component, n)
+
     return x, y
 
 
 def generate_cases():
-    ns = [30, 31, 32, 33, 34,
-          35, 36, 37, 38, 39,
-          40, 40, 40, 40, 40,
-          40, 40, 40, 40, 40,
-          40, 40, 40, 40, 40]
-    noises = [0.0, 0.01, 0.02, 0.03, 0.04,
-              0.05, 0.06, 0.07, 0.08, 0.09,
-              0.10, 0.11, 0.12, 0.13, 0.14,
-              0.13, 0.12, 0.11, 0.10, 0.10,
-              0.10, 0.10, 0.10, 0.10, 0.10]
-    confidence_levels = [0.90, 0.90, 0.90, 0.90, 0.90,
-                         0.90, 0.90, 0.90, 0.90, 0.90,
-                         0.90, 0.90, 0.90, 0.90, 0.90,
-                         0.95, 0.95, 0.95, 0.95, 0.95,
-                         0.99, 0.99, 0.99, 0.99, 0.99]
-    xs = [70, 70, 70, 70, 70,
-          70, 70, 70, 70, 70,
-          71, 72, 73, 74, 75,
-          75, 75, 75, 74, 73,
-          72, 71, 70, 69, 68]
+    ns = [30, 30, 30,
+          50, 70, 90,
+          90, 90, 90,
+          90, 90, 90]
+    noises = [0.0, 0.1, 0.2,
+              0.2, 0.2, 0.2,
+              0.2, 0.2, 0.2,
+              0.2, 0.2, 0.2]
+    confidence_levels = [0.90, 0.90, 0.90,
+                         0.90, 0.90, 0.90,
+                         0.95, 0.95, 0.95,
+                         0.99, 0.99, 0.99]
+    xs = [70, 70, 70,
+          70, 70, 70,
+          70, 71, 72,
+          71, 70, 69]
     for case in range(len(ns)):
         yield ns[case], noises[case], confidence_levels[case], xs[case]
 
 
 def plot_prediction_intervals(mode: str = "eng"):
-    (x_label_res, y_label_res, title, interval_label, model_label, n_component_label,
-     noise_component_label, conf_component_label) = annotations_by_language(mode)
+    labels = annotations_by_language(mode)
 
     tmp_dir = get_tmp_animation_directory()
     if tmp_dir.exists() and len(list(tmp_dir.iterdir())) > 0:
@@ -364,9 +390,17 @@ def plot_prediction_intervals(mode: str = "eng"):
     i = 0
     frames = []
     for n_value, noise_component, confidence_level, x_point_to_show in generate_cases():
-        x, y = generate_dataset(n=n_value, noise_component=noise_component)
+        x, y = generate_dataset(
+            n=n_value,
+            noise_component=noise_component,
+            intercept=FIXED_INTERCEPT,
+            slope=FIXED_SLOPE,
+        )
 
-        predicted, intercept, slope = _get_predicted(x, y)
+        intercept = FIXED_INTERCEPT
+        slope = FIXED_SLOPE
+        predicted = intercept + slope * x
+
         predicted_lower, predicted_upper = _compute_prediction_interval(
             x_train=x,
             y_train=y,
@@ -386,13 +420,26 @@ def plot_prediction_intervals(mode: str = "eng"):
         ax_parameters = fig.add_subplot(gs[0, 2])
         ax_calculations = fig.add_subplot(gs[1:4, 2])
 
-        fig.suptitle(title, fontsize=18, fontdict={'fontname': FONTNAME}, y=0.97, x=0.55)
+        fig.suptitle(
+            labels["title"],
+            fontsize=18,
+            fontdict={'fontname': FONTNAME},
+            y=0.97,
+            x=0.55,
+        )
 
         ax_intervals.scatter(x, y, s=30, c="grey", alpha=0.5, edgecolor="black", zorder=3)
         ax_intervals.grid(color='grey', alpha=0.5, zorder=2)
-        ax_intervals.plot(x, predicted, '--', c="black", zorder=3, label=model_label)
-        ax_intervals.fill_between(x, predicted_lower, predicted_upper, color="red", alpha=0.1, zorder=1,
-                                  label=interval_label)
+        ax_intervals.plot(x, predicted, '--', c="black", zorder=3, label=labels["model_label"])
+        ax_intervals.fill_between(
+            x,
+            predicted_lower,
+            predicted_upper,
+            color="red",
+            alpha=0.1,
+            zorder=1,
+            label=labels["interval_label"],
+        )
         ax_intervals.plot(x, predicted_lower, color="red", linewidth=1, alpha=0.5, zorder=1)
         ax_intervals.plot(x, predicted_upper, color="red", linewidth=1, alpha=0.5, zorder=1)
         ax_intervals.set_ylim(-75, 175)
@@ -400,50 +447,87 @@ def plot_prediction_intervals(mode: str = "eng"):
         ax_intervals.legend(loc='upper left', prop={'family': FONTNAME, 'size': 14})
         ax_intervals.set_ylabel("y", fontsize=14, fontdict=FONTDICT)
         ax_intervals.set_xlabel("x", fontsize=14, fontdict=FONTDICT)
-        ax_intervals.plot([-5, x_point_to_show],
-                          [prediction_point_to_show, prediction_point_to_show], c='grey', alpha=0.8, zorder=2)
-        ax_intervals.plot([x_point_to_show, x_point_to_show],
-                          [-75, prediction_point_to_show], c='grey', alpha=0.8, zorder=2)
-        # Draw x_0 label
+        ax_intervals.plot(
+            [-5, x_point_to_show],
+            [prediction_point_to_show, prediction_point_to_show],
+            c='grey',
+            alpha=0.8,
+            zorder=2,
+        )
+        ax_intervals.plot(
+            [x_point_to_show, x_point_to_show],
+            [-75, prediction_point_to_show],
+            c='grey',
+            alpha=0.8,
+            zorder=2,
+        )
+
         ax_intervals.scatter(x_point_to_show, -50, s=500, c="white", alpha=1.0, zorder=3)
-        ax_intervals.text(x_point_to_show, -50, r"$x_0$",
-                          va="center", ha="center", fontsize=14, fontname=FONTNAME, zorder=4)
+        ax_intervals.text(
+            x_point_to_show,
+            -50,
+            r"$x_0$",
+            va="center",
+            ha="center",
+            fontsize=14,
+            fontname=FONTNAME,
+            zorder=4,
+        )
 
-        # Draw a prediction for this label
         ax_intervals.scatter(10, prediction_point_to_show, s=1500, c="white", alpha=1.0, zorder=3)
-        ax_intervals.text(10, prediction_point_to_show, r"$\hat y(x_0)$",
-                          va="center", ha="center", fontsize=14, fontname=FONTNAME, zorder=4)
+        ax_intervals.text(
+            10,
+            prediction_point_to_show,
+            r"$\hat y(x_0)$",
+            va="center",
+            ha="center",
+            fontsize=14,
+            fontname=FONTNAME,
+            zorder=4,
+        )
 
-        # Draw sliders with default values:
         draw_parameter_sliders(
             ax_parameters,
             n_value=n_value,
             n_min=10,
             n_max=100,
-            n_label=n_component_label,
+            n_label=labels["n_component"],
             noise_value=noise_component,
             noise_min=0.0,
             noise_max=0.5,
-            noise_label=noise_component_label,
+            noise_label=labels["noise_component"],
             confidence_value=confidence_level,
             confidence_options=(0.90, 0.95, 0.99),
-            confidence_label=conf_component_label
+            confidence_label=labels["conf_component"],
         )
 
-        residuals = _plot_residuals(ax_residuals, y, predicted, x_label_res, y_label_res)
+        residuals = _plot_residuals(
+            ax_residuals,
+            y,
+            predicted,
+            labels["x_label_res"],
+            labels["y_label_res"],
+        )
         ax_residuals.plot([prediction_point_to_show, prediction_point_to_show], [-75, 0], c='grey', alpha=0.8)
         ax_residuals.scatter(prediction_point_to_show, -60, s=500, c="white", alpha=1.0, zorder=3)
-        ax_residuals.text(prediction_point_to_show, -60, r"$\hat y(x_0)$",
-                          va="center", ha="center", fontsize=14, fontname=FONTNAME, zorder=4)
+        ax_residuals.text(
+            prediction_point_to_show,
+            -60,
+            r"$\hat y(x_0)$",
+            va="center",
+            ha="center",
+            fontsize=14,
+            fontname=FONTNAME,
+            zorder=4,
+        )
 
         ax_calculations.axis("off")
         lines = []
 
-        # Заголовок
-        lines.append(r"Расчёт предсказательного интервала")
-        lines.append("")  # пустая строка
+        lines.append(labels["calculations_title"])
+        lines.append("")
 
-        lines.append(r"1. Модель:")
+        lines.append(labels["model_title"])
         lines.append(r"   $\hat y = b_0 + b_1 x$")
         sign = "+" if slope >= 0 else "-"
         lines.append(
@@ -451,18 +535,17 @@ def plot_prediction_intervals(mode: str = "eng"):
         )
         lines.append("")
 
-        lines.append(r"2. Остатки:")
+        lines.append(labels["residuals_title"])
         lines.append(r"   $e = y - \hat y$")
         lines.append("")
 
-        lines.append(r"3. Оценка шума (остаточное стандартное отклонение):")
+        lines.append(labels["noise_title"])
         s = np.sqrt(np.sum(residuals ** 2) / (n_value - 2))
         lines.append(
             rf"   $s = \sqrt{{\dfrac{{\sum e^2}}{{n - 2}}}} = {s:.1f}$"
         )
         lines.append("")
 
-        s = np.sqrt(np.sum(residuals ** 2) / (n_value - 2))
         mean_x = np.mean(x)
         sum_squares_x = np.sum((x - mean_x) ** 2)
         se_pred_x0 = s * np.sqrt(
@@ -470,12 +553,14 @@ def plot_prediction_intervals(mode: str = "eng"):
             + 1.0 / n_value
             + (x_point_to_show - mean_x) ** 2 / sum_squares_x
         )
+
         lines.append(
-            rf"4. Стандартная ошибка предсказания в точке $x_0$ "
-            rf"($x_0 = {x_point_to_show:.0f}$):"
+            labels["se_title_template"].format(x0=x_point_to_show)
         )
-        lines.append(r"   $se_{\mathrm{predicted}}(x_0) = " 
-                     r"s \sqrt{1 + \dfrac{1}{n} + \dfrac{(x_0 - \bar x)^2}{\sum (x - \bar x)^2}}$")
+        lines.append(
+            r"   $se_{\mathrm{predicted}}(x_0) = "
+            r"s \sqrt{1 + \dfrac{1}{n} + \dfrac{(x_0 - \bar x)^2}{\sum (x - \bar x)^2}}$"
+        )
         lines.append(
             rf"   $se_{{\mathrm{{predicted}}}}(x_0) = "
             rf"{s:.1f} \cdot \sqrt{{1 + \dfrac{{1}}{{{n_value}}} + "
@@ -492,35 +577,39 @@ def plot_prediction_intervals(mode: str = "eng"):
 
         lower_x0 = y_hat_0 - margin_x0
         upper_x0 = y_hat_0 + margin_x0
-        ax_intervals.scatter([x_point_to_show, x_point_to_show], [lower_x0, upper_x0],
-                             marker="x", s=50, c="black", alpha=1.0, zorder=3)
-        lines.append(
-            rf"5. Границы предсказательного интервала ({int(confidence_level * 100)}%):"
+        ax_intervals.scatter(
+            [x_point_to_show, x_point_to_show],
+            [lower_x0, upper_x0],
+            marker="x",
+            s=50,
+            c="black",
+            alpha=1.0,
+            zorder=3,
         )
 
-        # Нижняя граница
         lines.append(
-            rf"   Нижняя: "
+            labels["bounds_title_template"].format(confidence=confidence_level * 100)
+        )
+        lines.append(
+            rf"   {labels['lower_label']}: "
             rf"$\hat y_0 - t_{{\alpha/2,\,{dof}}} \cdot se_{{\mathrm{{pred}}}}(x_0)"
             rf" = {y_hat_0:.0f} - {t_crit:.1f} \cdot {se_pred_x0:.1f}"
             rf" = {lower_x0:.1f}$"
         )
-
-        # Верхняя граница
         lines.append(
-            rf"   Верхняя: "
+            rf"   {labels['upper_label']}: "
             rf"$\hat y_0 + t_{{\alpha/2,\,{dof}}} \cdot se_{{\mathrm{{pred}}}}(x_0)"
             rf" = {y_hat_0:.0f} + {t_crit:.1f} \cdot {se_pred_x0:.1f}"
             rf" = {upper_x0:.1f}$"
         )
         lines.append("")
 
-        lines.append(r"Где:")
-        lines.append(r"   $x$ — значения признака;")
-        lines.append(r"   $y$ — реальные значения отклика;")
-        lines.append(r"   $\hat y$ (predicted) — прогноз модели;")
-        lines.append(r"   $b_0$ (intercept) и $b_1$ (slope) — коэффициенты модели;")
-        lines.append(r"   $n$ — размер выборки.")
+        lines.append(labels["where_label"])
+        lines.append(f"   {labels['x_desc']}")
+        lines.append(f"   {labels['y_desc']}")
+        lines.append(f"   {labels['yhat_desc']}")
+        lines.append(f"   {labels['coef_desc']}")
+        lines.append(f"   {labels['n_desc']}")
 
         text = "\n".join(lines)
 
@@ -534,16 +623,16 @@ def plot_prediction_intervals(mode: str = "eng"):
             fontname=FONTNAME,
         )
 
-        raw_svg_file = Path(tmp_dir, f"20_1_prediction_intervals_{mode}.svg")
+        raw_svg_file = Path(tmp_dir, f"animation_4_prediction_intervals_{mode}.svg")
         plt.savefig(raw_svg_file, bbox_inches="tight")
         plt.close()
 
-        final_plot = Path(tmp_dir, f"20_1_prediction_intervals_{mode}_{i}.png")
+        final_plot = Path(tmp_dir, f"animation_4_intervals_{mode}_{i}.png")
         save_plot_according_to_template(raw_svg_file, final_plot, dpi=DPI)
         frames.append(final_plot)
         i += 1
 
-    gif_path = Path(get_plots_path(), f"20_1_prediction_intervals_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_4_prediction_intervals_{mode}.gif")
     with imageio.get_writer(gif_path, mode='I', duration=ANIM_DURATION, loop=0) as writer:
         for img in frames:
             writer.append_data(imageio.imread(img))
@@ -553,3 +642,4 @@ def plot_prediction_intervals(mode: str = "eng"):
 
 if __name__ == "__main__":
     plot_prediction_intervals("rus")
+    plot_prediction_intervals("eng")

@@ -180,3 +180,4 @@ def plot_models_and_statistical_tests(mode: str = "eng", significance_level: flo
 
 if __name__ == '__main__':
     plot_models_and_statistical_tests("rus")
+    plot_models_and_statistical_tests("eng")

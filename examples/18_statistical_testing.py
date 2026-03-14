@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import warnings
 
 from examples.paths import get_plots_path
-from examples.utils import save_plot_according_to_template
 
 warnings.filterwarnings('ignore')
 

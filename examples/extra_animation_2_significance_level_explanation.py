@@ -21,7 +21,7 @@ np.random.seed(2025)
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = "The significance level meaning in statistical testing"
+        title = "The meaning of significance level in F test"
         stat_prefix = "Percentage of experiments with false results"
         experiment_label = "Experiment"
     elif mode == "rus":
@@ -34,9 +34,8 @@ def annotations_by_language(mode: str):
 
 
 def _get_basic_plot(p_value_data_for_vis: dict):
-    fig = plt.figure(figsize=(12, 8))  # Больше, но сохраняем пропорции
+    fig = plt.figure(figsize=(12, 8))
 
-    # Параметры главного графика и сетки
     main_width = 0.30
     main_height = 0.48
     main_bottom = 0.26
@@ -47,23 +46,18 @@ def _get_basic_plot(p_value_data_for_vis: dict):
     dx = 0.105
     dy = 0.12
 
-    # Вычисление общей ширины (main_plot + отступ + 4 блока p-value)
-    gap = 0.07  # расстояние между основным графиком и сеткой
+    gap = 0.07
     total_width = main_width + gap + (cols - 1) * dx + box_w
 
-    # Центрируем по ширине: левый край всего блока
     total_left = 0.5 - total_width / 2
 
-    # Координаты основного графика
     main_left = total_left
     main_center_y = main_bottom + main_height / 2
 
-    # Координаты начала сетки
     grid_left = main_left + main_width + gap
     total_grid_height = (rows - 1) * dy
     grid_bottom = main_center_y - total_grid_height / 1.75
 
-    # === MAIN PLOT ===
     main_plot = fig.add_axes([main_left, main_bottom, main_width, main_height])
     main_plot.set_xlim(0, 101)
     main_plot.set_ylim(0, 101)
@@ -210,13 +204,13 @@ def generate_plot_with_model(mode, case_name, tmp_dir, x, y, experiment_id,
     fig.text(0.5, 0.1, statistics_message, fontsize=20, fontdict={'fontname': FONTNAME},
              ha='center', va='center')
 
-    raw_svg_file = Path(tmp_dir, f"20_raw_alpha_animation_{mode}_{case_name}.svg")
+    raw_svg_file = Path(tmp_dir, f"extra_animation_2_3_significance_level_explanation_{mode}_{case_name}.svg")
     plt.savefig(raw_svg_file)
     plt.close()
 
     postfix_in_file_name = "model"
-    path_to_file = Path(tmp_dir,
-                        f"20_train_test_animation_{mode}_{case_name}_{experiment_id}_{postfix_in_file_name}.png")
+    n = f"extra_animation_2_3_significance_level_explanation_{mode}_{case_name}_{experiment_id}_{postfix_in_file_name}.png"
+    path_to_file = Path(tmp_dir, n)
     save_plot_according_to_template(raw_svg_file, path_to_file, dpi=DPI, template_name="template_coolwarm.svg")
 
     return path_to_file, false_results_number
@@ -269,7 +263,12 @@ def create_animation_alpha(mode: str = "eng", case_name: str = 'random', animati
                                                                       p_value_data_for_vis)
         image_files.append(path_to_file)
 
-    gif_path = Path(get_plots_path(), f"20_alpha_explanation_{mode}_{case_name}.gif")
+    if case_name == "linear":
+        i = 3
+    else:
+        i = 2
+
+    gif_path = Path(get_plots_path(), f"extra_animation_{i}_significance_level_explanation_{mode}_{case_name}.gif")
     with imageio.get_writer(gif_path, mode='I', duration=animation_duration, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -280,3 +279,5 @@ def create_animation_alpha(mode: str = "eng", case_name: str = 'random', animati
 if __name__ == '__main__':
     create_animation_alpha("rus", "random")
     create_animation_alpha("rus", "linear")
+    create_animation_alpha("eng", "random")
+    create_animation_alpha("eng", "linear")

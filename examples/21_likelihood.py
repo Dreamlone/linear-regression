@@ -196,5 +196,5 @@ if __name__ == "__main__":
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
 
-    plt.savefig(get_plots_path() / "69_probability.svg", dpi=200, bbox_inches="tight")
+    plt.savefig(get_plots_path() / "21_likelihood.svg", dpi=200, bbox_inches="tight")
     plt.close()

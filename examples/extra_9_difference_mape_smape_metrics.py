@@ -16,7 +16,7 @@ def annotations_by_language(mode: str):
         x_label = "Offset relative to the initial dataset"
         y_label_left = "MAPE and SMAPE, %"
         y_label_right = "MAE"
-        actual_label = "Actual values"
+        actual_label = "Actual     "
         predicted_label = "Predicted"
     elif mode == "rus":
         title = "Значения метрик при возрастании значений наблюдений и предсказаний"
@@ -115,15 +115,16 @@ def difference_between_mape_and_smape(mode: str = "eng"):
     ax.text(0.8, -0.18, f"{predicted_label}: {predicted_values + 100}", transform=ax.transAxes,
             fontsize=12, fontname=FONTNAME, bbox=dict(boxstyle="round", facecolor="#dbdbdb", edgecolor="gray"))
 
-    raw_svg_file = Path(get_plots_path(), f"17_difference_mape_smape_metrics_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"extra_9_difference_mape_smape_metrics_{mode}.svg")
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME})
     plt.savefig(raw_svg_file)
     plt.close()
 
     save_plot_according_to_template(raw_svg_file,
-                                    Path(get_plots_path(), f"17_difference_mape_smape_metrics_{mode}.png"),
+                                    Path(get_plots_path(), f"extra_9_difference_mape_smape_metrics_{mode}.png"),
                                     template_name="template_green.svg")
 
 
 if __name__ == '__main__':
     difference_between_mape_and_smape("rus")
+    difference_between_mape_and_smape("eng")
