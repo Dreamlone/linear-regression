@@ -384,19 +384,25 @@ def plot_lof_boundary(ax,
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = "Metrics are cool!"
-        mahalanobis_plot = "Махаланобисово расстояние"
-        lof_plot = "Локальный фактор выброса"
+        title = "Fitting models on outlier-filtered data"
+        mahalanobis_plot = "Mahalanobis distance"
+        lof_plot = "Local outlier factor"
         elliptic_envelope_plot = "Elliptic Envelope"
-        main_plot = ""
-        lof_label = ""
-        y_label = ""
-        new_model_label = ""
-        best_model_label = ""
-        second_row = ""
-        third_row = ""
-        fourth_row = ""
-        final_row_plot = ""
+        main_plot = "Data with outliers"
+        lof_label = "Local outlier factor (LOF)"
+        y_label = "Detected outliers"
+        new_model_label = "New model fitted to the data"
+        best_model_label = "Reference model"
+        second_row = "Outlier filtering\nwith different methods"
+        third_row = "Model fitting"
+        fourth_row = (
+            "Metrics\n"
+            "on the population\n"
+            r"$\mathbf{RMSE\ of\ reference\ model}$"
+            "\n"
+            r"$\mathbf{3873}$"
+        )
+        final_row_plot = "RMSE to the reference model"
     elif mode == "rus":
         title = "Инициализация моделей на очищенных от выбросов данных"
         mahalanobis_plot = "Махаланобисово расстояние"
@@ -535,13 +541,14 @@ def plot_filtering_method_and_models(mode: str = "eng"):
         ax_lof_metrics.set_title(f"{final_row_plot}\n{rmse_delta:.0f}",
                                  fontsize=10, fontdict={'fontname': FONTNAME})
 
-    raw_svg_file = Path(get_plots_path(), f"31_explain_advanced_filtering_data_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"33_explain_advanced_filtering_data_{mode}.svg")
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME})
-    plt.savefig(raw_svg_file)
+    # plt.savefig(raw_svg_file)
     plt.close()
     save_plot_according_to_template(raw_svg_file,
-                                    Path(get_plots_path(), f"31_explain_advanced_filtering_data_{mode}.png"))
+                                    Path(get_plots_path(), f"33_explain_advanced_filtering_data_{mode}.png"))
 
 
 if __name__ == '__main__':
     plot_filtering_method_and_models("rus")
+    plot_filtering_method_and_models("eng")

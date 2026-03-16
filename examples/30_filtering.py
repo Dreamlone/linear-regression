@@ -338,20 +338,20 @@ def explain_3_sigma(ax_3_sigma, y, mean_y, std_y, lower_bound, upper_bound, mean
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = "Metrics are cool!"
-        iqr_plot = ""
-        iqr_plot_x_label = ""
-        sigma_plot = ""
-        z_score_plot = ""
+        title = "Data filtering methods (one-dimensional)"
+        iqr_plot = "Interquartile range"
+        iqr_plot_x_label = "Distribution                   Data                    Calculation"
+        sigma_plot = "Three-sigma rule (3σ)"
+        z_score_plot = "Z-score"
         z_score_threshold = "Z-score threshold"
-        z_score_modified_plot = ""
-        main_plot = "Is model good or not?"
-        y_label = ""
-        mean_label = ""
-        median_label = ""
-        std_label = ""
-        z_scores_label = ""
-        modified_z_scores_label = "Модифицированные z значения"
+        z_score_modified_plot = "Modified Z-score"
+        main_plot = "Data with outliers"
+        y_label = "Detected outliers"
+        mean_label = "mean"
+        median_label = "median"
+        std_label = "standard\ndeviation\n         σ"
+        z_scores_label = "Z-scores"
+        modified_z_scores_label = "Modified Z-scores"
     elif mode == "rus":
         title = "Способы фильтрации данных (одномерные методы)"
         iqr_plot = "Межквартильный размах"
@@ -473,13 +473,14 @@ def plot_filtering_method_concepts(mode: str = "eng"):
     explain_modified_z_score(ax_z_score_modified, x, y, modified_z_scores, median_y, mad_y,
                              lower_bound, upper_bound, median_label, modified_z_scores_label)
 
-    raw_svg_file = Path(get_plots_path(), f"28_explain_filtering_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"30_explain_filtering_{mode}.svg")
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME})
     plt.savefig(raw_svg_file)
     plt.close()
     save_plot_according_to_template(raw_svg_file,
-                                    Path(get_plots_path(), f"28_explain_filtering_{mode}.png"))
+                                    Path(get_plots_path(), f"30_explain_filtering_{mode}.png"))
 
 
 if __name__ == '__main__':
     plot_filtering_method_concepts("rus")
+    plot_filtering_method_concepts("eng")

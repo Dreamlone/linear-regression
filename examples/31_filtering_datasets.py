@@ -335,18 +335,24 @@ def filter_modified_zscore(x, y, threshold):
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = "Metrics are cool!"
-        iqr_plot = ""
-        sigma_plot = ""
-        z_score_plot = ""
-        z_score_modified_plot = ""
-        main_plot = "Is model good or not?"
-        new_model_label = ""
-        best_model_label = ""
-        second_row = ""
-        third_row = ""
-        fourth_row = ""
-        final_row_plot = ""
+        title = "Fitting models on outlier-filtered data"
+        iqr_plot = "Interquartile range\n(1IQR)"
+        sigma_plot = "Three-sigma rule\n(2σ)"
+        z_score_plot = "Z-score\n(threshold=1.5)"
+        z_score_modified_plot = "Modified Z-score\n(threshold=1.5)"
+        main_plot = "Data with outliers"
+        new_model_label = "New model fitted to the data"
+        best_model_label = "Reference model"
+        second_row = "Outlier filtering\nwith different methods"
+        third_row = "Model fitting"
+        fourth_row = (
+            "Metrics\n"
+            "on the population\n"
+            r"$\mathbf{RMSE\ of\ reference\ model}$"
+            "\n"
+            r"$\mathbf{3873}$"
+        )
+        final_row_plot = "RMSE to the reference model"
     elif mode == "rus":
         title = "Инициализация моделей на очищенных от выбросов данных"
         iqr_plot = "Межквартильный размах\n(1IQR)"
@@ -491,13 +497,14 @@ def plot_filtering_sample_and_init_model(mode: str = "eng"):
     ax_mod_z_score_metrics.set_title(f"{final_row_plot}\n{rmse_delta:.0f}",
                                      fontsize=10, fontdict={'fontname': FONTNAME})
 
-    raw_svg_file = Path(get_plots_path(), f"29_filtering_and_model_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"31_filtering_and_model_{mode}.svg")
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME})
     plt.savefig(raw_svg_file)
     plt.close()
     save_plot_according_to_template(raw_svg_file,
-                                    Path(get_plots_path(), f"29_filtering_and_model_{mode}.png"))
+                                    Path(get_plots_path(), f"31_filtering_and_model_{mode}.png"))
 
 
 if __name__ == '__main__':
     plot_filtering_sample_and_init_model("rus")
+    plot_filtering_sample_and_init_model("eng")

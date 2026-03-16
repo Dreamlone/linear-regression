@@ -35,15 +35,18 @@ def _build_model(rooms: np.array, actual_prices: np.array):
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        leverage_label = ""
-        model_label = ""
-        best_model_label = ""
-        current_model_label = ""
-        new_model_label = ""
-        build_model = ""
-        influence_label = ""
-        cook_distance_label = ""
-        excluding_title = ""
+        leverage_label = "Leverage"
+        model_label = "Model"
+        best_model_label = "Reference model"
+        current_model_label = "Current model fitted to the data"
+        new_model_label = "If we remove this point from training"
+        build_model = "Fit the model"
+        influence_label = "Assessing the influence of points on the model"
+        cook_distance_label = "Cook’s distance (D)"
+        excluding_title = (
+            "Removing a point with a large Cook’s distance"
+            "\nand checking how the model changes"
+        )
     elif mode == "rus":
         leverage_label = "Рычаг"
         model_label = "Модель"
@@ -290,10 +293,10 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         # Progress bar
         draw_progress_bar(fig_base, frame_index, total_frames)
 
-        raw_svg_file = Path(tmp_dir, f"32_cooks_distance_base_{mode}_{image_index}.svg")
+        raw_svg_file = Path(tmp_dir, f"animation_7_cooks_distance_base_{mode}_{image_index}.svg")
         plt.savefig(raw_svg_file, bbox_inches='tight')
         plt.close()
-        path_to_final_path = Path(tmp_dir, f"32_cooks_distance_base_{mode}_{image_index}.png")
+        path_to_final_path = Path(tmp_dir, f"animation_7_cooks_distance_base_{mode}_{image_index}.png")
         save_plot_according_to_template(raw_svg_file, path_to_final_path, template_name="template_small.svg")
         image_files.append(path_to_final_path)
         frame_index += 1
@@ -319,10 +322,10 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         # Progress bar
         draw_progress_bar(fig_point, frame_index, total_frames)
 
-        raw_svg_file = Path(tmp_dir, f"32_cooks_distance_leverage_{mode}_{image_index}.svg")
+        raw_svg_file = Path(tmp_dir, f"animation_7_cooks_distance_leverage_{mode}_{image_index}.svg")
         plt.savefig(raw_svg_file, bbox_inches='tight')
         plt.close()
-        path_to_final_path = Path(tmp_dir, f"32_cooks_distance_leverage_{mode}_{image_index}.png")
+        path_to_final_path = Path(tmp_dir, f"animation_7_cooks_distance_leverage_{mode}_{image_index}.png")
         save_plot_according_to_template(raw_svg_file, path_to_final_path, template_name="template_small.svg")
         image_files.append(path_to_final_path)
         frame_index += 1
@@ -364,10 +367,10 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         # Progress bar
         draw_progress_bar(fig_point, frame_index, total_frames)
 
-        raw_svg_file = Path(tmp_dir, f"32_cooks_distance_check_point_{mode}_{image_index}.svg")
+        raw_svg_file = Path(tmp_dir, f"animation_7_cooks_distance_check_point_{mode}_{image_index}.svg")
         plt.savefig(raw_svg_file, bbox_inches='tight')
         plt.close()
-        path_to_final_path = Path(tmp_dir, f"32_cooks_distance_check_point_{mode}_{image_index}.png")
+        path_to_final_path = Path(tmp_dir, f"animation_7_cooks_distance_check_point_{mode}_{image_index}.png")
         save_plot_according_to_template(raw_svg_file, path_to_final_path, template_name="template_small.svg")
         image_files.append(path_to_final_path)
         frame_index += 1
@@ -417,10 +420,10 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
         # Progress bar
         draw_progress_bar(fig_point, frame_index, total_frames)
 
-        raw_svg_file = Path(tmp_dir, f"32_cooks_distance_next_model_{mode}_{image_index}.svg")
+        raw_svg_file = Path(tmp_dir, f"animation_7_cooks_distance_next_model_{mode}_{image_index}.svg")
         plt.savefig(raw_svg_file, bbox_inches='tight')
         plt.close()
-        path_to_final_path = Path(tmp_dir, f"32_cooks_distance_next_model_{mode}_{image_index}.png")
+        path_to_final_path = Path(tmp_dir, f"animation_7_cooks_distance_next_model_{mode}_{image_index}.png")
         save_plot_according_to_template(raw_svg_file, path_to_final_path, template_name="template_small.svg")
         image_files.append(path_to_final_path)
         frame_index += 1
@@ -434,7 +437,7 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
             dropped_points.append(point_to_check)
 
     # Generate animation from the files
-    gif_path = Path(get_plots_path(), f"32_cooks_distance_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_7_cooks_distance_{mode}.gif")
     with imageio.get_writer(gif_path, mode='I', duration=animation_duration, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -444,3 +447,4 @@ def plot_animation_cooks_distance(mode: str = "eng", animation_duration: float =
 
 if __name__ == '__main__':
     plot_animation_cooks_distance("rus")
+    plot_animation_cooks_distance("eng")

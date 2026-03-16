@@ -269,7 +269,7 @@ def _compute_prediction_interval(
 def annotations_by_language(mode: str):
     if mode == "eng":
         title = "Model diagnostics on training and test samples"
-        x_label = "Number of the rooms in the apartment"
+        x_label = "Number of rooms"
         x_label_residuals = "Predicted"
         y_label_residuals = "Residuals (actual - predicted)"
         y_label = "Price, $"
@@ -504,13 +504,14 @@ def plot_metrics_per_train_test_datasets(mode: str = "eng"):
     # Minimum external indents
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME})
     plt.subplots_adjust(top=0.92, bottom=0.04, left=0.03, right=0.98)
-    raw_svg_file = Path(get_plots_path(), f"21_datasets_metric_on_train_test.svg")
+    raw_svg_file = Path(get_plots_path(), f"24_datasets_metric_on_train_test_{mode}.svg")
     plt.savefig(raw_svg_file, bbox_inches='tight')
     plt.close()
 
     save_plot_according_to_template(raw_svg_file,
-                                    Path(get_plots_path(), f"21_datasets_metric_on_train_test_{mode}.png"))
+                                    Path(get_plots_path(), f"24_datasets_metric_on_train_test_{mode}.png"))
 
 
 if __name__ == '__main__':
     plot_metrics_per_train_test_datasets("rus")
+    plot_metrics_per_train_test_datasets("eng")

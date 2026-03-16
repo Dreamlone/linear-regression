@@ -15,13 +15,13 @@ BEST_EXPECTED_RMSE_ALL = 3873.270
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        sample_label = ""
-        experiment_setup_label = ""
-        title = ""
-        train = ""
-        test = ""
-        all = ""
-        text_label = ""
+        sample_label = "Sample"
+        experiment_setup_label = "Sample size used\nto fit the model"
+        title = "RMSE values across different samples"
+        train = "train"
+        test = "test"
+        all = "full population"
+        text_label = f"RMSE of the model\nfitted on the\nfull population\n{BEST_EXPECTED_RMSE_ALL:.1f}\nest. entire data"
     elif mode == "rus":
         sample_label = "Выборка"
         experiment_setup_label = "Размер семпла по\nкоторому строилась модель"
@@ -99,12 +99,12 @@ def plot_all_datasets_in_one(mode: str = "eng"):
     sns.despine(offset=10, trim=True)
     fig.suptitle(title, fontsize=16, fontdict={'fontname': FONTNAME})
 
-    raw_svg_file = Path(get_plots_path(), f"26_train_test_all_stripplot_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"27_train_test_all_stripplot_{mode}.svg")
     plt.savefig(raw_svg_file)
     plt.close()
 
     save_plot_according_to_template(raw_svg_file,
-                                    Path(get_plots_path(), f"26_train_test_all_stripplot_{mode}.png"))
+                                    Path(get_plots_path(), f"27_train_test_all_stripplot_{mode}.png"))
 
     ###########
     # BOXPLOT #
@@ -133,13 +133,14 @@ def plot_all_datasets_in_one(mode: str = "eng"):
     sns.despine(offset=10, trim=True)
     fig.suptitle(title, fontsize=16, fontdict={'fontname': FONTNAME})
 
-    raw_svg_file = Path(get_plots_path(), f"26_train_test_all_boxplot_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"extra_10_train_test_all_boxplot_{mode}.svg")
     plt.savefig(raw_svg_file)
     plt.close()
 
     save_plot_according_to_template(raw_svg_file,
-                                    Path(get_plots_path(), f"26_train_test_all_boxplot_{mode}.png"))
+                                    Path(get_plots_path(), f"extra_10_train_test_all_boxplot_{mode}.png"))
 
 
 if __name__ == '__main__':
     plot_all_datasets_in_one("rus")
+    plot_all_datasets_in_one("eng")

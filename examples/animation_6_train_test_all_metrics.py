@@ -107,20 +107,20 @@ def _split_train_test(random_state: int, features: np.array, target: np.array, t
 
 def annotations_by_language(mode: str, sample_size: int):
     if mode == "eng":
-        x_label = "Number of the rooms in the apartment"
+        x_label = "Number of rooms"
         y_label = "Price, $"
-        title = ""
-        columns = ["Sample size", "RMSE train", "RMSE test", "RMSE all"]
+        title = "Relationship between sample size and metrics on the full dataset"
+        columns = ["Sample size", "RMSE train", "RMSE test", "RMSE full data"]
         model_title = "Fitted models"
         train_label = "Train"
         test_label = "Test"
-        sampling_title = f"Sampling {sample_size} objects"
-        all_data_title = "All data"
-        train_test_title = "Splitting on train and test"
-        small_title = ""
-        big_title = ""
-        experiment_x_label = ""
-        great_model = ""
+        sampling_title = f"Sampling {sample_size} observations"
+        all_data_title = "Full dataset"
+        train_test_title = "Train-test split"
+        small_title = "RMSE on the full dataset\n(model fitted on a sample of 10 observations)"
+        big_title = "RMSE on the full dataset\n(model fitted on a sample of 20 observations)"
+        experiment_x_label = "Experiment number"
+        great_model = "Reference model"
     elif mode == "rus":
         x_label = "Количество комнат в квартире"
         y_label = "Стоимость, $"
@@ -290,11 +290,11 @@ def generate_plot(mode: str, tmp_dir: Path,
 
     # Overall title
     fig.suptitle(title, fontsize=16, fontdict={'fontname': FONTNAME})
-    raw_svg_file = Path(tmp_dir, f"22_raw_train_test_animation_{mode}.svg")
+    raw_svg_file = Path(tmp_dir, f"animation_6_train_test_all_{mode}.svg")
     plt.savefig(raw_svg_file)
     plt.close()
 
-    plot_path = Path(tmp_dir, f"25_train_test_all_animation_{mode}_{experiment_number}_{postfix_in_file_name}.png")
+    plot_path = Path(tmp_dir, f"animation_6_train_test_all_{mode}_{experiment_number}_{postfix_in_file_name}.png")
     save_plot_according_to_template(raw_svg_file, plot_path, template_name="template_small.svg", dpi=140)
 
     return plot_path, table_to_show, lines_for_visualization
@@ -395,7 +395,7 @@ def measure_metrics_for_train_test_all(vis: bool = True, mode: str = "eng", anim
 
     # Generate animation from the files
     if vis:
-        gif_path = Path(get_plots_path(), f"25_train_test_all_animation_{mode}.gif")
+        gif_path = Path(get_plots_path(), f"animation_6_train_test_all_{mode}.gif")
         with imageio.get_writer(gif_path, mode='I', duration=animation_duration, loop=0) as writer:
             for image_file in image_files:
                 writer.append_data(imageio.imread(image_file))
@@ -409,3 +409,4 @@ def measure_metrics_for_train_test_all(vis: bool = True, mode: str = "eng", anim
 
 if __name__ == '__main__':
     measure_metrics_for_train_test_all(vis=True, mode="rus")
+    measure_metrics_for_train_test_all(vis=True, mode="eng")

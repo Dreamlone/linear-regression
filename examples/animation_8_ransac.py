@@ -42,16 +42,16 @@ def annotations_by_language(mode: str):
         final_line_label = "Финальная модель"
         table_title_final = "Модель с наибольшим\nколичеством не-выбросов"
     else:
-        best_model_label = "Best model"
+        best_model_label = "Reference model"
         sample_fit_label = "Model fit on all data"
         model = "Model"
         refit = "Train on inliers"
-        t1 = "1. Raw data"
-        t2 = "2. Random subset for init"
+        t1 = "1. All source data"
+        t2 = "2. Random subset for initializtion"
         t3 = "3. Fit model on subset"
-        t4 = "4. Outlier rejection"
+        t4 = "4. Remove outliers"
         t5 = "5. Train on inliers"
-        t6 = "6. Recheck & final count"
+        t6 = "6. Remove outliers again & final count"
         columns = ["Model", "Inliers count"]
         outliers_label = "outliers"
         final_frame_title = "Choose the final model"
@@ -322,9 +322,9 @@ def plot_animation_ransac(mode: str):
         _draw_table(ax_tbl, columns, table_rows)
         fig.suptitle(title1, fontsize=14,
                      fontdict={"fontname": FONTNAME}, va="top", y=0.98)
-        _save(fig, f"33_ransac_base_{mode}_{frame_id}", advance=True)
+        _save(fig, f"animation_8_ransac_base_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
-            frames.append(Path(tmp_dir, f"33_ransac_base_{mode}_{frame_id}.png"))
+            frames.append(Path(tmp_dir, f"animation_8_ransac_base_{mode}_{frame_id}.png"))
         frame_id += 1
 
         # 2) Random subset for initialization
@@ -346,9 +346,9 @@ def plot_animation_ransac(mode: str):
         _draw_table(ax_tbl, columns, table_rows)
         fig.suptitle(title2, fontsize=14,
                      fontdict={"fontname": FONTNAME}, va="top", y=0.98)
-        _save(fig, f"33_ransac_subset_{mode}_{frame_id}", advance=True)
+        _save(fig, f"animation_8_ransac_subset_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
-            frames.append(Path(tmp_dir, f"33_ransac_subset_{mode}_{frame_id}.png"))
+            frames.append(Path(tmp_dir, f"animation_8_ransac_subset_{mode}_{frame_id}.png"))
         frame_id += 1
 
         # 3) Model fitted on subset
@@ -381,9 +381,9 @@ def plot_animation_ransac(mode: str):
         _draw_table(ax_tbl, columns, table_rows)
         fig.suptitle(title3, fontsize=14,
                      fontdict={"fontname": FONTNAME}, va="top", y=0.98)
-        _save(fig, f"33_ransac_model_{mode}_{frame_id}", advance=True)
+        _save(fig, f"animation_8_ransac_model_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
-            frames.append(Path(tmp_dir, f"33_ransac_model_{mode}_{frame_id}.png"))
+            frames.append(Path(tmp_dir, f"animation_8_ransac_model_{mode}_{frame_id}.png"))
         frame_id += 1
 
         # 4) Outlier rejection based on subset model
@@ -435,9 +435,9 @@ def plot_animation_ransac(mode: str):
         _draw_table(ax_tbl, columns, table_rows)
         fig.suptitle(title4, fontsize=14,
                      fontdict={"fontname": FONTNAME}, va="top", y=0.98)
-        _save(fig, f"33_ransac_reject1_{mode}_{frame_id}", advance=True)
+        _save(fig, f"animation_8_ransac_reject1_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
-            frames.append(Path(tmp_dir, f"33_ransac_reject1_{mode}_{frame_id}.png"))
+            frames.append(Path(tmp_dir, f"animation_8_ransac_reject1_{mode}_{frame_id}.png"))
         frame_id += 1
 
         # 5) Train on inliers only
@@ -500,9 +500,9 @@ def plot_animation_ransac(mode: str):
         _draw_table(ax_tbl, columns, table_rows)
         fig.suptitle(title5, fontsize=14,
                      fontdict={"fontname": FONTNAME}, va="top", y=0.98)
-        _save(fig, f"33_ransac_refit_{mode}_{frame_id}", advance=True)
+        _save(fig, f"animation_8_ransac_refit_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
-            frames.append(Path(tmp_dir, f"33_ransac_refit_{mode}_{frame_id}.png"))
+            frames.append(Path(tmp_dir, f"animation_8_ransac_refit_{mode}_{frame_id}.png"))
         frame_id += 1
 
         # 6) Recheck with refitted model (logical stage 6)
@@ -555,9 +555,9 @@ def plot_animation_ransac(mode: str):
         fig.suptitle(title6, fontsize=14,
                      fontdict={"fontname": FONTNAME}, va="top", y=0.98)
         # This is logical stage 6, so advance=True
-        _save(fig, f"33_ransac_reject2_{mode}_{frame_id}", advance=True)
+        _save(fig, f"animation_8_ransac_reject2_{mode}_{frame_id}", advance=True)
         for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
-            frames.append(Path(tmp_dir, f"33_ransac_reject2_{mode}_{frame_id}.png"))
+            frames.append(Path(tmp_dir, f"animation_8_ransac_reject2_{mode}_{frame_id}.png"))
         frame_id += 1
 
         # Fast counting: many frames but progress bar does not move
@@ -630,7 +630,7 @@ def plot_animation_ransac(mode: str):
                 fig.suptitle(title6, fontsize=14,
                              fontdict={"fontname": FONTNAME}, va="top", y=0.98)
                 # Same logical stage 6: advance=False
-                _save(fig, f"33_ransac_count_{mode}_{frame_id}_{k}", advance=False)
+                _save(fig, f"animation_8_ransac_count_{mode}_{frame_id}_{k}", advance=False)
 
             n_inliers_r = int(inlier_ordered.size)
             final_counts[trial] = n_inliers_r
@@ -652,9 +652,9 @@ def plot_animation_ransac(mode: str):
             fig.suptitle(title6, fontsize=14,
                          fontdict={"fontname": FONTNAME}, va="top", y=0.98)
             # Still logical stage 6: advance=False
-            _save(fig, f"33_ransac_table_update_{mode}_{frame_id}", advance=False)
+            _save(fig, f"animation_8_ransac_table_update_{mode}_{frame_id}", advance=False)
             for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
-                frames.append(Path(tmp_dir, f"33_ransac_table_update_{mode}_{frame_id}.png"))
+                frames.append(Path(tmp_dir, f"animation_8_ransac_table_update_{mode}_{frame_id}.png"))
             frame_id += 1
         else:
             final_counts[trial] = 0
@@ -668,9 +668,9 @@ def plot_animation_ransac(mode: str):
             fig.suptitle(title6, fontsize=14,
                          fontdict={"fontname": FONTNAME}, va="top", y=0.98)
             # Also stays at logical stage 6
-            _save(fig, f"33_ransac_table_update_{mode}_{frame_id}", advance=False)
+            _save(fig, f"animation_8_ransac_table_update_{mode}_{frame_id}", advance=False)
             for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER):
-                frames.append(Path(tmp_dir, f"33_ransac_table_update_{mode}_{frame_id}.png"))
+                frames.append(Path(tmp_dir, f"animation_8_ransac_table_update_{mode}_{frame_id}.png"))
             frame_id += 1
 
     # Final frame: choose best model (stage 7)
@@ -703,11 +703,11 @@ def plot_animation_ransac(mode: str):
     fig.suptitle(final_frame_title, fontsize=14,
                  fontdict={"fontname": FONTNAME}, va="top", y=0.98)
     # Final logical stage 7: advance=True
-    _save(fig, f"33_ransac_final_choice_{mode}_{frame_id}", advance=True)
+    _save(fig, f"animation_8_ransac_final_choice_{mode}_{frame_id}", advance=True)
     for _ in range(1, MAIN_FRAMES_DURATION_MULTIPLIER * 2):
-        frames.append(Path(tmp_dir, f"33_ransac_final_choice_{mode}_{frame_id}.png"))
+        frames.append(Path(tmp_dir, f"animation_8_ransac_final_choice_{mode}_{frame_id}.png"))
 
-    gif_path = Path(get_plots_path(), f"33_ransac_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_8_ransac_{mode}.gif")
     with imageio.get_writer(gif_path, mode="I", duration=ANIM_DURATION, loop=0) as writer:
         for img in frames:
             writer.append_data(imageio.imread(img))
@@ -717,3 +717,4 @@ def plot_animation_ransac(mode: str):
 
 if __name__ == "__main__":
     plot_animation_ransac("rus")
+    plot_animation_ransac("eng")

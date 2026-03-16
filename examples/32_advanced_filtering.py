@@ -192,13 +192,13 @@ def plot_lof_boundary(ax,
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = "Metrics are cool!"
-        mahalanobis_plot = "Махаланобисово расстояние"
-        lof_plot = "Локальный фактор выброса"
+        title = "Data filtering methods (multivariate)"
+        mahalanobis_plot = "Mahalanobis distance"
+        lof_plot = "Local outlier factor"
         elliptic_envelope_plot = "Elliptic Envelope"
-        main_plot = ""
-        lof_label = ""
-        y_label = ""
+        main_plot = "Data with outliers"
+        lof_label = "Local outlier factor (LOF)"
+        y_label = "Detected outliers"
     elif mode == "rus":
         title = "Способы фильтрации данных (многомерные методы)"
         mahalanobis_plot = "Махаланобисово расстояние"
@@ -209,7 +209,7 @@ def annotations_by_language(mode: str):
         y_label = "Обнаруженные выбросы"
     else:
         raise NotImplementedError(f"Language {mode} is not supported")
-    return (title, mahalanobis_plot, lof_plot, elliptic_envelope_plot, main_plot, lof_label, y_label)
+    return title, mahalanobis_plot, lof_plot, elliptic_envelope_plot, main_plot, lof_label, y_label
 
 
 def generate_synthetic_data(n_samples=100, noise_std=1.0, outlier_fraction=0.1, random_state=2025):
@@ -288,13 +288,14 @@ def plot_filtering_method_concepts(mode: str = "eng"):
     ax_lof_data.set_xlim(MIN_X, MAX_X)
     ax_cleanup(ax_lof_data)
 
-    raw_svg_file = Path(get_plots_path(), f"30_explain_advanced_filtering_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"32_explain_advanced_filtering_{mode}.svg")
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME})
     plt.savefig(raw_svg_file)
     plt.close()
     save_plot_according_to_template(raw_svg_file,
-                                    Path(get_plots_path(), f"30_explain_advanced_filtering_{mode}.png"))
+                                    Path(get_plots_path(), f"32_explain_advanced_filtering_{mode}.png"))
 
 
 if __name__ == '__main__':
     plot_filtering_method_concepts("rus")
+    plot_filtering_method_concepts("eng")

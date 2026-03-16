@@ -39,7 +39,7 @@ def _split_train_test(random_state: int, features: np.array, target: np.array):
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        x_label = "Number of the rooms in the apartment"
+        x_label = "Number of rooms"
         y_label = "Price, $"
         title = "Models under different train and test splits"
         columns = ["Model", "MAPE train", "MAPE test"]
@@ -147,11 +147,11 @@ def generate_plot(mode: str, tmp_dir: Path,
 
     # Overall title
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME})
-    raw_svg_file = Path(tmp_dir, f"22_raw_train_test_animation_{mode}.svg")
+    raw_svg_file = Path(tmp_dir, f"animation_5_raw_train_test_{mode}.svg")
     plt.savefig(raw_svg_file)
     plt.close()
 
-    plot_path = Path(tmp_dir, f"20_train_test_animation_{mode}_{experiment_number}_{postfix_in_file_name}.png")
+    plot_path = Path(tmp_dir, f"animation_5_train_test_{mode}_{experiment_number}_{postfix_in_file_name}.png")
     save_plot_according_to_template(raw_svg_file, plot_path)
 
     return plot_path, table_to_show, lines_for_visualization
@@ -197,7 +197,7 @@ def create_animation_with_train_test(mode: str = "eng", animation_duration: floa
         image_files.append(path_to_file)
 
     # Generate animation from the files
-    gif_path = Path(get_plots_path(), f"22_train_test_animation_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_5_train_test_{mode}.gif")
     with imageio.get_writer(gif_path, mode='I', duration=animation_duration, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -207,3 +207,4 @@ def create_animation_with_train_test(mode: str = "eng", animation_duration: floa
 
 if __name__ == '__main__':
     create_animation_with_train_test("rus")
+    create_animation_with_train_test("eng")

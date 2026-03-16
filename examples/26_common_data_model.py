@@ -34,7 +34,7 @@ def annotations_by_language(mode: str):
     if mode == "eng":
         x_label = "Number of the rooms in the apartment"
         y_label = "Price, $"
-        title = "Linear regression model which were built based on the total population"
+        title = "Linear regression fitted to the full population"
         price = "price"
         room_label = "rooms number"
     elif mode == "rus":
@@ -256,14 +256,15 @@ def plot_all_datasets_in_one(mode: str = "eng"):
                   predicted, "D")
     fig.suptitle(title, fontsize=16, fontdict={'fontname': FONTNAME})
 
-    raw_svg_file = Path(get_plots_path(), f"24_common_data_model_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"26_common_data_model_{mode}.svg")
     plt.savefig(raw_svg_file)
     plt.close()
 
     save_plot_according_to_template(raw_svg_file,
-                                    Path(get_plots_path(), f"24_common_data_model_{mode}.png"),
+                                    Path(get_plots_path(), f"26_common_data_model_{mode}.png"),
                                     template_name="template_small.svg")
 
 
 if __name__ == '__main__':
     plot_all_datasets_in_one("rus")
+    plot_all_datasets_in_one("eng")

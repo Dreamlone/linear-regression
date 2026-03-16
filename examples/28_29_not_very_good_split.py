@@ -15,16 +15,16 @@ FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
 
 def annotations_by_language(mode: str, apply_distortion: bool):
     if mode == "eng":
-        x_label = "Number of the rooms in the apartment"
+        x_label = "Number of rooms"
         y_label = "Price, $"
         if apply_distortion:
-            title = ""
-            distorted_label = ""
+            title = "We can also end up with distorted data,\nfor example because of technical errors or human error"
+            distorted_label = "Distorted values"
         else:
-            title = ""
+            title = "Sometimes the relationship in the sample does not reflect the true underlying relationship"
             distorted_label = None
-        all_label = ""
-        sample_label = ""
+        all_label = "All data"
+        sample_label = "Sample"
     elif mode == "rus":
         x_label = "Количество комнат в квартире"
         y_label = "Стоимость, $"
@@ -35,7 +35,7 @@ def annotations_by_language(mode: str, apply_distortion: bool):
             title = "Когда с семплом не повезло (несмотря на его размер)"
             distorted_label = None
         all_label = "Все данные"
-        sample_label = "Семпл"
+        sample_label = "Выборка"
     else:
         raise NotImplementedError(f"Language {mode} is not supported")
     return x_label, y_label, title, all_label, sample_label, distorted_label
@@ -112,11 +112,11 @@ def plot_all_datasets_in_one(mode: str = "eng", apply_distortion: bool = False):
     fig.suptitle(title, fontsize=16, fontdict={'fontname': FONTNAME})
 
     if apply_distortion:
-        raw_svg_file = Path(get_plots_path(), f"27_not_good_sample_distorted_{mode}.svg")
-        final_plot = Path(get_plots_path(), f"27_not_good_sample_distorted_{mode}.png")
+        raw_svg_file = Path(get_plots_path(), f"29_not_good_sample_distorted_{mode}.svg")
+        final_plot = Path(get_plots_path(), f"29_not_good_sample_distorted_{mode}.png")
     else:
-        raw_svg_file = Path(get_plots_path(), f"27_not_good_sample_{mode}.svg")
-        final_plot = Path(get_plots_path(), f"27_not_good_sample_{mode}.png")
+        raw_svg_file = Path(get_plots_path(), f"28_not_good_sample_{mode}.svg")
+        final_plot = Path(get_plots_path(), f"28_not_good_sample_{mode}.png")
     plt.savefig(raw_svg_file)
     plt.close()
 
@@ -126,3 +126,5 @@ def plot_all_datasets_in_one(mode: str = "eng", apply_distortion: bool = False):
 if __name__ == '__main__':
     plot_all_datasets_in_one("rus", True)
     plot_all_datasets_in_one("rus")
+    plot_all_datasets_in_one("eng", True)
+    plot_all_datasets_in_one("eng")

@@ -11,9 +11,9 @@ FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        x_label = "Number of the rooms in the apartment"
+        x_label = "Number of rooms"
         y_label = "Price, $"
-        title = "The total population including datasets A, B, and C"
+        title = "All available data D. The statistical population including datasets A, B, and C"
     elif mode == "rus":
         x_label = "Количество комнат в квартире"
         y_label = "Стоимость, $"
@@ -51,13 +51,14 @@ def plot_all_datasets_in_one(mode: str = "eng"):
     ax.grid(color='grey', alpha=0.1)
     fig.suptitle(title, fontsize=16, fontdict={'fontname': FONTNAME})
 
-    raw_svg_file = Path(get_plots_path(), f"23_common_data_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"25_common_data_{mode}.svg")
     plt.savefig(raw_svg_file)
     plt.close()
 
     save_plot_according_to_template(raw_svg_file,
-                                    Path(get_plots_path(), f"23_common_data_{mode}.png"))
+                                    Path(get_plots_path(), f"25_common_data_{mode}.png"))
 
 
 if __name__ == '__main__':
     plot_all_datasets_in_one("rus")
+    plot_all_datasets_in_one("eng")
