@@ -20,7 +20,6 @@ def construct_title(model, poly, x_symbol="x", precision=1, latex=False):
       y = b0 + b1 * x + b2 * x^2 + ...
     Works for 1D PolynomialFeatures.
     """
-    # safe float formatting (no scientific notation)
     f = lambda v: np.format_float_positional(float(v), precision=precision, trim='-')
 
     degree = getattr(poly, "degree", len(model.coef_))
@@ -37,8 +36,6 @@ def construct_title(model, poly, x_symbol="x", precision=1, latex=False):
 
     # add terms b_p * x^p
     for p in range(1, degree + 1):
-        # for include_bias=True, coefs: [1, x, x^2, ...] -> index p
-        # for include_bias=False, coefs: [x, x^2, ...]   -> index p-1
         idx = p if include_bias else (p - 1)
         if idx >= len(coefs):
             break
@@ -138,9 +135,9 @@ def draw_poly_feature_table(ax,
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
-        degree_prefix = ""
-        table_note = ""
+        title = "Polynomial feature transformation"
+        degree_prefix = "Polynomial degree"
+        table_note = "first 5 rows of the dataset are shown"
     elif mode == "rus":
         title = "Полиномиальное преобразование"
         degree_prefix = "Степень полинома"
@@ -192,15 +189,16 @@ def plot_poly_features_models(mode: str = "eng"):
         else:
             axs[1, column_id].yaxis.set_ticklabels([])
 
-    fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME}, va="top", y=1.1)
+    fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME}, va="top", y=1.04)
 
-    raw_svg_file = Path(get_plots_path(), f"35_poly_features_{mode}.svg", bbox_inches='tight')
-    final_plot = Path(get_plots_path(), f"35_poly_features_{mode}.png")
-    plt.savefig(raw_svg_file)
+    raw_svg_file = Path(get_plots_path(), f"37_poly_features_{mode}.svg")
+    final_plot = Path(get_plots_path(), f"37_poly_features_{mode}.png")
+    plt.savefig(raw_svg_file, bbox_inches='tight')
     plt.close()
 
-    save_plot_according_to_template(raw_svg_file, final_plot, template_name="template.svg")
+    save_plot_according_to_template(raw_svg_file, final_plot, template_name="template_small.svg")
 
 
 if __name__ == '__main__':
     plot_poly_features_models("rus")
+    plot_poly_features_models("eng")

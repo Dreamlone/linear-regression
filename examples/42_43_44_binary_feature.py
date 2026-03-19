@@ -168,7 +168,7 @@ def draw_binary_regression_models():
             ax_5.set_title(r"Model with interaction term $x_1$=0", fontname=FONTNAME)
         row_index += 1
 
-    raw_svg_file = Path(get_plots_path(), "41_binary_features.svg")
+    raw_svg_file = Path(get_plots_path(), "42_43_44_binary_features.svg")
     plt.savefig(raw_svg_file)
     plt.close()
 

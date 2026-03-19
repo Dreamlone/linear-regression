@@ -15,7 +15,7 @@ MAX_Y = 70000
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
+        title = "Multiple linear regression"
     elif mode == "rus":
         title = "Пример многомерной регрессии"
     else:
@@ -129,8 +129,8 @@ def plot_new_extended_dataset(mode: str = "eng"):
     if title is not None:
         plt.suptitle(title, fontsize=15)
 
-    raw_svg_file = Path(get_plots_path(), f"36_{mode}.svg")
-    final_plot = Path(get_plots_path(), f"36_{mode}.png")
+    raw_svg_file = Path(get_plots_path(), f"35_multiple_linear_regression_{mode}.svg")
+    final_plot = Path(get_plots_path(), f"35_multiple_linear_regression_{mode}.png")
     plt.savefig(raw_svg_file, bbox_inches='tight')
     plt.close()
 

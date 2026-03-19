@@ -19,7 +19,7 @@ TARGET_TICKS = [10, 20, 30]
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
+        title = "How important is the feature"
     elif mode == "rus":
         title = "Насколько важен признак"
     else:
@@ -126,10 +126,11 @@ def plot_basement_for_feature_importance(mode: str = "eng"):
                      title="Both features are informative but scaled", c_to_show=c_to_show_)
 
     plt.suptitle(title, fontsize=15, fontname=FONTNAME)
-    raw_svg_file = Path(get_plots_path(), f"43_feature_importance_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"46_feature_importance_{mode}.svg")
     plt.savefig(raw_svg_file, bbox_inches="tight")
     plt.close()
 
 
 if __name__ == "__main__":
     plot_basement_for_feature_importance("rus")
+    plot_basement_for_feature_importance("eng")

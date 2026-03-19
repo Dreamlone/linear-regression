@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Dict, Union, List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,44 +11,16 @@ FONTNAME = "Comic Sans MS"
 FONTDICT = {'fontsize': 14, 'fontname': FONTNAME}
 
 
-def show_normalization():
-    np.set_printoptions(precision=2, suppress=True)
-
-    features = np.array([[1, 10],
-                         [2, 20],
-                         [3, 505]])
-    min_max = MinMaxScaler()
-    transformed = min_max.fit_transform(np.copy(features))
-    standard_scaler = StandardScaler()
-    transformed_sc = standard_scaler.fit_transform(np.copy(features))
-
-    print("Training sample. MinMaxScaler")
-    print(transformed.round(2))
-    print("Training sample. StandardScaler")
-    print(transformed_sc.round(2))
-
-    new_features = np.array([[0, 5],
-                             [2, 20],
-                             [100, 30]])
-    print("New data. MinMaxScaler")
-    new_transformed = min_max.transform(np.copy(new_features))
-    print(new_transformed.round(2))
-
-    print("New data. StandardScaler")
-    new_transformed = standard_scaler.transform(np.copy(new_features))
-    print(new_transformed.round(2))
-
-
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
-        data_title = ""
-        x_label = ""
-        y_label = ""
-        rooms_label = ""
-        metro_distance = ""
-        min_max_title = ""
-        standard_scaling_title = ""
+        title = "Results of normalization and standardization"
+        data_title = "Original features"
+        x_label = "Observation index in the dataset"
+        y_label = "Feature value"
+        rooms_label = "Number of rooms"
+        metro_distance = "Distance to the nearest metro station"
+        min_max_title = "Min-max normalization"
+        standard_scaling_title = "Standardization"
     elif mode == "rus":
         title = "Результаты нормализации и стандартизации"
         data_title = "Исходные признаки"
@@ -129,8 +100,8 @@ def plot_normalization_effect(mode: str = "eng"):
 
     fig.suptitle(title, fontsize=18, fontdict={'fontname': FONTNAME}, va="top", y=0.92)
 
-    raw_svg_file = Path(get_plots_path(), f"44_normalization_{mode}.svg")
-    final_plot = Path(get_plots_path(), f"44_normalization_{mode}.png")
+    raw_svg_file = Path(get_plots_path(), f"47_normalization_{mode}.svg")
+    final_plot = Path(get_plots_path(), f"47_normalization_{mode}.png")
     plt.savefig(raw_svg_file)
     plt.close()
 
@@ -138,5 +109,5 @@ def plot_normalization_effect(mode: str = "eng"):
 
 
 if __name__ == "__main__":
-    show_normalization()
     plot_normalization_effect("rus")
+    plot_normalization_effect("eng")

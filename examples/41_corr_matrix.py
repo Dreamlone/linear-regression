@@ -19,7 +19,7 @@ def annotations_by_language(mode: str):
         field_names = {
             "rooms": "Rooms",
             "area": "Area, m²",
-            "metro_distance": "Distance\nto subway, m",
+            "metro_distance": "Distance\nto the metro, m",
             "price": "Price, $"
         }
         cbar_label = "Correlation coefficient"
@@ -106,14 +106,15 @@ def plot_correlation_matrix(mode: str = "eng"):
 
     fig.suptitle(title, fontsize=16, fontdict={'fontname': FONTNAME}, x=0.45, y=0.89)
 
-    raw_svg_file = Path(get_plots_path(), f"40_corr_matrix_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"41_corr_matrix_{mode}.svg")
     plt.savefig(raw_svg_file, bbox_inches="tight")
     plt.close()
     save_plot_according_to_template(
         raw_svg_file,
-        Path(get_plots_path(), f"40_corr_matrix_{mode}.png")
+        Path(get_plots_path(), f"41_corr_matrix_{mode}.png")
     )
 
 
 if __name__ == '__main__':
     plot_correlation_matrix("rus")
+    plot_correlation_matrix("eng")

@@ -3,9 +3,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder, TargetEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 
-from examples.paths import get_plots_path
 from examples.utils import get_extended_dataset
 
 FONTNAME = "Comic Sans MS"

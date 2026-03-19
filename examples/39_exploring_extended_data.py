@@ -29,10 +29,16 @@ COLUMN_BORDERS_BY_NAME = {"rooms": {"ticks": [1, 2, 3, 4, 5], "min": 0.5, "max":
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
-        x_label_by_column = {}
-        y_label = ""
-        int_method = ""
+        title = "Visualizing multivariate data"
+        x_label_by_column = {
+            "rooms": "number of rooms",
+            "area": "apartment area",
+            "metro_distance": "distance to the metro",
+            "city": "city",
+            "ac_in_apartment": "air conditioning"
+        }
+        y_label = "price"
+        int_method = "Interpolation method"
     elif mode == "rus":
         title = "Визуализация многомерных данных"
         x_label_by_column = {"rooms": "количество комнат",
@@ -376,8 +382,8 @@ def plot_new_extended_dataset(mode: str = "eng"):
 
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME}, va="top")
 
-    raw_svg_file = Path(get_plots_path(), f"37_eda_extended_dataset_{mode}.svg")
-    final_plot = Path(get_plots_path(), f"37_eda_extended_dataset_{mode}.png")
+    raw_svg_file = Path(get_plots_path(), f"39_eda_extended_dataset_{mode}.svg")
+    final_plot = Path(get_plots_path(), f"39_eda_extended_dataset_{mode}.png")
     plt.savefig(raw_svg_file)
     plt.close()
 
@@ -386,3 +392,4 @@ def plot_new_extended_dataset(mode: str = "eng"):
 
 if __name__ == '__main__':
     plot_new_extended_dataset("rus")
+    plot_new_extended_dataset("eng")

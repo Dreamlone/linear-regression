@@ -207,11 +207,11 @@ def plot_main_graph(ax, x, y, best_model_label, ransac_model, cooks_model, first
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
-        first_plot_title = ""
-        best_model_label = ""
-        ransac_model = "RANSAC"
-        cooks_model = ""
+        title = "Model metrics on the population"
+        first_plot_title = "Models fitted to\nfiltered data"
+        best_model_label = "Reference model"
+        ransac_model = "Random sample consensus"
+        cooks_model = "Cook’s distance"
     elif mode == "rus":
         title = "Метрики моделей на генеральной совокупности"
         first_plot_title = "Модели построенные на\nочищенных данных"
@@ -275,7 +275,7 @@ def plot_ransac_and_cooks_models(mode: str = "eng"):
 
     fig.suptitle(title, fontsize=20, fontdict={'fontname': FONTNAME}, va="top", y=0.98)
 
-    raw_svg_file = Path(get_plots_path(), f"34_ransac_cook_models_{mode}.svg", bbox_inches='tight')
+    raw_svg_file = Path(get_plots_path(), f"34_ransac_cook_models_{mode}.svg")
     final_plot = Path(get_plots_path(), f"34_ransac_cook_models_{mode}.png")
     plt.savefig(raw_svg_file)
     plt.close()
@@ -285,3 +285,4 @@ def plot_ransac_and_cooks_models(mode: str = "eng"):
 
 if __name__ == '__main__':
     plot_ransac_and_cooks_models("rus")
+    plot_ransac_and_cooks_models("eng")

@@ -5,7 +5,7 @@ from typing import Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 from matplotlib.colors import Normalize
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -346,6 +346,7 @@ def plot_feature_surface(ax, features_raw, target_raw,
 
 
 def explore_coefficients_landscape_3d(mode: str = "eng",
+                                      label_animation: str = "animation_12",
                                       features_to_use: Union[list,None] = None):
     """ Create a 3d plot with multiple coefficients """
     if features_to_use is None:
@@ -446,15 +447,15 @@ def explore_coefficients_landscape_3d(mode: str = "eng",
         scaled_label = annotations.bake_scatter_label_scaled(coeff_b0_i, coeff_b1_i, coeff_b2_i)
         ax3.set_title(f"{scaled_label}\n\n{raw_label}", fontdict={'fontsize': 12, 'fontname': FONTNAME})
 
-        raw_svg_file = Path(tmp_dir, f"46_explore_coefficients_3d_{mode}_{image_index}.svg")
+        raw_svg_file = Path(tmp_dir, f"{label_animation}_explore_coefficients_3d_{mode}_{image_index}.svg")
         plt.savefig(raw_svg_file, bbox_inches='tight')
         plt.close()
-        path_to_final_path = Path(tmp_dir, f"46_explore_coefficients_3d_{mode}_{image_index}.png")
+        path_to_final_path = Path(tmp_dir, f"{label_animation}_explore_coefficients_3d_{mode}_{image_index}.png")
         save_plot_according_to_template(raw_svg_file, path_to_final_path, template_name="template_small.svg", dpi=100)
         image_files.append(path_to_final_path)
 
     features_label = '_'.join(features_to_use)
-    gif_path = Path(get_plots_path(), f"46_explore_coefficients_3d_{features_label}_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"{label_animation}_explore_coefficients_3d_{features_label}_{mode}.gif")
     with imageio.get_writer(gif_path, mode='I', duration=ANIMATION_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -464,6 +465,9 @@ def explore_coefficients_landscape_3d(mode: str = "eng",
 
 if __name__ == '__main__':
     features_to_use = ["rooms", "metro_distance"]
-    explore_coefficients_landscape_3d("rus", features_to_use)
+    explore_coefficients_landscape_3d("rus", "animation_12", features_to_use)
+    explore_coefficients_landscape_3d("eng", "animation_12", features_to_use)
+
     features_to_use = ["rooms", "area"]
-    explore_coefficients_landscape_3d("rus", features_to_use)
+    explore_coefficients_landscape_3d("rus", "animation_13", features_to_use)
+    explore_coefficients_landscape_3d("eng", "animation_13", features_to_use)

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 from scipy.interpolate import griddata
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
@@ -88,7 +88,7 @@ class EngAnnotations(Annotations):
     map_title: str = "Dependence of METRIC on intercept and slope"
     map_x_axis: str = r"Intercept scaled ($b_0$)"
     map_y_axis: str = r"Slope scaled ($b_1$)"
-    scatter_x_axis: str = "Number of the rooms in the apartment (x)"
+    scatter_x_axis: str = "Number of rooms in the apartment (x)"
     scatter_y_axis: str = "Price, $ (y)"
 
     def get_map_title(self, metric: str):
@@ -187,6 +187,10 @@ def compose_cases_to_explore(steps_per_section: int, sections: list):
 
 def explore_coefficients_landscape(mode: str = "eng", metric: str = "mae"):
     """ Create a 2d map with coefficients vs MAE """
+    if metric == "mae":
+        label_animation = "animation_10"
+    else:
+        label_animation = "animation_11"
     annotations = annotations_by_language(mode)
     sections = [
         {"start": [-1.5, -1.5], "end": [-1.5, 0.0]},
@@ -264,15 +268,15 @@ def explore_coefficients_landscape(mode: str = "eng", metric: str = "mae"):
         scaled_label = annotations.bake_scatter_label_scaled(intercept_i, slope_i)
         ax.set_title(f"{scaled_label}\n\n{raw_label}", fontdict={'fontsize': 12, 'fontname': FONTNAME})
 
-        raw_svg_file = Path(tmp_dir, f"45_explore_coefficients_{mode}_{image_index}.svg")
+        raw_svg_file = Path(tmp_dir, f"{label_animation}_explore_coefficients_{mode}_{image_index}.svg")
         plt.savefig(raw_svg_file, bbox_inches='tight')
         plt.close()
-        path_to_final_path = Path(tmp_dir, f"45_explore_coefficients_{mode}_{image_index}.png")
+        path_to_final_path = Path(tmp_dir, f"{label_animation}_explore_coefficients_{mode}_{image_index}.png")
         save_plot_according_to_template(raw_svg_file, path_to_final_path, template_name="template_small.svg", dpi=100)
         image_files.append(path_to_final_path)
 
     # Generate animation from the files
-    gif_path = Path(get_plots_path(), f"45_explore_coefficients_{metric}_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"{label_animation}_explore_coefficients_{metric}_{mode}.gif")
     with imageio.get_writer(gif_path, mode='I', duration=ANIMATION_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -282,3 +286,7 @@ def explore_coefficients_landscape(mode: str = "eng", metric: str = "mae"):
 
 if __name__ == '__main__':
     explore_coefficients_landscape("rus", metric="mae")
+    explore_coefficients_landscape("rus", metric="mape")
+
+    explore_coefficients_landscape("eng", metric="mae")
+    explore_coefficients_landscape("eng", metric="mape")

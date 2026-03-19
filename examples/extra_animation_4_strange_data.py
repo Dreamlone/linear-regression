@@ -24,10 +24,10 @@ DPI = 100
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
-        rooms_label = ""
-        metro_distance_label = ""
-        target_label = ""
+        title = "Sometimes one more dimension\nis needed to see the full picture"
+        rooms_label = "number of rooms"
+        metro_distance_label = "distance to the metro"
+        target_label = "price"
         labels = ["apartment 1", "apartment 2", "apartment 3"]
     elif mode == "rus":
         title = "Иногда для полной картины\nне хватает дополнительного измерения"
@@ -220,8 +220,8 @@ def plot_strange_data_case(mode: str = "eng"):
 
         fig.suptitle(title, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=1.1, x=0.55)
 
-        raw_svg_file = Path(tmp_dir, f"39_strange_data_{mode}.svg")
-        final_plot = Path(tmp_dir, f"39_strange_data_{mode}_{vertical_view_id}_{view_id}.png")
+        raw_svg_file = Path(tmp_dir, f"extra_animation_4_strange_data_{mode}.svg")
+        final_plot = Path(tmp_dir, f"extra_animation_4_strange_data_{mode}_{vertical_view_id}_{view_id}.png")
         plt.savefig(raw_svg_file, bbox_inches='tight')
         plt.close()
 
@@ -231,7 +231,7 @@ def plot_strange_data_case(mode: str = "eng"):
         frames.append(final_plot)
 
 
-    gif_path = Path(get_plots_path(), f"39_strange_data_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"extra_animation_4_strange_data_{mode}.gif")
     with imageio.get_writer(gif_path, mode='I', duration=ANIM_DURATION, loop=0) as writer:
         for img in frames:
             writer.append_data(imageio.imread(img))
@@ -241,4 +241,4 @@ def plot_strange_data_case(mode: str = "eng"):
 
 if __name__ == '__main__':
     plot_strange_data_case("rus")
-
+    plot_strange_data_case("eng")

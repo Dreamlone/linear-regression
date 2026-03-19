@@ -31,9 +31,15 @@ COLUMN_BORDERS_BY_NAME = {"rooms": {"ticks": [1, 2, 3, 4, 5], "min": 0.5, "max":
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
-        feature_label_by_column = {}
-        y_label = ""
+        title = "Visualizing multivariate data"
+        feature_label_by_column = {
+            "rooms": "number of rooms",
+            "area": "apartment area",
+            "metro_distance": "distance to the metro",
+            "city": "city",
+            "ac_in_apartment": "air conditioning"
+        }
+        y_label = "price"
     elif mode == "rus":
         title = "Визуализация многомерных данных"
         feature_label_by_column = {"rooms": "количество комнат",
@@ -298,8 +304,8 @@ def plot_new_extended_dataset_as_3d(mode: str = "eng"):
 
         fig.suptitle(title, fontsize=18, fontdict={'fontname': FONTNAME}, va="top", y=0.95)
 
-        raw_svg_file = Path(tmp_dir, f"38_3d_{mode}.svg")
-        final_plot = Path(tmp_dir, f"38_3d_{mode}_{vertical_view_id}_{view_id}.png")
+        raw_svg_file = Path(tmp_dir, f"animation_9_3d_{mode}.svg")
+        final_plot = Path(tmp_dir, f"animation_9_3d_{mode}_{vertical_view_id}_{view_id}.png")
         plt.savefig(raw_svg_file)
         plt.close()
 
@@ -309,7 +315,7 @@ def plot_new_extended_dataset_as_3d(mode: str = "eng"):
         frames.append(final_plot)
 
 
-    gif_path = Path(get_plots_path(), f"38_3d_rotation_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_9_3d_rotation_{mode}.gif")
     with imageio.get_writer(gif_path, mode='I', duration=ANIM_DURATION, loop=0) as writer:
         for img in frames:
             writer.append_data(imageio.imread(img))
@@ -319,3 +325,4 @@ def plot_new_extended_dataset_as_3d(mode: str = "eng"):
 
 if __name__ == '__main__':
     plot_new_extended_dataset_as_3d("rus")
+    plot_new_extended_dataset_as_3d("eng")
