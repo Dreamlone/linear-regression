@@ -43,17 +43,17 @@ class RusAnnotations:
 
 @dataclass
 class EngAnnotations:
-    title: str = ""
-    landscape_title: str = ""
-    landscape_x_axis: str = ""
-    landscape_y_axis: str = ""
-    slice_title: str = ""
-    slice_x_axis: str = ""
-    slice_y_axis: str = ""
-    scatter_title: str = ""
-    scatter_x_axis: str = "Number of the rooms in the apartment, scaled (x)"
+    title: str = "Number of iterations (MSE evaluations)"
+    landscape_title: str = "Error function landscape"
+    landscape_x_axis: str = "Intercept scaled\n($b_0$)"
+    landscape_y_axis: str = "Slope scaled\n($b_1$)"
+    slice_title: str = "Direction"
+    slice_x_axis: str = "Intercept scaled\n($b_0$)"
+    slice_y_axis: str = "Model error (MSE)"
+    scatter_title: str = "Model with selected coefficients"
+    scatter_x_axis: str = "Number of rooms, scaled (x)"
     scatter_y_axis: str = "Price, scaled (y)"
-    latest_point: str = ""
+    latest_point: str = "Previous iteration"
 
 
 def annotations_by_language(mode: str):
@@ -556,7 +556,7 @@ def show_one_slice(mode: str = "eng"):
             prev_index = int(path_indices[step_idx - 1]) if step_idx > 0 else None
             next_dir = int(move_directions[step_idx]) if step_idx < len(move_directions) else 0
 
-            frame_png = Path(tmp_dir, f"54_frame_{frame_idx}.png")
+            frame_png = Path(tmp_dir, f"animation_20_frame_{frame_idx}.png")
             render_frame(
                 context=context,
                 intercept_index=int(intercept_index),
@@ -573,7 +573,7 @@ def show_one_slice(mode: str = "eng"):
         last_eval = int(mse_evaluations[-1])
         pause_prev = int(path_indices[-2]) if len(path_indices) > 1 else None
         for _ in [1, 2]:
-            frame_png = Path(tmp_dir, f"54_frame_{frame_idx}.png")
+            frame_png = Path(tmp_dir, f"animation_20_frame_{frame_idx}.png")
             render_frame(
                 context=context,
                 intercept_index=int(path_indices[-1]),
@@ -586,7 +586,7 @@ def show_one_slice(mode: str = "eng"):
             image_files.append(frame_png)
             frame_idx += 1
 
-    gif_path = Path(get_plots_path(), f"54_one_dimension_slice_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_20_one_dimension_slice_{mode}.gif")
     with imageio.get_writer(gif_path, mode="I", duration=ANIM_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -596,3 +596,4 @@ def show_one_slice(mode: str = "eng"):
 
 if __name__ == "__main__":
     show_one_slice("rus")
+    show_one_slice("eng")

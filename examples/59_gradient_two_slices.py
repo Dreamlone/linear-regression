@@ -48,18 +48,25 @@ class RusAnnotations:
 
 @dataclass
 class EngAnnotations:
-    suptitle: str = ""
-    landscape_title: str = "MSE landscape and two slices through current point"
-    landscape_x_axis: str = "Intercept, scaled ($b_0$)"
-    landscape_y_axis: str = "Slope, scaled ($b_1$)"
+    suptitle: str = ("The gradient in a multivariate space is a vector made up of partial derivatives\n"
+                     "The negative gradient is the direction of the steepest decrease of the function")
 
-    left_title: str = "Slice over $b_0$ (fixed $b_1$)"
-    left_x_axis: str = "Intercept, scaled ($b_0$)"
+    landscape_title = (
+        r"$-\nabla_{(b_0,b_1)}\,\mathrm{MSE}"
+        r"=\left(-\frac{\partial\,\mathrm{MSE}}{\partial b_0},"
+        r"\ -\frac{\partial\,\mathrm{MSE}}{\partial b_1}\right)$"
+    )
+    landscape_x_axis: str = "Intercept scaled\n($b_0$)"
+    landscape_y_axis: str = "Slope scaled\n($b_1$)"
+
+    left_title: str = r"$-\frac{\partial\,\mathrm{MSE}}{\partial b_0}$, derivative in the slice over $b_0$ at fixed $b_1$"
+    left_x_axis: str = "Intercept scaled ($b_0$)"
     left_y_axis: str = "Model error (MSE)"
 
-    right_title: str = "Slice over $b_1$ (fixed $b_0$)"
-    right_x_axis: str = "Slope, scaled ($b_1$)"
+    right_title: str = r"$-\frac{\partial\,\mathrm{MSE}}{\partial b_1}$, derivative in the slice over $b_1$ at fixed $b_0$"
+    right_x_axis: str = "Slope scaled ($b_1$)"
     right_y_axis: str = "Model error (MSE)"
+
 
 def annotations_by_language(mode: str) -> Union[RusAnnotations, EngAnnotations]:
     if mode == "rus":
@@ -480,11 +487,11 @@ def show_two_slices_static(
         x=0.52,
         y=1.15,
     )
-    raw_svg = Path(get_plots_path(), f"58_two_slices_static_{mode}.svg")
+    raw_svg = Path(get_plots_path(), f"59_two_slices_static_{mode}.svg")
     plt.savefig(raw_svg, bbox_inches="tight")
     plt.close(fig)
 
-    out_png = Path(get_plots_path(), f"58_two_slices_static_{mode}.png")
+    out_png = Path(get_plots_path(), f"59_two_slices_static_{mode}.png")
     save_plot_according_to_template(
         raw_svg,
         out_png,
@@ -497,3 +504,4 @@ def show_two_slices_static(
 
 if __name__ == "__main__":
     show_two_slices_static(mode="rus")
+    show_two_slices_static(mode="eng")

@@ -47,24 +47,23 @@ class RusAnnotations:
 
 @dataclass
 class EngAnnotations:
-    landscape_title: str = ""
-    best_model: str = ""
-    map_title: str = ""
-    map_x_axis: str = r"Intercept scaled ($b_0$)"
-    map_y_axis: str = r"Slope scaled ($b_1$)"
-    scatter_title: str = ""
-    scatter_x_axis: str = "Number of the rooms in the apartment, scaled (x)"
+    landscape_title: str = "Error function landscape"
+    best_model: str = "Best model"
+    map_title: str = "Explored combinations"
+    map_x_axis: str = "Intercept scaled\n($b_0$)"
+    map_y_axis: str = "Slope scaled\n($b_1$)"
+    scatter_title: str = "Model with selected coefficients"
+    scatter_x_axis: str = "Number of rooms, scaled (x)"
     scatter_y_axis: str = "Price, scaled (y)"
 
     @staticmethod
     def get_title(method: str):
         if method == "brute":
-            title = ""
+            title = "Coefficient optimization by exhaustive search"
         else:
-            title = ""
+            title = "Coefficient optimization by random search"
 
         return title
-
 
 def annotations_by_language(mode: str):
     if mode == "eng":
@@ -403,6 +402,7 @@ def generate_frame(intercept_i, slope_i, coeff_b0, coeff_b1, metric_values, inte
 def show_optimal_b_search(mode: str = "eng", method: str = "brute"):
     iteration_number_per_coefficient = 3
     if method == "brute":
+        file_label = "animation_18"
         coefficients = np.linspace(
             MIN_COEFFICIENT_BORDER + 0.5,
             MAX_COEFFICIENT_BORDER - 0.5,
@@ -410,6 +410,7 @@ def show_optimal_b_search(mode: str = "eng", method: str = "brute"):
         )
         coeff_grid_points = list(product(coefficients, coefficients))
     else:
+        file_label = "animation_19"
         seed = 2007
         rng = np.random.default_rng(seed)
 
@@ -454,11 +455,11 @@ def show_optimal_b_search(mode: str = "eng", method: str = "brute"):
                                         explored_coeff_b1, explored_rmse, method)
         ax_map.set_title(annotations.map_title, fontsize=14, fontdict={"fontname": FONTNAME}, y=1.1)
 
-        raw_svg_file = Path(tmp_dir, f"52_optimization_direct_{mode}.svg")
+        raw_svg_file = Path(tmp_dir, f"{file_label}_optimization_direct_{mode}.svg")
         plt.savefig(raw_svg_file, bbox_inches="tight")
         plt.close()
 
-        path_to_final_path = Path(tmp_dir, f"52_optimization_direct_{mode}_{image_index}.png")
+        path_to_final_path = Path(tmp_dir, f"{file_label}_optimization_direct_{mode}_{image_index}.png")
         save_plot_according_to_template(
             raw_svg_file,
             path_to_final_path,
@@ -484,11 +485,11 @@ def show_optimal_b_search(mode: str = "eng", method: str = "brute"):
                                annotations, coeff_grid_points, explored_coeff_b0,
                                explored_coeff_b1, explored_rmse, method)
     ax_map.set_title(annotations.best_model, fontsize=14, fontdict={"fontname": FONTNAME}, c='red', y=1.1)
-    raw_svg_file = Path(tmp_dir, f"52_optimization_direct_{mode}.svg")
+    raw_svg_file = Path(tmp_dir, f"{file_label}_optimization_direct_{mode}.svg")
     plt.savefig(raw_svg_file, bbox_inches="tight")
     plt.close()
 
-    path_to_final_path = Path(tmp_dir, f"52_optimization_direct_{mode}_{image_index}.png")
+    path_to_final_path = Path(tmp_dir, f"{file_label}_optimization_direct_{mode}_{image_index}.png")
     save_plot_according_to_template(
         raw_svg_file,
         path_to_final_path,
@@ -500,7 +501,7 @@ def show_optimal_b_search(mode: str = "eng", method: str = "brute"):
     image_files.append(path_to_final_path)
     image_files.append(path_to_final_path)
 
-    gif_path = Path(get_plots_path(), f"52_optimization_direct_{method}_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"{file_label}_optimization_direct_{method}_{mode}.gif")
     with imageio.get_writer(gif_path, mode="I", duration=ANIMATION_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -512,3 +513,6 @@ def show_optimal_b_search(mode: str = "eng", method: str = "brute"):
 if __name__ == "__main__":
     show_optimal_b_search("rus", "brute")
     show_optimal_b_search("rus", "random")
+
+    show_optimal_b_search("eng", "brute")
+    show_optimal_b_search("eng", "random")

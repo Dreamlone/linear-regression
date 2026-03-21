@@ -40,15 +40,18 @@ class RusAnnotations:
 
 @dataclass
 class EngAnnotations:
-    title: str = ""
-    landscape_title: str = ""
-    landscape_x_axis: str = ""
-    landscape_y_axis: str = ""
-    slice_title: str = ""
-    slice_x_axis: str = ""
-    slice_y_axis: str = ""
-    scatter_title: str = ""
-    scatter_x_axis: str = "Number of the rooms in the apartment, scaled (x)"
+    title: str = ("Temporarily simplify the problem and optimize only one coefficient, $b_0$"
+                  "\nDetermine the direction of the next step"
+                  "\nIf current MSE decreases compared with the previous one, keep moving, "
+                  "if the error increases, move in the opposite direction")
+    landscape_title: str = "Error function landscape"
+    landscape_x_axis: str = "Intercept scaled\n($b_0$)"
+    landscape_y_axis: str = "Slope scaled\n($b_1$)"
+    slice_title: str = "Slice of $b_0$ values at a fixed value of $b_1$\n"
+    slice_x_axis: str = "Intercept scaled\n($b_0$)"
+    slice_y_axis: str = "Model error (MSE)"
+    scatter_title: str = "Model with selected coefficients"
+    scatter_x_axis: str = "Number of rooms, scaled (x)"
     scatter_y_axis: str = "Price, scaled (y)"
 
 
@@ -476,11 +479,11 @@ def show_one_slice(mode: str = "eng"):
 
     fig.suptitle(annotations.title, fontsize=16, fontdict={"fontname": FONTNAME}, va="top", x=0.52, y=1.4)
 
-    raw_svg_file = Path(get_plots_path(), f"53_one_dimension_slice_{mode}.svg")
+    raw_svg_file = Path(get_plots_path(), f"57_one_dimension_slice_{mode}.svg")
     plt.savefig(raw_svg_file, bbox_inches="tight")
     plt.close()
 
-    path_to_final_path = Path(get_plots_path(), f"53_one_dimension_slice_{mode}.png")
+    path_to_final_path = Path(get_plots_path(), f"57_one_dimension_slice_{mode}.png")
     save_plot_according_to_template(
         raw_svg_file,
         path_to_final_path,
@@ -491,3 +494,4 @@ def show_one_slice(mode: str = "eng"):
 
 if __name__ == "__main__":
     show_one_slice("rus")
+    show_one_slice("eng")

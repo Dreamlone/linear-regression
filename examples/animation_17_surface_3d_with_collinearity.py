@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -49,16 +49,16 @@ def draw_arrow(
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
-        vector_title = ""
+        title = r"Multivariate linear regression when the columns of $X$ are linearly dependent"
+        vector_title = r"The subspace $\mathrm{Col}(X)$ and two different decompositions of the same $\hat{y}$"
         scatter_title_top = "Model 1"
         scatter_title_bottom = "Model 2"
-        obj1_label = "Object 1"
-        obj2_label = "Object 2"
-        obj3_label = "Object 3"
-        x1_label = "Feature x1"
-        x2_label = "Feature x2"
-        y_label = "Response y"
+        obj1_label = "Observation 1"
+        obj2_label = "Observation 2"
+        obj3_label = "Observation 3"
+        x1_label = "Feature $x_1$"
+        x2_label = "Feature $x_2$"
+        y_label = "Target $y$"
     elif mode == "rus":
         title = r"Многомерная линейная регрессия когда столбцы $X$ линейно зависимы"
         vector_title = r"Подпространство $\mathrm{Col}(X)$ и два разных разложения одного и того же $\hat{y}$"
@@ -382,7 +382,7 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
 
         figure.suptitle(title, fontsize=14, fontdict={"fontname": FONTNAME}, va="top", x=0.50, y=0.97)
 
-        raw_svg_file = Path(tmp_dir, f"51_surface_3d_with_collinearity_{mode}_raw.svg")
+        raw_svg_file = Path(tmp_dir, f"animation_17_surface_3d_with_collinearity_{mode}_raw.svg")
         if view == first_view_id:
             figure.canvas.draw()
             renderer = figure.canvas.get_renderer()
@@ -392,11 +392,11 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
         plt.savefig(raw_svg_file, bbox_inches=fixed_bbox)
         plt.close()
 
-        final_path = Path(tmp_dir, f"51_surface_3d_with_collinearity_{mode}_{view_id}.png")
+        final_path = Path(tmp_dir, f"animation_17_surface_3d_with_collinearity_{mode}_{view_id}.png")
         save_plot_according_to_template(raw_svg_file, final_path, template_name="template_small.svg", dpi=DPI)
         image_files.append(final_path)
 
-    gif_path = Path(get_plots_path(), f"51_surface_3d_with_collinearity_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_17_surface_3d_with_collinearity_{mode}.gif")
     with imageio.get_writer(gif_path, mode="I", duration=ANIM_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -406,4 +406,5 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
 
 
 if __name__ == "__main__":
-    plot_three_observations_vector_surface("rus")
+    # plot_three_observations_vector_surface("rus")
+    plot_three_observations_vector_surface("eng")

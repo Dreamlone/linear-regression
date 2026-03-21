@@ -30,6 +30,8 @@ SLICE_YLIM = (0.0, 4.5)
 
 @dataclass
 class RusAnnotations:
+    title: str = "Градиент и антиградиент MSE (градиентный спуск по $b_0$)"
+    landscape: str = "Ландшафт MSE и антиградиент"
     landscape_x_axis: str = "Сдвиг\nстандартизированный\n($b_0$)"
     landscape_y_axis: str = "Наклон\nстандартизированный\n($b_1$)"
     slice_x_axis: str = "Сдвиг стандартизированный ($b_0$)"
@@ -37,10 +39,15 @@ class RusAnnotations:
     scatter_title: str = "Модель с выбранными коэффициентами"
     scatter_x_axis: str = "Количество комнат стандартизированное\n(x)"
     scatter_y_axis: str = "Стоимость, стандартизированная\n(y)"
+    antigradient: str = "антиградиент"
+    gradient: str = "градиент"
+    learning_rate_label: str = "Шаг спуска"
 
 
 @dataclass
 class EngAnnotations:
+    title: str = "Gradient and negative gradient of MSE (gradient descent over $b_0$)"
+    landscape: str = "MSE landscape and negative gradient"
     landscape_x_axis: str = "Intercept, scaled ($b_0$)"
     landscape_y_axis: str = "Slope, scaled ($b_1$)"
     slice_x_axis: str = "Intercept, scaled ($b_0$)"
@@ -48,6 +55,9 @@ class EngAnnotations:
     scatter_title: str = "Model with chosen coefficients"
     scatter_x_axis: str = "Number of rooms, scaled (x)"
     scatter_y_axis: str = "Price, scaled (y)"
+    antigradient: str = "negative gradient"
+    gradient: str = "gradient"
+    learning_rate_label: str = "Descent step"
 
 
 def annotations_by_language(mode: str):
@@ -333,7 +343,7 @@ def render_frame(
     ax_land.set_ylabel(annotations.landscape_y_axis, fontdict={"fontsize": 9, "fontname": FONTNAME})
     ax_land.set_zlabel("")  # no Z label
     ax_land.set_title(
-        "Ландшафт MSE и антиградиент",
+        annotations.landscape,
         fontsize=12,
         fontdict={"fontname": FONTNAME},
         x=0.75,
@@ -352,7 +362,7 @@ def render_frame(
         zorder=7,
     )
 
-    # --- Anti-gradient arrow on landscape ---
+    # Anti-gradient arrow on landscape
     anti_b0 = -grad_b0
     anti_b1 = -grad_b1
     anti_norm = float(np.hypot(anti_b0, anti_b1))
@@ -399,8 +409,8 @@ def render_frame(
     # Updated title: step + current b0 + gradient (no mathtext)
     b0 = "$b_0$"
     ax_slice.set_title(
-        f"Шаг спуска = {run_learning_rate:.1f}\n"
-        f"{b0} = {intercept_value:.2f},  градиент = {grad_b0:.2f}",
+        f"{annotations.learning_rate_label} = {run_learning_rate:.1f}\n"
+        f"{b0} = {intercept_value:.2f}, {annotations.gradient} = {grad_b0:.2f}",
         fontsize=12,
         fontdict={"fontname": FONTNAME},
         y=1.04,
@@ -429,7 +439,7 @@ def render_frame(
         ax_slice.text(
             float(intercept_value) + sign * dx_len,
             arrow_y + 0.05,
-            "градиент",
+            annotations.gradient,
             color="red",
             fontsize=8,
             fontname=FONTNAME,
@@ -452,7 +462,7 @@ def render_frame(
         ax_slice.text(
             float(intercept_value) - sign * dx_len,
             anti_label_y,
-            "антиградиент",
+            annotations.antigradient,
             color="black",
             fontsize=8,
             fontname=FONTNAME,
@@ -481,7 +491,7 @@ def render_frame(
     ax_model.set_title(annotations.scatter_title, fontsize=12, fontdict={"fontname": FONTNAME}, y=1.05)
 
     fig.suptitle(
-        "Градиент и антиградиент MSE (градиентный спуск по $b_0$)",
+        annotations.title,
         fontsize=16,
         fontdict={"fontname": FONTNAME},
         x=0.52,
@@ -571,7 +581,7 @@ def show_animation(
     max_abs_grad_b0 = float(max([abs(v) for v in grad_b0_list] + [1e-12]))
     max_abs_antigrad_norm_2d = float(max(antigrad_norm_list + [1e-12]))
 
-    raw_svg_file = Path(tmp_dir, "grad_descent_frame.svg")  # overwritten each frame
+    raw_svg_file = Path(tmp_dir, "grad_descent_frame.svg")
 
     image_files: List[Path] = []
     frame_idx = 0
@@ -630,7 +640,7 @@ def show_animation(
             image_files.append(frame_png)
             frame_idx += 1
 
-    gif_path = Path(get_plots_path(), f"57_grad_antigrad_b0_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_22_grad_antigrad_b0_{mode}.gif")
     with imageio.get_writer(gif_path, mode="I", duration=ANIM_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -639,15 +649,16 @@ def show_animation(
 
 
 if __name__ == "__main__":
-    show_animation(
-        mode="rus",
-        fixed_slope=None,
-        start_grid_size=15,
-        start_indices=(3, 12),
-        learning_rate_fast=0.4,
-        learning_rate_slow=0.1,
-        max_iterations=80,
-        grad_tol=0.02,
-        step_tol=0.001,
-        pause_frames=2,
-    )
+    for mode in ["rus", "eng"]:
+        show_animation(
+            mode=mode,
+            fixed_slope=None,
+            start_grid_size=15,
+            start_indices=(3, 12),
+            learning_rate_fast=0.4,
+            learning_rate_slow=0.1,
+            max_iterations=80,
+            grad_tol=0.02,
+            step_tol=0.001,
+            pause_frames=2,
+        )

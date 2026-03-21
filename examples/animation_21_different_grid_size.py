@@ -30,6 +30,7 @@ SLICE_YLIM = (0.0, 4.5)
 
 @dataclass
 class RusAnnotations:
+    suptitle: str = "Влияние размера сетки на сходимость"
     iter_title: str = "Количество итераций (оценок MSE)"
     landscape_x_axis: str = "Сдвиг\nстандартизированный\n($b_0$)"
     landscape_y_axis: str = "Наклон\nстандартизированный\n($b_1$)"
@@ -38,18 +39,23 @@ class RusAnnotations:
     scatter_title: str = "Модель с выбранными коэффициентами"
     scatter_x_axis: str = "Количество комнат стандартизированное\n(x)"
     scatter_y_axis: str = "Стоимость, стандартизированная\n(y)"
+    grid_size_title: str = "Ландшафт функционала ошибки\nразмер сетки={}"
+    grid_size_title_minor: str = "размер сетки={}"
 
 
 @dataclass
 class EngAnnotations:
-    iter_title: str = "Number of iterations (MSE evals)"
-    landscape_x_axis: str = ""
-    landscape_y_axis: str = ""
-    slice_x_axis: str = ""
-    slice_y_axis: str = ""
-    scatter_title: str = ""
-    scatter_x_axis: str = "Number of the rooms in the apartment, scaled (x)"
+    suptitle: str = "Effect of grid size on convergence"
+    iter_title: str = "Number of iterations (MSE evaluations)"
+    landscape_x_axis: str = "Intercept scaled\n($b_0$)"
+    landscape_y_axis: str = "Slope scaled\n($b_1$)"
+    slice_x_axis: str = "Intercept scaled ($b_0$)"
+    slice_y_axis: str = "Model error (MSE)"
+    scatter_title: str = "Model with selected coefficients"
+    scatter_x_axis: str = "Number of rooms, scaled (x)"
     scatter_y_axis: str = "Price, scaled (y)"
+    grid_size_title: str = "Error function landscape\ngrid size={}"
+    grid_size_title_minor: str = "grid size={}"
 
 
 def annotations_by_language(mode: str):
@@ -563,7 +569,7 @@ def render_frame_2x3(
         mse_evaluations=evals_top,
         cmap=cmap,
         norm=norm,
-        landscape_title_template="Ландшафт функционала ошибки\nразмер сетки={}",
+        landscape_title_template=context.annotations.grid_size_title,
     )
 
     render_row(
@@ -575,13 +581,13 @@ def render_frame_2x3(
         mse_evaluations=evals_bottom,
         cmap=cmap,
         norm=norm,
-        landscape_title_template="размер сетки={}",
+        landscape_title_template=context.annotations.grid_size_title_minor,
     )
 
     add_shared_colorbar(cax=cax, cmap=cmap, norm=norm)
 
     fig.suptitle(
-        "Влияние размера сетки на сходимость",
+        context.annotations.suptitle,
         fontsize=20,
         fontdict={"fontname": FONTNAME},
         color="black",
@@ -641,13 +647,13 @@ def show_animation(mode: str = "rus"):
     total_frames = max(len(run_top[0]), len(run_bottom[0]))
     pause_frames = 3
 
-    raw_svg_file = Path(tmp_dir, "55_different_grid_size.svg")
+    raw_svg_file = Path(tmp_dir, "animation_21_different_grid_size.svg")
     image_files: List[Path] = []
 
     for frame_idx in range(total_frames + pause_frames):
         step_index = min(frame_idx, total_frames - 1)
 
-        frame_png = Path(tmp_dir, f"55_different_grid_size_{frame_idx}.png")
+        frame_png = Path(tmp_dir, f"animation_21_different_grid_size_{frame_idx}.png")
         render_frame_2x3(
             context=context,
             step_index=step_index,
@@ -660,7 +666,7 @@ def show_animation(mode: str = "rus"):
         )
         image_files.append(frame_png)
 
-    gif_path = Path(get_plots_path(), f"55_different_grid_size_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_21_different_grid_size_{mode}.gif")
     with imageio.get_writer(gif_path, mode="I", duration=ANIM_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -670,3 +676,4 @@ def show_animation(mode: str = "rus"):
 
 if __name__ == "__main__":
     show_animation("rus")
+    show_animation("eng")

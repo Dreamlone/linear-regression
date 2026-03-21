@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -37,12 +37,12 @@ def draw_arrow(ax, start_point, vec, color, label=None, label_scale=1.02, arrow_
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
-        vector_title = ""
-        scatter_title = ""
-        x_label = "Object 1"
-        y_label = "Object 2"
-        z_label = "Object 3"
+        title = "Sample with three observations"
+        vector_title = "Data in vector space"
+        scatter_title = "Feature x Vs target y"
+        x_label = "Observation 1"
+        y_label = "Observation 2"
+        z_label = "Observation 3"
     elif mode == "rus":
         title = "Выборка с тремя объектами"
         vector_title = "Данные в векторном пространстве"
@@ -137,18 +137,18 @@ def plot_three_observations_vector_animation(mode: str = 'eng'):
         draw_arrow(ax_vectors, origin, x_feature, color="green", label="x (1, 2, 3)", arrow_length_ratio=0.3)
 
         figure.suptitle(title, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", x=0.43, y=0.97)
-        raw_svg_file = Path(tmp_dir, f"47_linear_algebra_3d_vector_sum_{mode}_raw.svg")
+        raw_svg_file = Path(tmp_dir, f"animation_14_linear_algebra_3d_vector_sum_{mode}_raw.svg")
         if view_id == 140:
             figure.canvas.draw()
             fixed_bbox = figure.get_tightbbox(figure.canvas.get_renderer())
         plt.savefig(raw_svg_file, bbox_inches=fixed_bbox)
         plt.close()
 
-        final_path = Path(tmp_dir, f"47_linear_algebra_3d_vector_sum_{mode}_{view_id}.png")
+        final_path = Path(tmp_dir, f"animation_14_linear_algebra_3d_vector_sum_{mode}_{view_id}.png")
         save_plot_according_to_template(raw_svg_file, final_path, template_name="template_small.svg", dpi=DPI)
         image_files.append(final_path)
 
-    gif_path = Path(get_plots_path(), f"47_linear_algebra_3d_vector_sum_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_14_linear_algebra_3d_vector_sum_{mode}.gif")
     with imageio.get_writer(gif_path, mode='I', duration=ANIM_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -158,3 +158,4 @@ def plot_three_observations_vector_animation(mode: str = 'eng'):
 
 if __name__ == "__main__":
     plot_three_observations_vector_animation("rus")
+    plot_three_observations_vector_animation("eng")

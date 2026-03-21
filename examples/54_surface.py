@@ -33,12 +33,12 @@ def draw_arrow(ax, start_point, vec, color, label=None, label_scale=1.02, arrow_
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
-        vector_title = ""
-        x_label = "Object 1"
-        y_label = "Object 2"
-        z_label = "Object 3"
-        scatter_title = ""
+        title = r"Optimal model in the prediction subspace $\mathrm{Col}(X)$"
+        vector_title = r"$\hat{y}_C$ as the projection of the target onto the plane $\mathrm{Col}(X)$"
+        x_label = "Observation 1"
+        y_label = "Observation 2"
+        z_label = "Observation 3"
+        scatter_title = "Three different models, A, B, and C"
     elif mode == "rus":
         title = r"Оптимальная модель в подпространстве предсказаний $\mathrm{Col}(X)$"
         vector_title = "$\hat{y}_С$ как проекция отклика на плоскость $\mathrm{Col}(X)$"
@@ -210,13 +210,14 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
                     linestyle="--",  color="orange", linewidth=2)
 
     figure.suptitle(title, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", x=0.43, y=0.97)
-    raw_svg_file = Path(get_plots_path(), f"49_surface_{mode}_raw.svg")
+    raw_svg_file = Path(get_plots_path(), f"54_surface_{mode}_raw.svg")
     plt.savefig(raw_svg_file, bbox_inches="tight")
     plt.close()
 
-    final_path = Path(get_plots_path(), f"49_surface_{mode}.png")
+    final_path = Path(get_plots_path(), f"54_surface_{mode}.png")
     save_plot_according_to_template(raw_svg_file, final_path, template_name="template_small.svg", dpi=100)
 
 
 if __name__ == "__main__":
     plot_three_observations_vector_surface("rus")
+    plot_three_observations_vector_surface("eng")

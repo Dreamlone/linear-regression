@@ -33,6 +33,7 @@ class RusAnnotations:
     scatter_title: str = "Модель с выбранными коэффициентами"
     scatter_x_axis: str = "Количество комнат стандартизированное\n(x)"
     scatter_y_axis: str = "Стоимость, стандартизированная\n(y)"
+    iterations: str = "Количество итераций"
 
     @staticmethod
     def get_title() -> str:
@@ -41,17 +42,18 @@ class RusAnnotations:
 
 @dataclass
 class EngAnnotations:
-    landscape_title: str = ""
-    best_model: str = ""
-    map_x_axis: str = r"Intercept scaled ($b_0$)"
-    map_y_axis: str = r"Slope scaled ($b_1$)"
-    scatter_title: str = ""
-    scatter_x_axis: str = "Number of the rooms in the apartment, scaled (x)"
+    landscape_title: str = "Error function landscape"
+    best_model: str = "Best model"
+    map_x_axis: str = "Intercept scaled\n($b_0$)"
+    map_y_axis: str = "Slope scaled\n($b_1$)"
+    scatter_title: str = "Model with selected coefficients"
+    scatter_x_axis: str = "Number of rooms, scaled (x)"
     scatter_y_axis: str = "Price, scaled (y)"
+    iterations: str = "Number of iterations"
 
     @staticmethod
     def get_title() -> str:
-        return ""
+        return "Coefficient optimization by gradient descent"
 
 
 def annotations_by_language(mode: str):
@@ -445,7 +447,7 @@ def render_map(
     ax_map.invert_yaxis()
 
     ax_map.set_title(
-        f"Количество итераций: {iteration_count}",
+        f"{annotations.iterations}: {iteration_count}",
         fontsize=14,
         fontdict={"fontname": FONTNAME},
         y=1.1,
@@ -597,6 +599,13 @@ def show_optimal_b_search_gradient(
     pause_frames: int = 3,
     surface_grid_size: int = GRID_SIZE,
 ):
+    if learning_rate == 0.5:
+        file_prefix = "animation_23"
+    elif learning_rate == 0.06:
+        file_prefix = "extra_animation_5"
+    else:
+        file_prefix = "extra_animation_6"
+
     annotations = annotations_by_language(mode)
 
     tmp_dir = get_tmp_animation_directory()
@@ -629,7 +638,7 @@ def show_optimal_b_search_gradient(
     explored_rmse: List[float] = []
 
     # Overwrite the same SVG each frame
-    raw_svg_file = Path(tmp_dir, f"59_optimization_gradient_{mode}.svg")
+    raw_svg_file = Path(tmp_dir, f"{file_prefix}_optimization_gradient_{mode}.svg")
 
     for frame_index, (current_b0, current_b1) in enumerate(path):
         fig, rmse_value = generate_frame(
@@ -653,7 +662,7 @@ def show_optimal_b_search_gradient(
         plt.savefig(raw_svg_file, bbox_inches="tight")
         plt.close(fig)
 
-        frame_png = Path(tmp_dir, f"59_optimization_gradient_{mode}_{frame_index}.png")
+        frame_png = Path(tmp_dir, f"{file_prefix}_optimization_gradient_{mode}_{frame_index}.png")
         save_plot_according_to_template(
             raw_svg_file,
             frame_png,
@@ -692,7 +701,7 @@ def show_optimal_b_search_gradient(
         plt.savefig(raw_svg_file, bbox_inches="tight")
         plt.close(fig)
 
-        final_png = Path(tmp_dir, f"59_optimization_gradient_{mode}_{len(image_files)}.png")
+        final_png = Path(tmp_dir, f"{file_prefix}_optimization_gradient_{mode}_{len(image_files)}.png")
         save_plot_according_to_template(
             raw_svg_file,
             final_png,
@@ -703,7 +712,7 @@ def show_optimal_b_search_gradient(
             image_files.append(final_png)
 
     learning_rate_str = str(learning_rate).replace(".", "_")
-    gif_path = Path(get_plots_path(), f"59_optimization_gradient_{learning_rate_str}_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"{file_prefix}_optimization_gradient_{learning_rate_str}_{mode}.gif")
     with imageio.get_writer(gif_path, mode="I", duration=ANIMATION_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -713,13 +722,36 @@ def show_optimal_b_search_gradient(
 
 
 if __name__ == "__main__":
-    show_optimal_b_search_gradient(
-        mode="rus",
-        learning_rate=3.0,
-        start_b0=0.0,
-        start_b1=0.0,
-        max_iterations=25,
-        grad_tol=0.02,
-        step_tol=1e-4,
-        pause_frames=3,
-    )
+    for mode in ["rus", "eng"]:
+        show_optimal_b_search_gradient(
+            mode=mode,
+            learning_rate=0.5,
+            start_b0=0.0,
+            start_b1=0.0,
+            max_iterations=25,
+            grad_tol=0.02,
+            step_tol=1e-4,
+            pause_frames=3,
+        )
+
+        # Extra visualizations
+        show_optimal_b_search_gradient(
+            mode=mode,
+            learning_rate=3.0,
+            start_b0=0.0,
+            start_b1=0.0,
+            max_iterations=25,
+            grad_tol=0.02,
+            step_tol=1e-4,
+            pause_frames=3,
+        )
+        show_optimal_b_search_gradient(
+            mode=mode,
+            learning_rate=0.06,
+            start_b0=0.0,
+            start_b1=0.0,
+            max_iterations=25,
+            grad_tol=0.02,
+            step_tol=1e-4,
+            pause_frames=3,
+        )

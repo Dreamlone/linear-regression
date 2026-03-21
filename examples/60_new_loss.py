@@ -339,3 +339,4 @@ def show_mse_vs_tukey_static(
 if __name__ == "__main__":
     # point_b0/point_b1 are only for the highlighted point on both landscapes
     show_mse_vs_tukey_static(mode="rus", tukey_c=2.5, point_b0=-2.0, point_b1=1.0)
+    show_mse_vs_tukey_static(mode="eng", tukey_c=2.5, point_b0=-2.0, point_b1=1.0)

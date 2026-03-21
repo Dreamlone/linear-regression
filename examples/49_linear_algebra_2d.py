@@ -69,7 +69,7 @@ def generate_vectors_svg():
         fontname=FONTNAME, fontsize=14, ha="left", va="bottom"
     )
 
-    plt.savefig(Path(get_plots_path(), "linear_algebra.svg"))
+    plt.savefig(Path(get_plots_path(), "49_linear_algebra.svg"))
     plt.close()
 
 

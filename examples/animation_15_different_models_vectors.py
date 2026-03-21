@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -38,11 +38,11 @@ def draw_arrow(ax, start_point, vec, color, label=None, label_scale=1.02, arrow_
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = ""
-        vector_title = ""
-        x_label = "Object 1"
-        y_label = "Object 2"
-        z_label = "Object 3"
+        title = "Different models in observation space"
+        vector_title = r"Features vectors $b_0v$, $b_1x$ and prediction $\hat{y}$"
+        x_label = "Observation 1"
+        y_label = "Observation 2"
+        z_label = "Observation 3"
     elif mode == "rus":
         title = "Разные модели в пространстве объектов"
         vector_title = r"Векторы признаков $b_0v$, $b_1x$ и предсказаний $\hat{y}$"
@@ -117,9 +117,7 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
         new_y0 = pos.y0 + (pos.height - new_height) / 2
         ax_features.set_position([pos.x0, new_y0, pos.width, new_height])
 
-        # -----------------------------
         # Left plot: x vs y
-        # -----------------------------
         ax_features.set_xlim(0.5, 3.5)
         ax_features.set_ylim(0, 20)
         ax_features.set_xlabel("x", fontname=FONTNAME, fontsize=12)
@@ -138,9 +136,7 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
             for b0_visited, b1_visited in visited_points:
                 ax_features.plot(x_line, b0_visited + b1_visited * x_line, "--", c="grey", alpha=0.2)
 
-        # -----------------------------
         # Right plot: vectors in R^3
-        # -----------------------------
         axis_min, axis_max = -5, 20
         ax_vectors.set_xlim(axis_min, 10)
         ax_vectors.set_ylim(axis_min, 10)
@@ -215,16 +211,16 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
                 border_alpha = 1.0
 
         figure.suptitle(title, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", x=0.43, y=0.97)
-        raw_svg_file = Path(tmp_dir, f"48_different_models_vectors_{mode}_raw.svg")
+        raw_svg_file = Path(tmp_dir, f"animation_15_different_models_vectors_{mode}_raw.svg")
         plt.savefig(raw_svg_file, bbox_inches="tight")
         plt.close()
 
-        final_path = Path(tmp_dir, f"48_different_models_vectors_{mode}_{case_index}.png")
+        final_path = Path(tmp_dir, f"animation_15_different_models_vectors_{mode}_{case_index}.png")
         save_plot_according_to_template(raw_svg_file, final_path, template_name="template_small.svg", dpi=DPI)
         image_files.append(final_path)
         visited_points.append([b0, b1])
 
-    gif_path = Path(get_plots_path(), f"48_different_models_vectors_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_15_different_models_vectors_{mode}.gif")
     with imageio.get_writer(gif_path, mode='I', duration=ANIM_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -234,3 +230,4 @@ def plot_three_observations_vector_surface(mode: str = "eng"):
 
 if __name__ == "__main__":
     plot_three_observations_vector_surface("rus")
+    plot_three_observations_vector_surface("eng")

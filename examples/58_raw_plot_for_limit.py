@@ -23,12 +23,14 @@ SLICE_YLIM = (0.0, 4.5)
 
 @dataclass
 class RusAnnotations:
+    title: str = "Срез MSE по $b_0$: истинная кривая (100 точек) vs аппроксимация по сетке"
     slice_x_axis: str = "Сдвиг стандартизированный ($b_0$)"
     slice_y_axis: str = "Ошибка модели (MSE)"
 
 
 @dataclass
 class EngAnnotations:
+    title: str = "MSE slice over $b_0$: true curve (100 points) vs grid based approximation"
     slice_x_axis: str = "Intercept, scaled ($b_0$)"
     slice_y_axis: str = "Model error (MSE)"
 
@@ -108,8 +110,8 @@ def render_static_slice_2x2(
     grid_left: int = 5,
     grid_right: int = 10,
     dense_grid: int = 100,
-    out_name: str = "55_slice_2x2_grid_5_vs_10",
 ):
+    out_name = f"58_lim"
     annotations = annotations_by_language(mode)
 
     features_scaled, target_scaled = load_scaled_data()
@@ -160,7 +162,7 @@ def render_static_slice_2x2(
     draw_slice(axes[1, 1], intercept_right, errors_right, f"grid size = {grid_right}")
 
     fig.suptitle(
-        "Срез MSE по $b_0$: истинная кривая (100 точек) vs аппроксимация по сетке",
+        annotations.title,
         fontsize=14,
         fontdict={"fontname": FONTNAME},
         x=0.5,
@@ -183,3 +185,4 @@ def render_static_slice_2x2(
 
 if __name__ == "__main__":
     render_static_slice_2x2(mode="rus", grid_left=5, grid_right=9, dense_grid=200)
+    render_static_slice_2x2(mode="eng", grid_left=5, grid_right=9, dense_grid=200)
