@@ -57,7 +57,7 @@ def prepare_kde_axis(ax, samples, color_hex: str, y_label: str):
 
 def annotations_by_language(mode: str):
     if mode == "eng":
-        title = "Main plot"
+        title = ""
         left_distribution = "Normal\ndistribution"
         right_distribution = "Bimodal\ndistribution"
         first_row = "Sample size"
