@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple, Union, Dict
+from typing import List, Tuple, Union, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -11,8 +11,12 @@ from sklearn.preprocessing import StandardScaler
 import seaborn as sns
 
 from examples.paths import get_plots_path
-from examples.utils import save_plot_according_to_template, split_train_test_manual, get_extended_dataset, \
-    take_sample_manual
+from examples.utils import (
+    save_plot_according_to_template,
+    split_train_test_manual,
+    get_extended_dataset,
+    take_sample_manual,
+)
 
 FONTNAME = "Comic Sans MS"
 DPI = 200
@@ -34,19 +38,21 @@ class RusAnnotations:
     legend_title: str = "Признак"
     legend_train: str = "Обучающая выборка"
     legend_test: str = "Тестовая выборка"
+    model_label: str = "Модель"
 
 
 @dataclass
 class EngAnnotations:
-    suptitle: str = "Gradient descent history for multivariate linear regression"
-    top_title: str = "Feature importance depends on coefficient magnitude. Values across iterations"
+    suptitle: str = "Comparison of models and train/test errors for different types of regularization"
+    top_title: str = "Feature importance in the model"
     top_y: str = "Share of feature coefficient"
-    bottom_title: str = "Train and test error vs iteration"
+    bottom_title: str = "Train and test error across iterations"
     bottom_x: str = "Gradient descent iteration"
-    bottom_y: str = "Squared error value"
+    bottom_y: str = "Mean squared error"
     legend_title: str = "Feature"
-    legend_train: str = "train"
-    legend_test: str = "test"
+    legend_train: str = "Training set"
+    legend_test: str = "Test set"
+    model_label: str = "Model"
 
 
 def annotations_by_language(mode: str) -> Union[RusAnnotations, EngAnnotations]:
@@ -73,33 +79,88 @@ def _encode_ac_binary(series: pd.Series) -> pd.Series:
     return s.map(to_bin).astype(float)
 
 
-def _build_readable_feature_names(city_categories_sorted: List[str]) -> Dict[str, str]:
-    mapping: Dict[str, str] = {
-        "rooms_scaled": "количество комнат",
-        "area_scaled": "площадь квартиры",
-        "metro_distance_scaled": "расстояние до метро",
-        "ac_yes": "есть ли кондиционер",
-    }
+def _build_readable_feature_names(
+    city_categories_sorted: List[str],
+    mode: str,
+) -> Dict[str, str]:
+    if mode == "rus":
+        mapping: Dict[str, str] = {
+            "rooms_scaled": "количество комнат",
+            "area_scaled": "площадь квартиры",
+            "metro_distance_scaled": "расстояние до метро",
+            "ac_yes": "есть ли кондиционер",
+        }
+        city_prefix = "город "
+    elif mode == "eng":
+        mapping = {
+            "rooms_scaled": "number of rooms",
+            "area_scaled": "apartment area",
+            "metro_distance_scaled": "distance to metro",
+            "ac_yes": "air conditioning",
+        }
+        city_prefix = "city "
+    else:
+        raise NotImplementedError(f"Language {mode} is not supported")
 
     letters = ["A", "B", "C", "D", "E"]
     for idx, category in enumerate(city_categories_sorted):
         letter = letters[idx] if idx < len(letters) else str(idx + 1)
-        mapping[f"city__{category}"] = f"город {letter}"
+        mapping[f"city__{category}"] = f"{city_prefix}{letter}"
 
     return mapping
 
 
-def load_scaled_train_test_multifeature() -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str]]:
+def _intercept_name(mode: str) -> str:
+    if mode == "rus":
+        return "коэффициент сдвига"
+    if mode == "eng":
+        return "intercept coefficient"
+    raise NotImplementedError(f"Language {mode} is not supported")
+
+
+def _format_split_label(mode: str, split_label: Optional[Union[int, str]]) -> str:
+    if split_label is None:
+        return ""
+
+    if mode == "rus":
+        return f"разбиение {split_label}"
+    if mode == "eng":
+        return f"split {split_label}"
+
+    raise NotImplementedError(f"Language {mode} is not supported")
+
+
+def _build_panel_subtitle(
+    mode: str,
+    model_name: str,
+    lambda_value: float,
+    split_label: Optional[Union[int, str]] = None,
+) -> str:
+    parts = [f"{model_name}, λ={lambda_value:.2f}"]
+    split_text = _format_split_label(mode, split_label)
+    if split_text:
+        parts.append(split_text)
+    return ", ".join(parts)
+
+
+def load_scaled_train_test_multifeature(
+    mode: str,
+    random_state: int = 52,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str], List[str]]:
     dataset = get_extended_dataset()
 
     features = dataset[FEATURE_COLUMNS]
     target = dataset["price"].to_numpy()
 
     x_train_raw, y_train_raw, _, _ = take_sample_manual(
-        np.array(features), np.array(target), apply_distortion=True
+        np.array(features),
+        np.array(target),
+        apply_distortion=True,
     )
     x_train_raw, y_train_raw, x_test_raw, y_test_raw = split_train_test_manual(
-        x_train_raw, y_train_raw, random_state=52,
+        x_train_raw,
+        y_train_raw,
+        random_state=int(random_state),
     )
 
     x_train_df = pd.DataFrame(x_train_raw, columns=FEATURE_COLUMNS)
@@ -108,7 +169,7 @@ def load_scaled_train_test_multifeature() -> Tuple[np.ndarray, np.ndarray, np.nd
     y_train = np.ravel(np.array(y_train_raw, dtype=float))
     y_test = np.ravel(np.array(y_test_raw, dtype=float))
 
-    # --- Numeric scaling (fit on train) ---
+    # Numeric scaling, fit on train only
     numeric_scaler = StandardScaler()
     x_train_num = x_train_df[NUMERIC_COLUMNS].astype(float)
     x_test_num = x_test_df[NUMERIC_COLUMNS].astype(float)
@@ -116,20 +177,26 @@ def load_scaled_train_test_multifeature() -> Tuple[np.ndarray, np.ndarray, np.nd
     x_train_num_scaled = numeric_scaler.fit_transform(x_train_num)
     x_test_num_scaled = numeric_scaler.transform(x_test_num)
 
-    # --- City one-hot (stable order from train, align test) ---
+    # One hot encode city, keep a stable order from the train split and align the test split
     city_train = x_train_df[CITY_COLUMN].astype(str)
     city_test = x_test_df[CITY_COLUMN].astype(str)
 
     city_categories_sorted = sorted(city_train.unique().tolist())
-    readable_map = _build_readable_feature_names(city_categories_sorted)
+    readable_map = _build_readable_feature_names(city_categories_sorted, mode=mode)
 
-    city_train_dummies = pd.get_dummies(city_train, dtype=float).reindex(columns=city_categories_sorted, fill_value=0.0)
-    city_test_dummies = pd.get_dummies(city_test, dtype=float).reindex(columns=city_categories_sorted, fill_value=0.0)
+    city_train_dummies = pd.get_dummies(city_train, dtype=float).reindex(
+        columns=city_categories_sorted,
+        fill_value=0.0,
+    )
+    city_test_dummies = pd.get_dummies(city_test, dtype=float).reindex(
+        columns=city_categories_sorted,
+        fill_value=0.0,
+    )
 
     city_train_dummies.columns = [f"city__{c}" for c in city_train_dummies.columns]
     city_test_dummies.columns = [f"city__{c}" for c in city_test_dummies.columns]
 
-    # --- AC as a single binary column ---
+    # AC as a single binary column
     ac_train_yes = _encode_ac_binary(x_train_df[AC_COLUMN]).astype(float).rename("ac_yes")
     ac_test_yes = _encode_ac_binary(x_test_df[AC_COLUMN]).astype(float).rename("ac_yes")
 
@@ -145,19 +212,26 @@ def load_scaled_train_test_multifeature() -> Tuple[np.ndarray, np.ndarray, np.nd
         ac_test_yes.to_numpy(dtype=float).reshape(-1, 1),
     ]).astype(float)
 
-    feature_names = (
+    feature_keys = (
         [f"{c}_scaled" for c in NUMERIC_COLUMNS]
         + list(city_train_dummies.columns)
         + ["ac_yes"]
     )
-    feature_names_human = [readable_map.get(name, name) for name in feature_names]
+    feature_names_human = [readable_map.get(name, name) for name in feature_keys]
 
-    # --- Target scaling (fit on train, apply to test) ---
+    # Target scaling, fit on train and apply to test
     target_scaler = StandardScaler()
     y_train_scaled = target_scaler.fit_transform(y_train.reshape(-1, 1)).ravel().astype(float)
     y_test_scaled = target_scaler.transform(y_test.reshape(-1, 1)).ravel().astype(float)
 
-    return x_train_processed, y_train_scaled, x_test_processed, y_test_scaled, feature_names_human
+    return (
+        x_train_processed,
+        y_train_scaled,
+        x_test_processed,
+        y_test_scaled,
+        feature_keys,
+        feature_names_human,
+    )
 
 
 def mse_and_gradients_multi(
@@ -210,8 +284,9 @@ def history_lasso_prox_gd(
     Proximal gradient descent for Lasso:
       w_temp = w - lr * grad_mse_w
       w = S(w_temp, lr * lambda)
-    b0 is NOT regularized.
-    Metrics stored: pure MSE on train/test (without penalty).
+
+    The intercept is NOT regularized.
+    Stored metrics are pure MSE on train and test, without the penalty term.
     """
     if learning_rate <= 0:
         raise ValueError("learning_rate must be positive.")
@@ -236,10 +311,10 @@ def history_lasso_prox_gd(
         b0_hist.append(float(current_b0))
         w_hist.append(current_w.copy())
 
-        # b0 update (no regularization)
+        # Intercept update, no regularization
         current_b0 = float(current_b0) - float(learning_rate) * float(grad_b0)
 
-        # proximal step for w
+        # Proximal step for the weights
         w_temp = current_w - float(learning_rate) * grad_w_mse
         current_w = soft_threshold(w_temp, float(learning_rate) * float(lasso_lambda))
 
@@ -258,8 +333,9 @@ def history_ridge_gd(
     """
     Gradient descent for Ridge:
       grad_w_total = grad_mse_w + 2*lambda*w
-    b0 is NOT regularized.
-    Metrics stored: pure MSE on train/test (without penalty).
+
+    The intercept is NOT regularized.
+    Stored metrics are pure MSE on train and test, without the penalty term.
     """
     if learning_rate <= 0:
         raise ValueError("learning_rate must be positive.")
@@ -284,10 +360,10 @@ def history_ridge_gd(
         b0_hist.append(float(current_b0))
         w_hist.append(current_w.copy())
 
-        # b0 update (no regularization)
+        # Intercept update, no regularization
         current_b0 = float(current_b0) - float(learning_rate) * float(grad_b0)
 
-        # ridge update for w
+        # Ridge update for the weights
         grad_w_total = grad_w_mse + 2.0 * float(ridge_lambda) * current_w
         current_w = current_w - float(learning_rate) * grad_w_total
 
@@ -304,14 +380,14 @@ def _build_dense_fill_shares(
     n_iters = int(len(iteration_values))
 
     n_features = int(len(w_history[0])) if len(w_history) > 0 else 0
-    n_coeffs = 1 + n_features  # b0 + w
+    n_coeffs = 1 + n_features  # intercept + all weights
 
     coef_matrix = np.zeros((n_coeffs, n_iters), dtype=float)
     coef_matrix[0, :] = np.array(b0_history, dtype=float)
     for idx, w_vec in enumerate(w_history):
         coef_matrix[1:, idx] = np.ravel(np.array(w_vec, dtype=float))
 
-    # interpolate abs(coefs) to look continuous
+    # Interpolate absolute coefficient values to make the fill look continuous
     if n_iters <= 1:
         x_dense = iteration_values.copy()
         abs_dense = np.abs(coef_matrix)
@@ -328,7 +404,7 @@ def _build_dense_fill_shares(
     denom = np.maximum(denom_raw, float(eps))
     shares = abs_dense / denom
 
-    # if all coefs ~ 0 -> show 100% on intercept
+    # If all coefficients are effectively zero, show 100% on the intercept
     near_zero_mask = (denom_raw.ravel() < float(eps))
     if np.any(near_zero_mask):
         shares[:, near_zero_mask] = 0.0
@@ -388,26 +464,26 @@ def _annotate_iteration_shares(
         )
 
 
-def build_grouped_palette(coeff_names: List[str]) -> List[tuple]:
+def build_grouped_palette(coeff_keys: List[str]) -> List[tuple]:
     """
-    Группируем цвета по смысловым блокам:
-    - города -> Blues
-    - кондиционер -> Reds
-    - численные -> Greens
-    - коэффициент сдвига -> grey
+    Group colors by semantic blocks:
+    - cities -> Blues
+    - air conditioning -> Reds
+    - numeric features -> Greens
+    - intercept coefficient -> grey
     """
     blues = plt.get_cmap("Blues")
     reds = plt.get_cmap("Reds")
     greens = plt.get_cmap("Greens")
     purples = plt.get_cmap("Purples")
 
-    city_idx = [i for i, name in enumerate(coeff_names) if name.startswith("город ")]
-    ac_idx = [i for i, name in enumerate(coeff_names) if "кондиционер" in name]
-    numeric_names = {"количество комнат", "площадь квартиры", "расстояние до метро"}
-    numeric_idx = [i for i, name in enumerate(coeff_names) if name in numeric_names]
-    intercept_idx = [i for i, name in enumerate(coeff_names) if name == "коэффициент сдвига"]
+    city_idx = [i for i, name in enumerate(coeff_keys) if name.startswith("city__")]
+    ac_idx = [i for i, name in enumerate(coeff_keys) if name == "ac_yes"]
+    numeric_names = {"rooms_scaled", "area_scaled", "metro_distance_scaled"}
+    numeric_idx = [i for i, name in enumerate(coeff_keys) if name in numeric_names]
+    intercept_idx = [i for i, name in enumerate(coeff_keys) if name == "intercept"]
 
-    colors = [None] * len(coeff_names)
+    colors = [None] * len(coeff_keys)
 
     def assign(idx_list: List[int], cmap, lo: float = 0.45, hi: float = 0.85):
         if len(idx_list) == 0:
@@ -458,30 +534,69 @@ def _plot_top_panel(
         fontdict={"fontname": FONTNAME},
         y=1.06,
     )
-    ax_top.set_ylabel(annotations.top_y, fontdict={"fontsize": 11, "fontname": FONTNAME})
+    ax_top.set_ylabel(
+        annotations.top_y,
+        fontdict={"fontsize": 11, "fontname": FONTNAME},
+    )
     ax_top.set_ylim(0.0, 1.0)
     ax_top.tick_params(axis="x", labelbottom=False)
 
     ax_top.set_xlim(-0.5, float(max_iter_global) + 1.0)
 
-    # Vertical iteration markers behind fill
+    # Vertical iteration markers behind the filled areas
     for x_val in range(0, int(max_iter_global) + 1):
-        ax_top.axvline(x=float(x_val), color="black", linewidth=0.6, alpha=0.22, zorder=1)
+        ax_top.axvline(
+            x=float(x_val),
+            color="black",
+            linewidth=0.6,
+            alpha=0.22,
+            zorder=1,
+        )
 
     if annotate_iteration_5 and max_iter_global >= 5:
-        ax_top.axvline(x=5.0, color="black", linewidth=1.4, alpha=0.75, zorder=6)
+        ax_top.axvline(
+            x=5.0,
+            color="black",
+            linewidth=1.4,
+            alpha=0.75,
+            zorder=6,
+        )
 
     if len(iterations) > 0:
         last_iter = int(iterations[-1])
 
-        ax_top.axvline(x=float(last_iter), color="black", linewidth=1.4, alpha=0.75, zorder=6)
+        ax_top.axvline(
+            x=float(last_iter),
+            color="black",
+            linewidth=1.4,
+            alpha=0.75,
+            zorder=6,
+        )
 
-        shares_last = _compute_shares_at_iteration(b0_hist, w_hist, iteration_index=last_iter)
-        _annotate_iteration_shares(ax_top, iter_x=last_iter, shares_at_iter=shares_last, fontsize=7)
+        shares_last = _compute_shares_at_iteration(
+            b0_hist,
+            w_hist,
+            iteration_index=last_iter,
+        )
+        _annotate_iteration_shares(
+            ax_top,
+            iter_x=last_iter,
+            shares_at_iter=shares_last,
+            fontsize=7,
+        )
 
         if annotate_iteration_5 and last_iter >= 5:
-            shares_5 = _compute_shares_at_iteration(b0_hist, w_hist, iteration_index=5)
-            _annotate_iteration_shares(ax_top, iter_x=5, shares_at_iter=shares_5, fontsize=7)
+            shares_5 = _compute_shares_at_iteration(
+                b0_hist,
+                w_hist,
+                iteration_index=5,
+            )
+            _annotate_iteration_shares(
+                ax_top,
+                iter_x=5,
+                shares_at_iter=shares_5,
+                fontsize=7,
+            )
 
     return stack_handles
 
@@ -500,15 +615,25 @@ def _plot_bottom_panel(
     ax_bottom.set_xticks(xticks)
 
     ax_bottom.scatter(
-        iterations, mse_train,
-        s=35, c="red", edgecolor="black", linewidth=0.6, zorder=3,
+        iterations,
+        mse_train,
+        s=35,
+        c="red",
+        edgecolor="black",
+        linewidth=0.6,
+        zorder=3,
         label=annotations.legend_train,
     )
     ax_bottom.plot(iterations, mse_train, "-", color="red", alpha=0.45, zorder=2)
 
     ax_bottom.scatter(
-        iterations, mse_test,
-        s=35, c="black", edgecolor="black", linewidth=0.6, zorder=3,
+        iterations,
+        mse_test,
+        s=35,
+        c="black",
+        edgecolor="black",
+        linewidth=0.6,
+        zorder=3,
         label=annotations.legend_test,
     )
     ax_bottom.plot(iterations, mse_test, "-", color="black", alpha=0.35, zorder=2)
@@ -519,12 +644,26 @@ def _plot_bottom_panel(
         fontdict={"fontname": FONTNAME},
         y=1.02,
     )
-    ax_bottom.set_xlabel(annotations.bottom_x, fontdict={"fontsize": 11, "fontname": FONTNAME})
-    ax_bottom.set_ylabel(annotations.bottom_y, fontdict={"fontsize": 11, "fontname": FONTNAME})
+    ax_bottom.set_xlabel(
+        annotations.bottom_x,
+        fontdict={"fontsize": 11, "fontname": FONTNAME},
+    )
+    ax_bottom.set_ylabel(
+        annotations.bottom_y,
+        fontdict={"fontsize": 11, "fontname": FONTNAME},
+    )
     ax_bottom.legend(loc="upper right")
 
 
-def _print_equation(model_name: str, b0_hist: List[float], w_hist: List[np.ndarray], feature_names: List[str]) -> None:
+def _print_equation(
+    mode: str,
+    model_name: str,
+    b0_hist: List[float],
+    w_hist: List[np.ndarray],
+    feature_names: List[str],
+) -> None:
+    annotations = annotations_by_language(mode)
+
     b0_last = float(b0_hist[-1])
     w_last = np.ravel(np.array(w_hist[-1], dtype=float))
 
@@ -532,8 +671,8 @@ def _print_equation(model_name: str, b0_hist: List[float], w_hist: List[np.ndarr
     w_ordered = w_last[::-1]
 
     lines: List[str] = []
-    lines.append(f"{model_name}:")
-    lines.append(f"y_scaled = {b0_last:+.2f}")  # intercept as constant
+    lines.append(f"{annotations.model_label}: {model_name}")
+    lines.append(f"y_scaled = {b0_last:+.2f}")
 
     for name, coef in zip(feature_names_ordered, w_ordered):
         c = float(coef)
@@ -551,14 +690,28 @@ def show_lasso_vs_ridge_history_static(
     lasso_lambda: float = 0.2,
     ridge_lambda: float = 0.9,
     annotate_iteration_5: bool = True,
+    random_state: int = 52,
+    split_label: Optional[Union[int, str]] = None,
 ):
     sns.set_theme(style="whitegrid")
     annotations = annotations_by_language(mode)
 
-    x_train, y_train, x_test, y_test, feature_names_human = load_scaled_train_test_multifeature()
-    coeff_names = ["коэффициент сдвига"] + list(feature_names_human)
+    (
+        x_train,
+        y_train,
+        x_test,
+        y_test,
+        feature_keys,
+        feature_names_human,
+    ) = load_scaled_train_test_multifeature(
+        mode=mode,
+        random_state=int(random_state),
+    )
 
-    # --- Histories ---
+    coeff_keys = ["intercept"] + list(feature_keys)
+    coeff_names = [_intercept_name(mode)] + list(feature_names_human)
+
+    # Histories
     lasso_train_mse, lasso_test_mse, lasso_b0_hist, lasso_w_hist = history_lasso_prox_gd(
         x_train=x_train,
         y_train=y_train,
@@ -581,33 +734,62 @@ def show_lasso_vs_ridge_history_static(
 
     lasso_iters = np.arange(len(lasso_train_mse), dtype=int)
     ridge_iters = np.arange(len(ridge_train_mse), dtype=int)
+
     max_iter_global = int(
-        max(lasso_iters[-1] if len(lasso_iters) else 0, ridge_iters[-1] if len(ridge_iters) else 0)
+        max(
+            lasso_iters[-1] if len(lasso_iters) else 0,
+            ridge_iters[-1] if len(ridge_iters) else 0,
+        )
     )
-    xticks = list(range(0, max_iter_global + 1, 5)) if max_iter_global >= 5 else list(range(0, max_iter_global + 1))
+    xticks = (
+        list(range(0, max_iter_global + 1, 5))
+        if max_iter_global >= 5
+        else list(range(0, max_iter_global + 1))
+    )
 
-    # Dense fill for top plots
-    lasso_x_dense, lasso_shares_dense = _build_dense_fill_shares(lasso_b0_hist, lasso_w_hist, points_per_step=40)
-    ridge_x_dense, ridge_shares_dense = _build_dense_fill_shares(ridge_b0_hist, ridge_w_hist, points_per_step=40)
+    # Dense fill for the top plots
+    lasso_x_dense, lasso_shares_dense = _build_dense_fill_shares(
+        lasso_b0_hist,
+        lasso_w_hist,
+        points_per_step=40,
+    )
+    ridge_x_dense, ridge_shares_dense = _build_dense_fill_shares(
+        ridge_b0_hist,
+        ridge_w_hist,
+        points_per_step=40,
+    )
 
-    # Same palette in both columns
-    grouped_colors = build_grouped_palette(coeff_names)
+    # Use the same palette in both columns
+    grouped_colors = build_grouped_palette(coeff_keys)
 
     fig = plt.figure(figsize=(16, 8))
     gs = fig.add_gridspec(2, 2, hspace=0.35, wspace=0.22)
 
     ax_top_lasso = fig.add_subplot(gs[0, 0])
     ax_bottom_lasso = fig.add_subplot(gs[1, 0], sharex=ax_top_lasso)
-    ax_bottom_lasso.set_ylim(0, 2)
+    ax_bottom_lasso.set_ylim(0, 1.5)
 
     ax_top_ridge = fig.add_subplot(gs[0, 1])
     ax_bottom_ridge = fig.add_subplot(gs[1, 1], sharex=ax_top_ridge)
-    ax_bottom_ridge.set_ylim(0, 2)
+    ax_bottom_ridge.set_ylim(0, 1.5)
 
-    # Make room for legend below bottom row
+    # Make room for the legend below the bottom row
     fig.subplots_adjust(bottom=0.18)
 
-    # --- Lasso column ---
+    lasso_subtitle = _build_panel_subtitle(
+        mode=mode,
+        model_name="Lasso",
+        lambda_value=float(lasso_lambda),
+        split_label=split_label,
+    )
+    ridge_subtitle = _build_panel_subtitle(
+        mode=mode,
+        model_name="Ridge",
+        lambda_value=float(ridge_lambda),
+        split_label=split_label,
+    )
+
+    # Lasso column
     handles_lasso = _plot_top_panel(
         ax_top=ax_top_lasso,
         x_dense=lasso_x_dense,
@@ -618,7 +800,7 @@ def show_lasso_vs_ridge_history_static(
         b0_hist=lasso_b0_hist,
         w_hist=lasso_w_hist,
         annotations=annotations,
-        subtitle=f"Lasso, λ={lasso_lambda:.2f}",
+        subtitle=lasso_subtitle,
         annotate_iteration_5=bool(annotate_iteration_5),
         max_iter_global=max_iter_global,
     )
@@ -628,11 +810,11 @@ def show_lasso_vs_ridge_history_static(
         mse_train=lasso_train_mse,
         mse_test=lasso_test_mse,
         annotations=annotations,
-        subtitle=f"Lasso, λ={lasso_lambda:.2f}",
+        subtitle=lasso_subtitle,
         xticks=xticks,
     )
 
-    # --- Ridge column ---
+    # Ridge column
     _plot_top_panel(
         ax_top=ax_top_ridge,
         x_dense=ridge_x_dense,
@@ -643,7 +825,7 @@ def show_lasso_vs_ridge_history_static(
         b0_hist=ridge_b0_hist,
         w_hist=ridge_w_hist,
         annotations=annotations,
-        subtitle=f"Ridge, λ={ridge_lambda:.2f}",
+        subtitle=ridge_subtitle,
         annotate_iteration_5=bool(annotate_iteration_5),
         max_iter_global=max_iter_global,
     )
@@ -653,11 +835,11 @@ def show_lasso_vs_ridge_history_static(
         mse_train=ridge_train_mse,
         mse_test=ridge_test_mse,
         annotations=annotations,
-        subtitle=f"Ridge, λ={ridge_lambda:.2f}",
+        subtitle=ridge_subtitle,
         xticks=xticks,
     )
 
-    # --- Feature legend: move to bottom, centered, below ax_bottom ---
+    # Feature legend at the bottom, centered
     fig.legend(
         handles_lasso[::-1],
         coeff_names[::-1],
@@ -679,11 +861,12 @@ def show_lasso_vs_ridge_history_static(
         y=1.05,
     )
 
-    raw_svg = Path(get_plots_path(), f"63_lasso_vs_ridge_history_static_{mode}.svg")
+    split_suffix = f"_split_{split_label}" if split_label is not None else ""
+    raw_svg = Path(get_plots_path(), f"64_lasso_vs_ridge_history_static_{mode}{split_suffix}.svg")
     plt.savefig(raw_svg, bbox_inches="tight")
     plt.close(fig)
 
-    out_png = Path(get_plots_path(), f"63_lasso_vs_ridge_history_static_{mode}.png")
+    out_png = Path(get_plots_path(), f"64_lasso_vs_ridge_history_static_{mode}{split_suffix}.png")
     save_plot_according_to_template(
         raw_svg,
         out_png,
@@ -694,6 +877,7 @@ def show_lasso_vs_ridge_history_static(
     print(f"Saved: {out_png}")
 
     _print_equation(
+        mode=mode,
         model_name=f"Lasso (λ={float(lasso_lambda):.3f})",
         b0_hist=lasso_b0_hist,
         w_hist=lasso_w_hist,
@@ -701,6 +885,7 @@ def show_lasso_vs_ridge_history_static(
     )
 
     _print_equation(
+        mode=mode,
         model_name=f"Ridge (λ={float(ridge_lambda):.3f})",
         b0_hist=ridge_b0_hist,
         w_hist=ridge_w_hist,
@@ -709,11 +894,14 @@ def show_lasso_vs_ridge_history_static(
 
 
 if __name__ == "__main__":
-    show_lasso_vs_ridge_history_static(
-        mode="rus",
-        learning_rate=0.05,
-        max_iterations=25,
-        lasso_lambda=0.2,
-        ridge_lambda=0.2,
-        annotate_iteration_5=True,
-    )
+    for mode in ["rus", "eng"]:
+        show_lasso_vs_ridge_history_static(
+            mode=mode,
+            learning_rate=0.05,
+            max_iterations=25,
+            lasso_lambda=0.2,
+            ridge_lambda=0.2,
+            annotate_iteration_5=True,
+            random_state=52,
+            split_label=2,
+        )

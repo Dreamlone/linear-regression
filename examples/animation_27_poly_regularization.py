@@ -305,7 +305,7 @@ def animate_poly_regularization(
         shutil.rmtree(tmp_dir)
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
-    raw_svg_file = Path(tmp_dir, f"66_poly_regularization_{mode}.svg")
+    raw_svg_file = Path(tmp_dir, f"animation_27_poly_regularization_{mode}.svg")
     frame_files: List[Path] = []
 
     # Render frames
@@ -348,7 +348,7 @@ def animate_poly_regularization(
         plt.savefig(raw_svg_file, bbox_inches="tight")
         plt.close(fig)
 
-        frame_png = Path(tmp_dir, f"66_poly_regularization_{mode}_{frame_index:03d}.png")
+        frame_png = Path(tmp_dir, f"animation_27_poly_regularization_{mode}_{frame_index:03d}.png")
         save_plot_according_to_template(
             raw_svg_file,
             frame_png,
@@ -362,7 +362,7 @@ def animate_poly_regularization(
         frame_files.append(frame_files[-1])
 
     # Save GIF
-    gif_path = Path(get_plots_path(), f"66_poly_regularization_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"animation_27_poly_regularization_{mode}.gif")
 
     with imageio.get_writer(gif_path, mode="I", duration=ANIM_DURATION, loop=0) as writer:
         for frame_png in frame_files:
@@ -374,7 +374,8 @@ def animate_poly_regularization(
 
 
 if __name__ == "__main__":
-    animate_poly_regularization(
-        mode="rus",
-        template_name="template.svg",
-    )
+    for mode in ["rus", "eng"]:
+        animate_poly_regularization(
+            mode=mode,
+            template_name="template.svg",
+        )

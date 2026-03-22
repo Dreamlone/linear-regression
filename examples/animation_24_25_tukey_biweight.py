@@ -28,23 +28,25 @@ class RusAnnotations:
     title: str = "Оптимизация коэффициентов градиентным спуском (Tukey biweight)"
     landscape_title: str = "Ландшафт функции потерь Tukey biweight"
     best_model: str = "Лучшая модель"
-    map_x_axis: str = "Сдвиг ($b_0$)"
-    map_y_axis: str = "Наклон ($b_1$)"
+    map_x_axis: str = "Сдвиг\nстандартизированный ($b_0$)"
+    map_y_axis: str = "Наклон\nстандартизированный ($b_1$)"
     scatter_title: str = "Модель с выбранными коэффициентами"
     scatter_x_axis: str = "Количество комнат стандартизированное\n(x)"
     scatter_y_axis: str = "Стоимость, стандартизированная\n(y)"
+    iterations: str = "Количество итераций"
 
 
 @dataclass
 class EngAnnotations:
-    title: str = ""
-    landscape_title: str = ""
-    best_model: str = ""
-    map_x_axis: str = r"Intercept scaled ($b_0$)"
-    map_y_axis: str = r"Slope scaled ($b_1$)"
-    scatter_title: str = ""
-    scatter_x_axis: str = "Number of the rooms in the apartment, scaled (x)"
-    scatter_y_axis: str = "Price, scaled (y)"
+    title: str = "Coefficient optimization by gradient descent (Tukey’s biweight)"
+    landscape_title: str = "Landscape of Tukey’s biweight loss function"
+    best_model: str = "Best model"
+    map_x_axis: str = "Intercept scaled\n($b_0$)"
+    map_y_axis: str = "Slope scaled\n($b_1$)"
+    scatter_title: str = "Model with selected coefficients"
+    scatter_x_axis: str = "Number of rooms, scaled\n(x)"
+    scatter_y_axis: str = "Price, scaled\n(y)"
+    iterations: str = "Number of iterations"
 
 
 def annotations_by_language(mode: str):
@@ -469,7 +471,7 @@ def render_map(
     ax_map.invert_yaxis()
 
     ax_map.set_title(
-        f"Количество итераций: {iteration_count}",
+        f"{annotations.iterations}: {iteration_count}",
         fontsize=14,
         fontdict={"fontname": FONTNAME},
         y=1.1,
@@ -620,6 +622,7 @@ def show_optimal_b_search_gradient_tukey(
     pause_frames: int = 3,
     surface_grid_size: int = GRID_SIZE,
     tukey_c: float = 4.685,
+    animation_prefix: str = "animation_24"
 ):
     annotations = annotations_by_language(mode)
 
@@ -655,7 +658,7 @@ def show_optimal_b_search_gradient_tukey(
     explored_loss: List[float] = []
 
     # Overwrite the same SVG each frame
-    raw_svg_file = Path(tmp_dir, f"61_optimization_gradient_tukey_{mode}.svg")
+    raw_svg_file = Path(tmp_dir, f"{animation_prefix}_optimization_gradient_tukey_{mode}.svg")
 
     for frame_index, (current_b0, current_b1) in enumerate(path):
         fig, loss_value = generate_frame(
@@ -679,7 +682,7 @@ def show_optimal_b_search_gradient_tukey(
         plt.savefig(raw_svg_file, bbox_inches="tight")
         plt.close(fig)
 
-        frame_png = Path(tmp_dir, f"61_optimization_gradient_tukey_{mode}_{frame_index}.png")
+        frame_png = Path(tmp_dir, f"{animation_prefix}_optimization_gradient_tukey_{mode}_{frame_index}.png")
         save_plot_according_to_template(
             raw_svg_file,
             frame_png,
@@ -717,7 +720,7 @@ def show_optimal_b_search_gradient_tukey(
         plt.savefig(raw_svg_file, bbox_inches="tight")
         plt.close(fig)
 
-        final_png = Path(tmp_dir, f"61_optimization_gradient_tukey_{mode}_{len(image_files)}.png")
+        final_png = Path(tmp_dir, f"{animation_prefix}_optimization_gradient_tukey_{mode}_{len(image_files)}.png")
         save_plot_according_to_template(
             raw_svg_file,
             final_png,
@@ -728,7 +731,7 @@ def show_optimal_b_search_gradient_tukey(
             image_files.append(final_png)
 
     prefix = f"{start_b0}_{start_b1}".replace(".", "_")
-    gif_path = Path(get_plots_path(), f"61_optimization_gradient_tukey_{prefix}_{mode}.gif")
+    gif_path = Path(get_plots_path(), f"{animation_prefix}_optimization_gradient_tukey_{prefix}_{mode}.gif")
     with imageio.get_writer(gif_path, mode="I", duration=ANIMATION_DURATION, loop=0) as writer:
         for image_file in image_files:
             writer.append_data(imageio.imread(image_file))
@@ -738,15 +741,18 @@ def show_optimal_b_search_gradient_tukey(
 
 
 if __name__ == "__main__":
-    for start_b0, start_b1 in [[-1.4, -4.0], [-2.0, 1.0]]:
-        show_optimal_b_search_gradient_tukey(
-            mode="rus",
-            learning_rate=6.0,
-            start_b0=start_b0,
-            start_b1=start_b1,
-            max_iterations=10,
-            grad_tol=0.01,
-            step_tol=0.001,
-            pause_frames=3,
-            tukey_c=2.5,
-        )
+    for mode in ["rus", "eng"]:
+        for initial_guess, animation_prefix in zip([[-2.0, 1.0], [-1.4, -4.0]], ["animation_24", "animation_25"]):
+            start_b0, start_b1 = initial_guess
+            show_optimal_b_search_gradient_tukey(
+                mode=mode,
+                learning_rate=6.0,
+                start_b0=start_b0,
+                start_b1=start_b1,
+                max_iterations=10,
+                grad_tol=0.01,
+                step_tol=0.001,
+                pause_frames=3,
+                tukey_c=2.5,
+                animation_prefix=animation_prefix
+            )

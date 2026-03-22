@@ -443,7 +443,7 @@ def main():
 
     ax.view_init(elev=17, azim=-60)
 
-    output_path = get_plots_path() / "68_3d.svg"
+    output_path = get_plots_path() / "69_final_plot_3d_base.svg"
     plt.savefig(output_path, bbox_inches="tight")
     plt.close(fig)
 

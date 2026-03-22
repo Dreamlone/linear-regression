@@ -1,7 +1,7 @@
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -13,12 +13,13 @@ from sklearn.metrics import root_mean_squared_error
 from sklearn.linear_model import LinearRegression, Lasso, Ridge
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
-from examples.utils import save_plot_according_to_template, split_train_test_manual, get_extended_dataset, \
-    take_sample_manual
+from examples.utils import (
+    save_plot_according_to_template,
+    split_train_test_manual,
+    get_extended_dataset,
+    take_sample_manual,
+)
 
-# =========================
-# Global settings
-# =========================
 FONTNAME = "Comic Sans MS"
 DPI = 200
 ANIMATION_DURATION: int = 180
@@ -39,9 +40,6 @@ CITY_COLUMN = "city"
 AC_COLUMN = "ac_in_apartment"
 
 
-# =========================
-# Annotations
-# =========================
 @dataclass
 class RusAnnotations:
     suptitle: str = "Влияние параметра регуляризации λ на модель"
@@ -52,11 +50,13 @@ class RusAnnotations:
 
     # Row titles
     lr_title: str = "Модель без регуляризации"
-    lasso_rmse_title: str = "Lasso: Зависимость RMSE от λ"
+    lr_coef_title: str = "Коэффициенты модели без регуляризации"
+
+    lasso_rmse_title: str = "Lasso: зависимость RMSE от λ"
     lasso_coef_title: str = "Lasso: коэффициенты признаков vs λ"
     lasso_biplot_title: str = "L1 регуляризация"
 
-    ridge_rmse_title: str = "Ridge: Зависимость RMSE от λ"
+    ridge_rmse_title: str = "Ridge: зависимость RMSE от λ"
     ridge_coef_title: str = "Ridge: коэффициенты признаков vs λ"
     ridge_biplot_title: str = "L2 регуляризация"
 
@@ -78,6 +78,8 @@ class EngAnnotations:
 
     # Row titles
     lr_title: str = "Model without regularization"
+    lr_coef_title: str = "Feature coefficients without regularization"
+
     lasso_rmse_title: str = "Lasso: RMSE vs λ"
     lasso_coef_title: str = "Lasso: feature coefficients vs λ"
     lasso_biplot_title: str = "L1 regularization"
@@ -94,7 +96,7 @@ class EngAnnotations:
     legend_test: str = "test"
 
 
-def annotations_by_language(mode: str):
+def annotations_by_language(mode: str) -> Union[RusAnnotations, EngAnnotations]:
     if mode == "rus":
         return RusAnnotations()
     if mode == "eng":
@@ -102,9 +104,6 @@ def annotations_by_language(mode: str):
     raise NotImplementedError(f"Language {mode} is not supported")
 
 
-# =========================
-# Preprocessing (returns train+test)
-# =========================
 def _encode_ac_binary(series: pd.Series) -> pd.Series:
     s = series.astype(str).str.strip().str.lower()
     positive = {"1", "true", "yes", "y", "да", "есть"}
@@ -120,33 +119,54 @@ def _encode_ac_binary(series: pd.Series) -> pd.Series:
     return s.map(to_bin).astype(float)
 
 
-def _build_readable_feature_names(city_categories_sorted: List[str]) -> Dict[str, str]:
-    mapping: Dict[str, str] = {
-        "rooms_scaled": "количество комнат",
-        "area_scaled": "площадь квартиры",
-        "metro_distance_scaled": "расстояние до метро",
-        "ac_yes": "есть ли кондиционер",
-    }
+def _build_readable_feature_names(
+    city_categories_sorted: List[str],
+    mode: str,
+) -> Dict[str, str]:
+    if mode == "rus":
+        mapping: Dict[str, str] = {
+            "rooms_scaled": "количество комнат",
+            "area_scaled": "площадь квартиры",
+            "metro_distance_scaled": "расстояние до метро",
+            "ac_yes": "есть ли кондиционер",
+        }
+        city_prefix = "город "
+    elif mode == "eng":
+        mapping = {
+            "rooms_scaled": "number of rooms",
+            "area_scaled": "apartment area",
+            "metro_distance_scaled": "distance to metro",
+            "ac_yes": "air conditioning",
+        }
+        city_prefix = "city "
+    else:
+        raise NotImplementedError(f"Language {mode} is not supported")
 
     letters = ["A", "B", "C", "D", "E", "F", "G", "H"]
     for idx, cat in enumerate(city_categories_sorted):
         letter = letters[idx] if idx < len(letters) else str(idx + 1)
-        mapping[f"city__{cat}"] = f"город {letter}"
+        mapping[f"city__{cat}"] = f"{city_prefix}{letter}"
 
     return mapping
 
 
-def load_scaled_train_test_multifeature() -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str]]:
+def load_scaled_train_test_multifeature(
+    mode: str,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str], List[str]]:
     dataset = get_extended_dataset()
 
     features = dataset[FEATURE_COLUMNS]
     target = dataset["price"].to_numpy()
 
     x_train_raw, y_train_raw, _, _ = take_sample_manual(
-        np.array(features), np.array(target), apply_distortion=True
+        np.array(features),
+        np.array(target),
+        apply_distortion=True,
     )
     x_train_raw, y_train_raw, x_test_raw, y_test_raw = split_train_test_manual(
-        x_train_raw, y_train_raw, random_state=52,
+        x_train_raw,
+        y_train_raw,
+        random_state=52,
     )
 
     x_train_df = pd.DataFrame(x_train_raw, columns=FEATURE_COLUMNS)
@@ -155,17 +175,17 @@ def load_scaled_train_test_multifeature() -> Tuple[np.ndarray, np.ndarray, np.nd
     y_train = np.ravel(np.array(y_train_raw, dtype=float))
     y_test = np.ravel(np.array(y_test_raw, dtype=float))
 
-    # 1) Scale numeric columns (fit on train, apply to both)
+    # 1) Scale numeric columns, fit on train and apply to both
     numeric_scaler = StandardScaler()
     x_train_num = x_train_df[NUMERIC_COLUMNS].astype(float)
     x_test_num = x_test_df[NUMERIC_COLUMNS].astype(float)
     x_train_num_scaled = numeric_scaler.fit_transform(x_train_num)
     x_test_num_scaled = numeric_scaler.transform(x_test_num)
 
-    # 2) City one-hot with stable full order
+    # 2) One hot encode city using a stable full order
     full_city_series = dataset[CITY_COLUMN].astype(str)
     city_categories_sorted = sorted(full_city_series.unique().tolist())
-    city_name_map = _build_readable_feature_names(city_categories_sorted)
+    city_name_map = _build_readable_feature_names(city_categories_sorted, mode=mode)
 
     train_city = x_train_df[CITY_COLUMN].astype(str)
     test_city = x_test_df[CITY_COLUMN].astype(str)
@@ -179,7 +199,7 @@ def load_scaled_train_test_multifeature() -> Tuple[np.ndarray, np.ndarray, np.nd
     train_dummies.columns = [f"city__{c}" for c in train_dummies.columns]
     test_dummies.columns = [f"city__{c}" for c in test_dummies.columns]
 
-    # 3) AC -> binary column
+    # 3) Convert AC to a binary column
     ac_train = _encode_ac_binary(x_train_df[AC_COLUMN]).astype(float).rename("ac_yes")
     ac_test = _encode_ac_binary(x_test_df[AC_COLUMN]).astype(float).rename("ac_yes")
 
@@ -195,36 +215,33 @@ def load_scaled_train_test_multifeature() -> Tuple[np.ndarray, np.ndarray, np.nd
         ac_test.to_numpy(dtype=float).reshape(-1, 1),
     ]).astype(float)
 
-    feature_names = (
+    feature_keys = (
         [f"{c}_scaled" for c in NUMERIC_COLUMNS]
         + list(train_dummies.columns)
         + ["ac_yes"]
     )
-    feature_names_human = [city_name_map.get(name, name) for name in feature_names]
+    feature_names_human = [city_name_map.get(name, name) for name in feature_keys]
 
-    # Scale target (fit on train, apply to both)
+    # Scale target, fit on train and apply to test
     target_scaler = StandardScaler()
     y_train_scaled = target_scaler.fit_transform(y_train.reshape(-1, 1)).ravel().astype(float)
     y_test_scaled = target_scaler.transform(y_test.reshape(-1, 1)).ravel().astype(float)
 
-    return x_train_processed, x_test_processed, y_train_scaled, y_test_scaled, feature_names_human
+    return x_train_processed, x_test_processed, y_train_scaled, y_test_scaled, feature_keys, feature_names_human
 
 
-# =========================
-# Colors
-# =========================
-def build_grouped_palette(coeff_names: List[str]) -> List[tuple]:
+def build_grouped_palette(feature_keys: List[str]) -> List[tuple]:
     blues = plt.get_cmap("Blues")
     reds = plt.get_cmap("Reds")
     greens = plt.get_cmap("Greens")
     purples = plt.get_cmap("Purples")
 
-    city_idx = [i for i, name in enumerate(coeff_names) if str(name).startswith("город ")]
-    ac_idx = [i for i, name in enumerate(coeff_names) if "кондиционер" in str(name)]
-    numeric_names = {"количество комнат", "площадь квартиры", "расстояние до метро"}
-    numeric_idx = [i for i, name in enumerate(coeff_names) if str(name) in numeric_names]
+    city_idx = [i for i, name in enumerate(feature_keys) if str(name).startswith("city__")]
+    ac_idx = [i for i, name in enumerate(feature_keys) if str(name) == "ac_yes"]
+    numeric_names = {"rooms_scaled", "area_scaled", "metro_distance_scaled"}
+    numeric_idx = [i for i, name in enumerate(feature_keys) if str(name) in numeric_names]
 
-    colors = [None] * len(coeff_names)
+    colors: List[Optional[tuple]] = [None] * len(feature_keys)
 
     def assign(idx_list: List[int], cmap, lo: float = 0.45, hi: float = 0.85):
         if len(idx_list) == 0:
@@ -240,12 +257,9 @@ def build_grouped_palette(coeff_names: List[str]) -> List[tuple]:
     fallback_idx = [i for i, c in enumerate(colors) if c is None]
     assign(fallback_idx, purples, lo=0.45, hi=0.85)
 
-    return colors
+    return [c for c in colors if c is not None]
 
 
-# =========================
-# Model utilities
-# =========================
 def rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return float(root_mean_squared_error(np.asarray(y_true, dtype=float), np.asarray(y_pred, dtype=float)))
 
@@ -322,9 +336,6 @@ def compute_global_biplot_limits(
     return vmin - pad, vmax + pad
 
 
-# =========================
-# Plot blocks
-# =========================
 def plot_rmse_text_cell(
     ax,
     annotations,
@@ -376,17 +387,15 @@ def plot_lr_coef_barplot(
     ax.set_xlim(-0.6, float(n_features) - 0.4)
 
     ax.set_ylabel(annotations.coef_y, fontdict={"fontsize": 10, "fontname": FONTNAME})
-
-    # Labels can get crowded; keep them but small + rotated
     ax.set_xticks(x)
     ax.set_xticklabels(feature_names_human, rotation=50, fontsize=5, fontname=FONTNAME)
 
-    # Title: minimal & language-aware
-    if isinstance(annotations, RusAnnotations):
-        title = "Модель без регуляризации: коэффициенты"
-    else:
-        title = "Feature coefficients"
-    ax.set_title(title, fontsize=12, fontdict={"fontname": FONTNAME}, y=1.05)
+    ax.set_title(
+        annotations.lr_coef_title,
+        fontsize=12,
+        fontdict={"fontname": FONTNAME},
+        y=1.05,
+    )
 
 
 def plot_biplot(
@@ -467,30 +476,22 @@ def plot_rmse_curves(
         label=annotations.legend_test,
     )
 
-    # Vertical line at current lambda
     ax.axvline(x=float(current_alpha), color="black", linewidth=1.6, alpha=0.9, zorder=4)
-
-    # Fixed y-limits to match your hard-coded bounds
     ax.set_ylim(float(RMSE_MIN), float(RMSE_MAX))
 
-    # --- current values (dot + text) ---
-    # Find nearest grid index for current_alpha (robust vs float mismatch)
     idx = int(np.argmin(np.abs(np.asarray(regularization_values, dtype=float) - float(current_alpha))))
 
     x_val = float(np.asarray(regularization_values, dtype=float)[idx])
     y_train_cur = float(np.asarray(rmse_train_values, dtype=float)[idx])
     y_test_cur = float(np.asarray(rmse_test_values, dtype=float)[idx])
 
-    # Mark points
     ax.scatter([x_val], [y_train_cur], s=80, c="red", edgecolor="black", linewidth=0.8, zorder=6)
     ax.scatter([x_val], [y_test_cur], s=80, c="black", edgecolor="black", linewidth=0.8, zorder=6)
 
-    # Text offsets: small shift to the right if possible, else to the left
     x_vals = np.asarray(regularization_values, dtype=float)
     x_span = float(np.max(x_vals) - np.min(x_vals)) if len(x_vals) > 1 else 1.0
     x_offset = 0.02 * x_span
 
-    # If close to right boundary, place text to the left
     x_text = x_val + x_offset
     ha = "left"
     if x_val > float(np.max(x_vals)) - 0.08 * x_span:
@@ -564,24 +565,18 @@ def plot_coef_paths(
         ax.legend(loc="lower right", frameon=True, fontsize=7, ncol=1)
 
 
-# =========================
-# Figure layout
-# =========================
 def create_axes(fig):
     gs = fig.add_gridspec(3, 3)
     gs.update(wspace=0.32, hspace=0.42)
 
-    # Row 1:
     ax_lr_rmse_text = fig.add_subplot(gs[0, 0])
     ax_lr_coef_bar = fig.add_subplot(gs[0, 1])
     ax_lr_biplot = fig.add_subplot(gs[0, 2])
 
-    # Row 2: Lasso
     ax_lasso_rmse = fig.add_subplot(gs[1, 0])
     ax_lasso_coef = fig.add_subplot(gs[1, 1])
     ax_lasso_biplot = fig.add_subplot(gs[1, 2])
 
-    # Row 3: Ridge
     ax_ridge_rmse = fig.add_subplot(gs[2, 0])
     ax_ridge_coef = fig.add_subplot(gs[2, 1])
     ax_ridge_biplot = fig.add_subplot(gs[2, 2])
@@ -590,20 +585,20 @@ def create_axes(fig):
         ax_lr_rmse_text,
         ax_lr_coef_bar,
         ax_lr_biplot,
-        ax_lasso_rmse, ax_lasso_coef, ax_lasso_biplot,
-        ax_ridge_rmse, ax_ridge_coef, ax_ridge_biplot
+        ax_lasso_rmse,
+        ax_lasso_coef,
+        ax_lasso_biplot,
+        ax_ridge_rmse,
+        ax_ridge_coef,
+        ax_ridge_biplot,
     )
 
 
-# =========================
-# Frame generation
-# =========================
 def generate_frame(
     frame_index: int,
     mode: str,
     regularization_values: np.ndarray,
     biplot_lims: Tuple[float, float],
-    # Baseline
     y_train: np.ndarray,
     y_test: np.ndarray,
     pred_lr_train: np.ndarray,
@@ -611,19 +606,16 @@ def generate_frame(
     rmse_lr_train: float,
     rmse_lr_test: float,
     lr_coefs: np.ndarray,
-    # Lasso paths
     lasso_rmse_train: np.ndarray,
     lasso_rmse_test: np.ndarray,
     lasso_coef_matrix: np.ndarray,
     lasso_pred_train_list: List[np.ndarray],
     lasso_pred_test_list: List[np.ndarray],
-    # Ridge paths
     ridge_rmse_train: np.ndarray,
     ridge_rmse_test: np.ndarray,
     ridge_coef_matrix: np.ndarray,
     ridge_pred_train_list: List[np.ndarray],
     ridge_pred_test_list: List[np.ndarray],
-    # Feature naming/colors
     feature_names_human: List[str],
     feature_colors: List[tuple],
 ) -> plt.Figure:
@@ -635,11 +627,14 @@ def generate_frame(
         ax_lr_rmse_text,
         ax_lr_coef_bar,
         ax_lr_biplot,
-        ax_lasso_rmse, ax_lasso_coef, ax_lasso_biplot,
-        ax_ridge_rmse, ax_ridge_coef, ax_ridge_biplot
+        ax_lasso_rmse,
+        ax_lasso_coef,
+        ax_lasso_biplot,
+        ax_ridge_rmse,
+        ax_ridge_coef,
+        ax_ridge_biplot,
     ) = create_axes(fig)
 
-    # Row 1, Col 1: RMSE text (colored)
     plot_rmse_text_cell(
         ax=ax_lr_rmse_text,
         annotations=annotations,
@@ -647,7 +642,6 @@ def generate_frame(
         rmse_test_value=float(rmse_lr_test),
     )
 
-    # Row 1, Col 2: barplot of baseline coefficients
     plot_lr_coef_barplot(
         ax=ax_lr_coef_bar,
         annotations=annotations,
@@ -656,7 +650,6 @@ def generate_frame(
         feature_colors=feature_colors,
     )
 
-    # Row 1, Col 3: LinearRegression biplot (constant across frames)
     plot_biplot(
         ax=ax_lr_biplot,
         annotations=annotations,
@@ -668,7 +661,6 @@ def generate_frame(
         lims=biplot_lims,
     )
 
-    # Row 2: Lasso
     plot_rmse_curves(
         ax=ax_lasso_rmse,
         annotations=annotations,
@@ -702,7 +694,6 @@ def generate_frame(
         lims=biplot_lims,
     )
 
-    # Row 3: Ridge
     plot_rmse_curves(
         ax=ax_ridge_rmse,
         annotations=annotations,
@@ -737,7 +728,7 @@ def generate_frame(
     )
 
     fig.suptitle(
-        f"{annotations.suptitle}.  λ = {current_alpha:.2f}",
+        f"{annotations.suptitle}. λ = {current_alpha:.2f}",
         fontsize=18,
         fontdict={"fontname": FONTNAME},
         x=0.5,
@@ -764,11 +755,10 @@ def show_regularization_gamma_effect(
         shutil.rmtree(tmp_dir)
     tmp_dir = get_tmp_animation_directory()
 
-    # Data
-    x_train, x_test, y_train, y_test, feature_names_human = load_scaled_train_test_multifeature()
-    feature_colors = build_grouped_palette(feature_names_human)
+    x_train, x_test, y_train, y_test, feature_keys, feature_names_human = load_scaled_train_test_multifeature(mode=mode)
+    feature_colors = build_grouped_palette(feature_keys)
 
-    # Optional noise on training target (in scaled units)
+    # Optional noise on the training target, in scaled units
     if noise is not None and float(noise) > 0.0:
         rng = np.random.default_rng(42)
         y_train = (
@@ -776,7 +766,6 @@ def show_regularization_gamma_effect(
             + rng.normal(0.0, float(noise), size=len(y_train)).astype(float)
         )
 
-    # Regularization grid
     regularization_values = np.linspace(
         float(min_regularization),
         float(max_regularization),
@@ -784,7 +773,6 @@ def show_regularization_gamma_effect(
         dtype=float,
     )
 
-    # Baseline LinearRegression
     lr_model = LinearRegression(fit_intercept=True)
     lr_model.fit(x_train, y_train)
     pred_lr_train = np.ravel(lr_model.predict(x_train)).astype(float)
@@ -794,7 +782,6 @@ def show_regularization_gamma_effect(
     rmse_lr_test = rmse(y_test, pred_lr_test)
     lr_coefs = np.ravel(np.array(lr_model.coef_, dtype=float))
 
-    # Lasso / Ridge paths
     lasso_rmse_train, lasso_rmse_test, lasso_coef_matrix, lasso_pred_train_list, lasso_pred_test_list = (
         collect_regularization_path(
             model_kind="lasso",
@@ -818,7 +805,6 @@ def show_regularization_gamma_effect(
         )
     )
 
-    # Global biplot limits (stable axes across frames)
     biplot_lims = compute_global_biplot_limits(
         y_train=y_train,
         y_test=y_test,
@@ -833,7 +819,7 @@ def show_regularization_gamma_effect(
     )
 
     image_files: List[Path] = []
-    raw_svg_file = Path(tmp_dir, f"65_regularization_gamma_{mode}.svg")
+    raw_svg_file = Path(tmp_dir, f"animation_26_regularization_gamma_{mode}.svg")
 
     for frame_index in range(len(regularization_values)):
         fig = generate_frame(
@@ -865,7 +851,7 @@ def show_regularization_gamma_effect(
         plt.savefig(raw_svg_file, bbox_inches="tight")
         plt.close(fig)
 
-        frame_png = Path(tmp_dir, f"65_regularization_gamma_{mode}_{frame_index}.png")
+        frame_png = Path(tmp_dir, f"animation_26_regularization_gamma_{mode}_{frame_index}.png")
         save_plot_according_to_template(
             raw_svg_file,
             frame_png,
@@ -874,7 +860,6 @@ def show_regularization_gamma_effect(
         )
         image_files.append(frame_png)
 
-    # Pause on last frame
     if len(image_files) > 0:
         for _ in range(int(pause_frames)):
             image_files.append(image_files[-1])
@@ -887,7 +872,7 @@ def show_regularization_gamma_effect(
 
     gif_path = Path(
         get_plots_path(),
-        f"65_regularization_gamma_effect_grid_{grid_str}_noise_{noise_str}_{mode}.gif",
+        f"animation_26_regularization_gamma_effect_grid_{grid_str}_noise_{noise_str}_{mode}.gif",
     )
 
     with imageio.get_writer(gif_path, mode="I", duration=ANIMATION_DURATION, loop=0) as writer:
@@ -899,12 +884,13 @@ def show_regularization_gamma_effect(
 
 
 if __name__ == "__main__":
-    show_regularization_gamma_effect(
-        mode="rus",
-        regularization_grid_size=REGULARIZATION_GRID_SIZE,
-        min_regularization=MIN_REGULARIZATION,
-        max_regularization=MAX_REGULARIZATION,
-        noise=None,
-        pause_frames=8,
-        template_name="template.svg",
-    )
+    for mode in ["rus", "eng"]:
+        show_regularization_gamma_effect(
+            mode=mode,
+            regularization_grid_size=REGULARIZATION_GRID_SIZE,
+            min_regularization=MIN_REGULARIZATION,
+            max_regularization=MAX_REGULARIZATION,
+            noise=None,
+            pause_frames=8,
+            template_name="template.svg",
+        )

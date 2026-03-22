@@ -37,6 +37,8 @@ class RusAnnotations:
     y_axis: str = "Наклон стандартизированный ($b_1$)"
     model_x: str = "Количество комнат, стандартизированное (x)"
     model_y: str = "Стоимость, стандартизированная (y)"
+    mse_optim: str = "Оптимум по MSE"
+    tukey_optim: str = "Оптимум по Tukey biweight"
 
 
 @dataclass
@@ -46,8 +48,10 @@ class EngAnnotations:
     model_title: str = "Data and two optimal models"
     x_axis: str = "Intercept, scaled ($b_0$)"
     y_axis: str = "Slope, scaled ($b_1$)"
-    model_x: str = "Rooms, scaled (x)"
+    model_x: str = "Rooms number, scaled (x)"
     model_y: str = "Price, scaled (y)"
+    mse_optim: str = "Optimum according to MSE"
+    tukey_optim: str = "Optimum according to Tukey’s biweight"
 
 
 def annotations_by_language(mode: str) -> Union[RusAnnotations, EngAnnotations]:
@@ -197,8 +201,8 @@ def render_center_model(
     y_line_mse = float(b0_mse) + float(b1_mse) * x_line
     y_line_tukey = float(b0_tukey) + float(b1_tukey) * x_line
 
-    ax.plot(x_line, y_line_mse, linewidth=2.6, zorder=3, label="Оптимум по MSE")
-    ax.plot(x_line, y_line_tukey, linewidth=2.6, zorder=3, label="Оптимум по Tukey biweight")
+    ax.plot(x_line, y_line_mse, linewidth=2.6, zorder=3, label=annotations.mse_optim)
+    ax.plot(x_line, y_line_tukey, linewidth=2.6, zorder=3, label=annotations.tukey_optim)
 
     ax.set_xlabel(annotations.model_x, fontdict={"fontsize": 10, "fontname": FONTNAME})
     ax.set_ylabel(annotations.model_y, fontdict={"fontsize": 10, "fontname": FONTNAME})

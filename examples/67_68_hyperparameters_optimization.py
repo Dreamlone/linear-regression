@@ -518,7 +518,7 @@ def make_ridge_alpha_gridsearch_figure(mode: str = "rus", k_folds: Optional[int]
         ax_top = fig.add_subplot(top_gs[0, ax_index])
 
         title = (
-            f"фолд {fold_index}: обучение/валидация"
+            f"fold {fold_index}: train/test"
             if mode == "rus"
             else f"fold {fold_index}: train/validation"
         )
@@ -545,8 +545,13 @@ def make_ridge_alpha_gridsearch_figure(mode: str = "rus", k_folds: Optional[int]
         )
 
     plots_path = Path(get_plots_path())
-    raw_svg = plots_path / f"67_hyperparameters_optimization_kfold3_{mode}.svg"
-    out_png = plots_path / f"67_hyperparameters_optimization_kfold3_{mode}.png"
+    if k_folds is None:
+        prefix = "67"
+    else:
+        prefix = "68"
+
+    raw_svg = plots_path / f"{prefix}_hyperparameters_optimization_kfold3_{mode}.svg"
+    out_png = plots_path / f"{prefix}_hyperparameters_optimization_kfold3_{mode}.png"
 
     plt.savefig(raw_svg, bbox_inches="tight")
     plt.close(fig)
@@ -562,3 +567,4 @@ def make_ridge_alpha_gridsearch_figure(mode: str = "rus", k_folds: Optional[int]
 
 if __name__ == "__main__":
     make_ridge_alpha_gridsearch_figure(mode="rus", k_folds=None)
+    make_ridge_alpha_gridsearch_figure(mode="rus", k_folds=3)

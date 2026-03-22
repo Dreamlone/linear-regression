@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple, Union, Dict, Optional
+from typing import List, Tuple, Union, Dict
 
 import numpy as np
 import pandas as pd
@@ -32,17 +32,19 @@ class RusAnnotations:
     bottom_x: str = "Итерация градиентного спуска"
     bottom_y: str = "Значение квадратической ошибки"
     legend_title: str = "Признак"
+    model_label: str = "Модель"
 
 
 @dataclass
 class EngAnnotations:
-    suptitle: str = "Gradient descent history for multivariate linear regression"
+    suptitle: str = "Gradient descent history for multiple linear regression"
     top_title: str = "Feature importance depends on coefficient magnitude. Values across iterations"
     top_y: str = "Share of feature coefficient"
-    bottom_title: str = "Training error vs iteration"
+    bottom_title: str = "Training error across iterations"
     bottom_x: str = "Gradient descent iteration"
-    bottom_y: str = "Squared error value"
+    bottom_y: str = "Mean Squared Error"
     legend_title: str = "Feature"
+    model_label: str = "Model"
 
 
 def annotations_by_language(mode: str) -> Union[RusAnnotations, EngAnnotations]:
@@ -69,30 +71,57 @@ def _encode_ac_binary(series: pd.Series) -> pd.Series:
     return s.map(to_bin).astype(float)
 
 
-def _build_readable_feature_names(city_categories_sorted: List[str]) -> Dict[str, str]:
-    mapping: Dict[str, str] = {
-        "rooms_scaled": "количество комнат",
-        "area_scaled": "площадь квартиры",
-        "metro_distance_scaled": "расстояние до метро",
-        "ac_yes": "есть ли кондиционер",
-    }
+def _build_readable_feature_names(
+    city_categories_sorted: List[str],
+    mode: str,
+) -> Dict[str, str]:
+    if mode == "rus":
+        mapping: Dict[str, str] = {
+            "rooms_scaled": "количество комнат",
+            "area_scaled": "площадь квартиры",
+            "metro_distance_scaled": "расстояние до метро",
+            "ac_yes": "есть ли кондиционер",
+        }
+        city_prefix = "город "
+    elif mode == "eng":
+        mapping = {
+            "rooms_scaled": "number of rooms",
+            "area_scaled": "apartment area",
+            "metro_distance_scaled": "distance to metro",
+            "ac_yes": "air conditioning",
+        }
+        city_prefix = "city "
+    else:
+        raise NotImplementedError(f"Language {mode} is not supported")
 
     letters = ["A", "B", "C", "D", "E"]
     for idx, cat in enumerate(city_categories_sorted):
         letter = letters[idx] if idx < len(letters) else str(idx + 1)
-        mapping[f"city__{cat}"] = f"город {letter}"
+        mapping[f"city__{cat}"] = f"{city_prefix}{letter}"
 
     return mapping
 
 
-def load_scaled_data_multifeature() -> Tuple[np.ndarray, np.ndarray, List[str]]:
+def _intercept_name(mode: str) -> str:
+    if mode == "rus":
+        return "коэффициент сдвига"
+    if mode == "eng":
+        return "intercept coefficient"
+    raise NotImplementedError(f"Language {mode} is not supported")
+
+
+def load_scaled_data_multifeature(
+    mode: str,
+) -> Tuple[np.ndarray, np.ndarray, List[str], List[str]]:
     dataset = get_extended_dataset()
 
     features = dataset[FEATURE_COLUMNS]
     target = dataset["price"].to_numpy()
 
     x_train_raw, y_train_raw, _, _ = take_sample_manual(
-        np.array(features), np.array(target), apply_distortion=True
+        np.array(features),
+        np.array(target),
+        apply_distortion=True,
     )
 
     x_train_df = pd.DataFrame(x_train_raw, columns=FEATURE_COLUMNS)
@@ -103,16 +132,16 @@ def load_scaled_data_multifeature() -> Tuple[np.ndarray, np.ndarray, List[str]]:
     x_num = x_train_df[NUMERIC_COLUMNS].astype(float)
     x_num_scaled = numeric_scaler.fit_transform(x_num)
 
-    # 2) City one-hot in stable order
+    # 2) One hot encode city in a stable order
     city_series = x_train_df[CITY_COLUMN].astype(str)
     city_categories_sorted = sorted(city_series.unique().tolist())
-    city_name_map = _build_readable_feature_names(city_categories_sorted)
+    city_name_map = _build_readable_feature_names(city_categories_sorted, mode=mode)
 
     city_dummies = pd.get_dummies(city_series, dtype=float)
     city_dummies = city_dummies.reindex(columns=city_categories_sorted, fill_value=0.0)
     city_dummies.columns = [f"city__{c}" for c in city_dummies.columns]
 
-    # 3) AC -> single column (yes/no), for clarity and no redundancy
+    # 3) Convert AC to a single yes/no column for clarity and to avoid redundancy
     ac_yes = _encode_ac_binary(x_train_df[AC_COLUMN]).astype(float).rename("ac_yes")
 
     x_processed = np.hstack([
@@ -121,7 +150,7 @@ def load_scaled_data_multifeature() -> Tuple[np.ndarray, np.ndarray, List[str]]:
         ac_yes.to_numpy(dtype=float).reshape(-1, 1),
     ]).astype(float)
 
-    feature_names = (
+    feature_keys = (
         [f"{c}_scaled" for c in NUMERIC_COLUMNS]
         + list(city_dummies.columns)
         + ["ac_yes"]
@@ -131,8 +160,8 @@ def load_scaled_data_multifeature() -> Tuple[np.ndarray, np.ndarray, List[str]]:
     target_scaler = StandardScaler()
     y_scaled = target_scaler.fit_transform(y_train.reshape(-1, 1)).ravel().astype(float)
 
-    feature_names_human = [city_name_map.get(name, name) for name in feature_names]
-    return x_processed, y_scaled, feature_names_human
+    feature_names_human = [city_name_map.get(name, name) for name in feature_keys]
+    return x_processed, y_scaled, feature_keys, feature_names_human
 
 
 def mse_and_gradients_multi(
@@ -183,7 +212,12 @@ def gradient_descent_mse_and_coeff_history(
     w_history: List[np.ndarray] = []
 
     for _ in range(int(max_iterations) + 1):
-        mse_value, grad_b0, grad_w = mse_and_gradients_multi(current_b0, current_w, x_train, y_train)
+        mse_value, grad_b0, grad_w = mse_and_gradients_multi(
+            current_b0,
+            current_w,
+            x_train,
+            y_train,
+        )
 
         mse_history.append(float(mse_value))
         b0_history.append(float(current_b0))
@@ -209,14 +243,14 @@ def _build_dense_fill_shares(
 
     n_iters = int(len(iteration_values))
     n_features = int(len(w_history[0])) if len(w_history) > 0 else 0
-    n_coeffs = 1 + n_features  # b0 + all weights
+    n_coeffs = 1 + n_features  # intercept + all weights
 
     coef_matrix = np.zeros((n_coeffs, n_iters), dtype=float)
     coef_matrix[0, :] = np.array(b0_history, dtype=float)
     for idx, w_vec in enumerate(w_history):
         coef_matrix[1:, idx] = np.ravel(np.array(w_vec, dtype=float))
 
-    # Make it look continuous: interpolate in time between iterations
+    # Make the plot look continuous by interpolating between iterations
     if n_iters <= 1:
         x_dense = iteration_values.copy()
         abs_dense = np.abs(coef_matrix)
@@ -257,7 +291,7 @@ def _annotate_iteration_shares(
     iter_x: int,
     shares_at_iter: np.ndarray,
     x_offset: float = 0.22,
-    fontsize: int = 7,  # smaller as requested earlier
+    fontsize: int = 7,
 ):
     cum = np.cumsum(shares_at_iter)
     y_bottoms = np.concatenate(([0.0], cum[:-1]))
@@ -283,26 +317,26 @@ def _annotate_iteration_shares(
         )
 
 
-def build_grouped_palette(coeff_names: List[str]) -> List[tuple]:
+def build_grouped_palette(coeff_keys: List[str]) -> List[tuple]:
     """
-    Группируем цвета по смысловым блокам:
-    - города -> Blues
-    - кондиционер -> Reds
-    - численные -> Greens
-    - коэффициент сдвига -> grey
+    Group colors by semantic blocks:
+    - cities -> Blues
+    - air conditioning -> Reds
+    - numeric features -> Greens
+    - intercept coefficient -> grey
     """
     blues = plt.get_cmap("Blues")
     reds = plt.get_cmap("Reds")
     greens = plt.get_cmap("Greens")
     purples = plt.get_cmap("Purples")
 
-    city_idx = [i for i, name in enumerate(coeff_names) if name.startswith("город ")]
-    ac_idx = [i for i, name in enumerate(coeff_names) if "кондиционер" in name]
-    numeric_names = {"количество комнат", "площадь квартиры", "расстояние до метро"}
-    numeric_idx = [i for i, name in enumerate(coeff_names) if name in numeric_names]
-    intercept_idx = [i for i, name in enumerate(coeff_names) if name == "коэффициент сдвига"]
+    city_idx = [i for i, name in enumerate(coeff_keys) if name.startswith("city__")]
+    ac_idx = [i for i, name in enumerate(coeff_keys) if name == "ac_yes"]
+    numeric_names = {"rooms_scaled", "area_scaled", "metro_distance_scaled"}
+    numeric_idx = [i for i, name in enumerate(coeff_keys) if name in numeric_names]
+    intercept_idx = [i for i, name in enumerate(coeff_keys) if name == "intercept"]
 
-    colors = [None] * len(coeff_names)
+    colors = [None] * len(coeff_keys)
 
     def assign(idx_list: List[int], cmap, lo: float = 0.45, hi: float = 0.85):
         if len(idx_list) == 0:
@@ -323,7 +357,7 @@ def build_grouped_palette(coeff_names: List[str]) -> List[tuple]:
     fallback_idx = [i for i, c in enumerate(colors) if c is None]
     assign(fallback_idx, purples, lo=0.45, hi=0.85)
 
-    return colors  # order matches layers; legend reversal won't affect these
+    return colors
 
 
 def show_mse_vs_iteration_static(
@@ -337,7 +371,7 @@ def show_mse_vs_iteration_static(
 
     annotations = annotations_by_language(mode)
 
-    x_train, y_train, feature_names_human = load_scaled_data_multifeature()
+    x_train, y_train, feature_keys, feature_names_human = load_scaled_data_multifeature(mode=mode)
 
     mse_history, b0_history, w_history = gradient_descent_mse_and_coeff_history(
         x_train=x_train,
@@ -349,7 +383,8 @@ def show_mse_vs_iteration_static(
 
     iterations = np.arange(len(mse_history), dtype=int)
 
-    coeff_names = ["коэффициент сдвига"] + list(feature_names_human)
+    coeff_keys = ["intercept"] + list(feature_keys)
+    coeff_names = [_intercept_name(mode)] + list(feature_names_human)
 
     x_dense, shares_dense = _build_dense_fill_shares(
         b0_history=b0_history,
@@ -373,8 +408,8 @@ def show_mse_vs_iteration_static(
 
     ax_bottom.xaxis.set_major_locator(MaxNLocator(integer=True))
 
-    # --- Top: stackplot with grouped palette ---
-    grouped_colors = build_grouped_palette(coeff_names)
+    # Top panel: stackplot with grouped palette
+    grouped_colors = build_grouped_palette(coeff_keys)
 
     stack_handles = ax_top.stackplot(
         x_dense,
@@ -391,16 +426,19 @@ def show_mse_vs_iteration_static(
         fontdict={"fontname": FONTNAME},
         y=1.1,
     )
-    ax_top.set_ylabel(annotations.top_y, fontdict={"fontsize": 11, "fontname": FONTNAME})
+    ax_top.set_ylabel(
+        annotations.top_y,
+        fontdict={"fontsize": 11, "fontname": FONTNAME},
+    )
     ax_top.set_ylim(0.0, 1.0)
 
     if len(iterations) > 0:
         last_iter = int(iterations[-1])
 
-        # Add space on right for % labels
+        # Add some space on the right for percentage labels
         ax_top.set_xlim(-0.5, float(last_iter) + 1.0)
 
-        # Manual vertical iteration markers BEHIND the fill (thin black lines)
+        # Draw iteration markers behind the filled areas
         for x in iterations:
             ax_top.axvline(
                 x=float(x),
@@ -410,7 +448,7 @@ def show_mse_vs_iteration_static(
                 zorder=1,
             )
 
-        # Emphasize iteration 5
+        # Highlight iteration 5
         if annotate_iteration_5 and last_iter >= 5:
             ax_top.axvline(
                 x=5.0,
@@ -420,8 +458,12 @@ def show_mse_vs_iteration_static(
                 zorder=6,
             )
 
-        # Annotate shares at last iteration
-        shares_last = _compute_shares_at_iteration(b0_history, w_history, iteration_index=last_iter)
+        # Annotate shares at the last iteration
+        shares_last = _compute_shares_at_iteration(
+            b0_history,
+            w_history,
+            iteration_index=last_iter,
+        )
         _annotate_iteration_shares(
             ax=ax_top,
             iter_x=last_iter,
@@ -439,7 +481,11 @@ def show_mse_vs_iteration_static(
 
         # Annotate shares at iteration 5
         if annotate_iteration_5 and last_iter >= 5:
-            shares_5 = _compute_shares_at_iteration(b0_history, w_history, iteration_index=5)
+            shares_5 = _compute_shares_at_iteration(
+                b0_history,
+                w_history,
+                iteration_index=5,
+            )
             _annotate_iteration_shares(
                 ax=ax_top,
                 iter_x=5,
@@ -450,7 +496,7 @@ def show_mse_vs_iteration_static(
 
     ax_top.tick_params(axis="x", labelbottom=False)
 
-    # --- Legend order: bottom-to-top (b0 at bottom), colors unchanged on plot ---
+    # Legend order: bottom-to-top
     ax_legend.legend(
         stack_handles[::-1],
         coeff_names[::-1],
@@ -461,7 +507,7 @@ def show_mse_vs_iteration_static(
         title_fontsize=10,
     )
 
-    # --- Bottom: scatter MSE vs iteration ---
+    # Bottom panel: MSE vs iteration
     ax_bottom.grid(True, axis="both", which="major", color="grey", alpha=0.3, zorder=1)
     ax_bottom.scatter(
         iterations,
@@ -481,8 +527,14 @@ def show_mse_vs_iteration_static(
         y=1.02,
     )
     ax_bottom.set_xticks([0, 5, 10, 15, 20, 25])
-    ax_bottom.set_xlabel(annotations.bottom_x, fontdict={"fontsize": 11, "fontname": FONTNAME})
-    ax_bottom.set_ylabel(annotations.bottom_y, fontdict={"fontsize": 11, "fontname": FONTNAME})
+    ax_bottom.set_xlabel(
+        annotations.bottom_x,
+        fontdict={"fontsize": 11, "fontname": FONTNAME},
+    )
+    ax_bottom.set_ylabel(
+        annotations.bottom_y,
+        fontdict={"fontsize": 11, "fontname": FONTNAME},
+    )
 
     fig.suptitle(
         annotations.suptitle,
@@ -493,11 +545,11 @@ def show_mse_vs_iteration_static(
         y=1.04,
     )
 
-    raw_svg = Path(get_plots_path(), f"62_mse_vs_iteration_static_{mode}.svg")
+    raw_svg = Path(get_plots_path(), f"61_mse_vs_iteration_static_{mode}.svg")
     plt.savefig(raw_svg, bbox_inches="tight")
     plt.close(fig)
 
-    out_png = Path(get_plots_path(), f"62_mse_vs_iteration_static_{mode}.png")
+    out_png = Path(get_plots_path(), f"61_mse_vs_iteration_static_{mode}.png")
     save_plot_according_to_template(
         raw_svg,
         out_png,
@@ -506,13 +558,11 @@ def show_mse_vs_iteration_static(
     )
 
     print(f"Saved: {out_png}")
-    # ===== Print final equation (order matches legend) =====
+
+    # Print the final equation in the same order as the legend
     b0_last = float(b0_history[-1])
     w_last = np.ravel(np.array(w_history[-1], dtype=float))
 
-    # names and coefficients in the same order as legend:
-    # legend uses coeff_names[::-1], so we do the same
-    coeff_names = ["коэффициент сдвига"] + list(feature_names_human)
     coef_values = np.concatenate(([b0_last], w_last), axis=0)
 
     legend_names = coeff_names[::-1]
@@ -521,25 +571,23 @@ def show_mse_vs_iteration_static(
     terms = []
     for name, coef in zip(legend_names, legend_coefs):
         c = float(coef)
-        # print all terms (or skip near-zero if you want)
-        # if abs(c) < 1e-8:
-        #     continue
         sign = "+" if c >= 0 else "-"
         terms.append(f" {sign} {abs(c):.2f}·({name})")
 
     equation = "y_scaled =" + "".join(terms)
 
     print("\n" + "-" * 80)
-    print("Model:")
+    print(f"{annotations.model_label}:")
     print(equation)
     print("-" * 80 + "\n")
 
 
 if __name__ == "__main__":
-    show_mse_vs_iteration_static(
-        mode="rus",
-        learning_rate=0.25,
-        max_iterations=25,
-        grad_tol=1e-8,
-        annotate_iteration_5=True,
-    )
+    for mode in ["rus", "eng"]:
+        show_mse_vs_iteration_static(
+            mode=mode,
+            learning_rate=0.25,
+            max_iterations=25,
+            grad_tol=1e-8,
+            annotate_iteration_5=True,
+        )
