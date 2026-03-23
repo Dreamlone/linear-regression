@@ -118,18 +118,6 @@ def _intercept_name(mode: str) -> str:
     raise NotImplementedError(f"Language {mode} is not supported")
 
 
-def _format_split_label(mode: str, split_label: Optional[Union[int, str]]) -> str:
-    if split_label is None:
-        return ""
-
-    if mode == "rus":
-        return f"разбиение {split_label}"
-    if mode == "eng":
-        return f"split {split_label}"
-
-    raise NotImplementedError(f"Language {mode} is not supported")
-
-
 def _build_panel_subtitle(
     mode: str,
     model_name: str,
@@ -137,9 +125,6 @@ def _build_panel_subtitle(
     split_label: Optional[Union[int, str]] = None,
 ) -> str:
     parts = [f"{model_name}, λ={lambda_value:.2f}"]
-    split_text = _format_split_label(mode, split_label)
-    if split_text:
-        parts.append(split_text)
     return ", ".join(parts)
 
 
