@@ -1,6 +1,6 @@
 # A Visual Explanation of the Linear Regression
 
-<img src="./docs/media/estaty_logo.png" width="750"/>
+<img src="./plots_per_article/tds/0_roadmap_eng_transparent.png" width="1200"/>
 
 This repository contains materials to explain the linear regression algorithm.
 
