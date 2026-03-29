@@ -74,7 +74,7 @@ Start the exploration with `examples` folder
   author       = {Mikhail Sarafanov},
   title        = {A Visual Explanation of the Linear Regression},
   howpublished = {\url{https://github.com/Dreamlone/linear-regression}},
-  year         = {2025}
+  year         = {2026}
 }
 ```
 
