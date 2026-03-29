@@ -1,5 +1,7 @@
 # A Visual Explanation of the Linear Regression
 
+<img src="./docs/media/estaty_logo.png" width="750"/>
+
 This repository contains materials to explain the linear regression algorithm.
 
 ## Why linear regression 
