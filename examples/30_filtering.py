@@ -349,7 +349,7 @@ def annotations_by_language(mode: str):
         y_label = "Detected outliers"
         mean_label = "mean"
         median_label = "median"
-        std_label = "standard\ndeviation\n         σ"
+        std_label = "standard\ndeviation\n      σ"
         z_scores_label = "Z-scores"
         modified_z_scores_label = "Modified Z-scores"
     elif mode == "rus":
