@@ -64,15 +64,15 @@ Start the exploration with `examples` folder
 
 ## Articles 
 
-- habr (rus) - Как бы я рассказал про линейную регрессию (если б меня кто-то спросил)
-- TDS (eng) - A Visual Explanation of the Linear Regression
+- habr (rus) - [Как бы я рассказал про линейную регрессию (если б меня кто-то спросил)](https://habr.com/ru/articles/1013998/)
+- TDS (eng) - [A Visual Explanation of Linear Regression](https://towardsdatascience.com/a-visual-explanation-of-the-linear-regression/)
 
 ## How to cite
 
 ```
 @misc{dreamlone-linear-regression,
   author       = {Mikhail Sarafanov},
-  title        = {A Visual Explanation of the Linear Regression},
+  title        = {A Visual Explanation of Linear Regression},
   howpublished = {\url{https://github.com/Dreamlone/linear-regression}},
   year         = {2026}
 }
