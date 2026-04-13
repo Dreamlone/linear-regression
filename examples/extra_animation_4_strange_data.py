@@ -6,7 +6,7 @@ import matplotlib.colors as mcolors
 import numpy as np
 from matplotlib.gridspec import GridSpec
 from scipy.interpolate import griddata
-import imageio
+import imageio.v2 as imageio
 
 from examples.paths import get_plots_path, get_tmp_animation_directory
 from examples.utils import save_plot_according_to_template
@@ -168,55 +168,55 @@ def plot_strange_data_case(mode: str = "eng"):
         fig = plt.figure(figsize=fig_size)
         gs = GridSpec(2, 2, figure=fig)
         gs.update(wspace=0.05, hspace=0.3)
-        ax_left = fig.add_subplot(gs[0, 0])
-        ax_center = fig.add_subplot(gs[:, 1])
-        ax_right = fig.add_subplot(gs[1, 0])
+        ax_upper = fig.add_subplot(gs[0, 0])
+        ax_big_3d = fig.add_subplot(gs[:, 1])
+        ax_lower = fig.add_subplot(gs[1, 0])
 
-        for ax in [ax_left, ax_right]:
+        for ax in [ax_upper, ax_lower]:
             box = ax.get_position()
             new_y0 = box.y0 + (box.height - box.height)
             shrink_factor_width = 1.8
             new_width = box.width / shrink_factor_width
             new_x0 = box.x0 + (box.width - new_width) / 2
             ax.set_position([new_x0, new_y0, new_width, box.height])
+            ax.spines[['right', 'top']].set_visible(False)
 
-        # 3d scatter plot
-        ax_left.scatter(rooms, prices, c=prices, cmap=CMAP, s=80, edgecolor="black",
+        ax_upper.scatter(rooms, prices, c=prices, cmap=CMAP, s=80, edgecolor="black",
                         vmin=MIN_TARGET, vmax=MAX_TARGET, zorder=2)
-        ax_left.grid(color='grey', alpha=0.5, zorder=1)
-        ax_left.set_xlabel(rooms_label, fontdict={"fontsize": 9, "fontname": FONTNAME})
-        ax_left.set_ylabel(target_label, fontdict={"fontsize": 9, "fontname": FONTNAME})
-        ax_left.set_xticks([1, 2, 3])
-        ax_left.set_xticklabels([1, 2, 3])
-        ax_left.set_xlim(0.5, 3.5)
-        ax_left.set_ylim(MIN_TARGET, MAX_TARGET)
-        ax_left.set_yticks(TARGET_TICKS)
-        ax_left.set_yticklabels(TARGET_TICKS)
+        ax_upper.grid(color='grey', alpha=0.5, zorder=1)
+        ax_upper.set_xlabel(rooms_label, fontdict={"fontsize": 9, "fontname": FONTNAME})
+        ax_upper.set_ylabel(target_label, fontdict={"fontsize": 9, "fontname": FONTNAME})
+        ax_upper.set_xticks([1, 2, 3])
+        ax_upper.set_xticklabels([1, 2, 3])
+        ax_upper.set_xlim(0.5, 3.5)
+        ax_upper.set_ylim(MIN_TARGET, MAX_TARGET)
+        ax_upper.set_yticks(TARGET_TICKS)
+        ax_upper.set_yticklabels(TARGET_TICKS)
         for i in range(len(labels)):
-            ax_left.text(rooms[i] - 0.2, prices[i] + TEXT_SHIFT, labels[i], color='black',
-                         fontsize=6, va='bottom', ha='left', fontname=FONTNAME, zorder=3)
-
-        ax_right.scatter(metro_distance, prices, c=prices, cmap=CMAP, s=80, edgecolor="black",
-                        vmin=MIN_TARGET, vmax=MAX_TARGET, zorder=2)
-        ax_right.grid(color='grey', alpha=0.5, zorder=1)
-        ax_right.set_xlabel(metro_distance_label, fontdict={"fontsize": 9, "fontname": FONTNAME})
-        ax_right.set_ylabel(target_label, fontdict={"fontsize": 9, "fontname": FONTNAME})
-        ax_right.set_xticks([0, 500, 1000, 1500])
-        ax_right.set_xticklabels([0, 500, 1000, 1500])
-        ax_right.set_xlim(-200, 1700)
-        ax_right.set_ylim(MIN_TARGET, MAX_TARGET)
-        ax_right.set_yticks(TARGET_TICKS)
-        ax_right.set_yticklabels(TARGET_TICKS)
-        for i in range(len(labels)):
-            ax_right.text(metro_distance[i] - 150, prices[i] + TEXT_SHIFT, labels[i], color='black',
+            ax_upper.text(rooms[i] - 0.2, prices[i] + TEXT_SHIFT, labels[i], color='black',
                           fontsize=6, va='bottom', ha='left', fontname=FONTNAME, zorder=3)
 
-        ax_center = scatter_plot_3d(ax_center, np.array(rooms), np.array(metro_distance),
-                                   target=np.array(prices),
-                                   first_label=rooms_label,
-                                   second_label=metro_distance_label,
-                                   target_label=target_label, labels=labels)
-        ax_center.view_init(vertical_view_id, view_id)
+        ax_lower.scatter(metro_distance, prices, c=prices, cmap=CMAP, s=80, edgecolor="black",
+                        vmin=MIN_TARGET, vmax=MAX_TARGET, zorder=2)
+        ax_lower.grid(color='grey', alpha=0.5, zorder=1)
+        ax_lower.set_xlabel(metro_distance_label, fontdict={"fontsize": 9, "fontname": FONTNAME})
+        ax_lower.set_ylabel(target_label, fontdict={"fontsize": 9, "fontname": FONTNAME})
+        ax_lower.set_xticks([0, 500, 1000, 1500])
+        ax_lower.set_xticklabels([0, 500, 1000, 1500])
+        ax_lower.set_xlim(-200, 1700)
+        ax_lower.set_ylim(MIN_TARGET, MAX_TARGET)
+        ax_lower.set_yticks(TARGET_TICKS)
+        ax_lower.set_yticklabels(TARGET_TICKS)
+        for i in range(len(labels)):
+            ax_lower.text(metro_distance[i] - 150, prices[i] + TEXT_SHIFT, labels[i], color='black',
+                          fontsize=6, va='bottom', ha='left', fontname=FONTNAME, zorder=3)
+
+        ax_big_3d = scatter_plot_3d(ax_big_3d, np.array(rooms), np.array(metro_distance),
+                                    target=np.array(prices),
+                                    first_label=rooms_label,
+                                    second_label=metro_distance_label,
+                                    target_label=target_label, labels=labels)
+        ax_big_3d.view_init(vertical_view_id, view_id)
 
         fig.suptitle(title, fontsize=14, fontdict={'fontname': FONTNAME}, va="top", y=1.1, x=0.55)
 
