@@ -1,4 +1,4 @@
-# A Visual Explanation of the Linear Regression
+# A Visual Explanation of Linear Regression
 
 <img src="./plots_per_article/tds/0_roadmap_eng_transparent.png" width="1200"/>
 
@@ -67,6 +67,34 @@ Start the exploration with `examples` folder
 - habr (rus) - [Как бы я рассказал про линейную регрессию (если б меня кто-то спросил)](https://habr.com/ru/articles/1013998/)
 - TDS (eng) - [A Visual Explanation of Linear Regression](https://towardsdatascience.com/a-visual-explanation-of-the-linear-regression/)
 
+## How to run
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Dreamlone/linear-regression.git
+cd linear-regression
+```
+
+Make sure you have Python 3.13 and Poetry installed:
+
+```
+python --version
+poetry --version
+```
+
+Install dependencies from the repository root:
+
+```
+poetry install --no-root
+```
+
+Run any script from the examples folder, for example:
+
+```
+poetry run python examples/1_plot_initial_data.py
+```
+
 ## How to cite
 
 ```
@@ -78,7 +106,7 @@ Start the exploration with `examples` folder
 }
 ```
 
-## WIP
+## Work In Progress
 
 The source code is still being improved, but I hope that the implementation of a clean architecture can be done calmly 
 after the articles are published.
