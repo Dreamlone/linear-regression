@@ -4,6 +4,11 @@
 
 This repository contains materials to explain the linear regression algorithm.
 
+## Articles 
+
+- habr (rus) - [Как бы я рассказал про линейную регрессию (если б меня кто-то спросил)](https://habr.com/ru/articles/1013998/)
+- TDS (eng) - [A Visual Explanation of Linear Regression](https://towardsdatascience.com/a-visual-explanation-of-the-linear-regression/)
+
 ## Why linear regression 
 
 I understand that learning new things is difficult. 
@@ -60,14 +65,9 @@ limits I set for myself, but I sincerely tried.
 - `plots_templates` - .svg templates for plots & animations
 - `results` - csv and other data artifacts after simulations
 
-Start the exploration with `examples` folder 
+Start the exploration with `examples` folder
 
-## Articles 
-
-- habr (rus) - [Как бы я рассказал про линейную регрессию (если б меня кто-то спросил)](https://habr.com/ru/articles/1013998/)
-- TDS (eng) - [A Visual Explanation of Linear Regression](https://towardsdatascience.com/a-visual-explanation-of-the-linear-regression/)
-
-## How to run
+## How to launch
 
 Clone the repository:
 
