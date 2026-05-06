@@ -11,7 +11,7 @@ function App() {
 
         <div className="sections">
           <article>
-            <span>01</span>
+            <span className="section-number">01</span>
             <h2>What it is and why we use it</h2>
             <p>
               We start with the basic idea of a model: a simple mathematical
@@ -34,7 +34,15 @@ function App() {
               <p>
                 where <strong>x</strong> is the feature, <strong>y</strong> is the target
                 variable. [James, G., et al. Linear Regression. An Introduction to
-                Statistical Learning, 2021. Free version: https://www.statlearning.com/]
+                Statistical Learning, 2021. Free version:{" "}
+                <a
+                  href="https://www.statlearning.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  https://www.statlearning.com/
+                </a>
+                ]
               </p>
 
               <p>
@@ -59,7 +67,7 @@ function App() {
            </article>
 
           <article>
-            <span>02</span>
+            <span className="section-number">02</span>
             <h2>How to fit a model</h2>
             <p>
               Then we look at how a regression line is chosen, what its
@@ -69,7 +77,7 @@ function App() {
           </article>
 
           <article>
-            <span>03</span>
+            <span className="section-number">03</span>
             <h2>How to evaluate model quality</h2>
             <p>
               A model should not only look reasonable. We also need metrics,
@@ -79,7 +87,7 @@ function App() {
           </article>
 
           <article>
-            <span>04</span>
+            <span className="section-number">04</span>
             <h2>How to improve the model when the results are not good enough</h2>
             <p>
               Finally, we explore how better data, better features, diagnostics,

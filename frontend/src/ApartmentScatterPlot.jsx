@@ -1,4 +1,9 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+
 function ApartmentScatterPlot() {
+  const chartRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
   const rooms = [1, 2, 4];
   const prices = [10000, 20000, 40000];
 
@@ -29,8 +34,42 @@ function ApartmentScatterPlot() {
   const xTicks = [0, 1, 2, 3, 4, 5];
   const yTicks = [0, 10000, 20000, 30000, 40000, 50000];
 
+  const points = useMemo(
+    () =>
+      rooms
+        .map((room, index) => ({
+          room,
+          price: prices[index],
+        }))
+        .sort((a, b) => b.price - a.price),
+    [],
+  );
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      {
+        threshold: 0.35,
+      },
+    );
+
+    if (chartRef.current) {
+      observer.observe(chartRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <figure className="chart-card">
+    <figure
+      ref={chartRef}
+      className={`chart-card ${isVisible ? "chart-card-visible" : ""}`}
+    >
       <svg
         className="chart"
         viewBox={`0 0 ${width} ${height}`}
@@ -115,13 +154,16 @@ function ApartmentScatterPlot() {
           Price, $
         </text>
 
-        {rooms.map((room, index) => (
+        {points.map((point, index) => (
           <circle
-            key={room}
-            className="data-point"
-            cx={xScale(room)}
-            cy={yScale(prices[index])}
-            r="6"
+            key={point.room}
+            className="data-point animated-data-point"
+            cx={xScale(point.room)}
+            cy={yScale(point.price)}
+            r="4.5"
+            style={{
+              transitionDelay: `${index * 300}ms`,
+            }}
           />
         ))}
       </svg>

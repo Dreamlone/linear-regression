@@ -1,7 +1,6 @@
 :root {
-  font-family:
-    "Trebuchet MS", "Segoe UI", Arial, sans-serif;
-  color: #3b2718;
+  font-family: "Arial", "Helvetica Neue", Helvetica, sans-serif;
+  color: #1f1f1f;
   background: #fff3e4;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -48,9 +47,10 @@ body {
 h1 {
   max-width: 860px;
   margin: 0;
-  font-size: clamp(2.2rem, 5vw, 4.4rem);
-  line-height: 1.05;
-  letter-spacing: -0.04em;
+  font-size: clamp(2.1rem, 5vw, 4.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+  font-weight: 900;
 }
 
 .sections {
@@ -67,14 +67,14 @@ article {
   background: rgba(255, 255, 255, 0.54);
 }
 
-article span {
+.section-number {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1px;
-  height: 1px;
+  width: 34px;
+  height: 34px;
   margin-bottom: 20px;
-  border-radius: 1px;
+  border-radius: 4px;
   background: #f6b35f;
   font-weight: 800;
   font-size: 0.85rem;
@@ -84,15 +84,17 @@ article span {
 h2 {
   margin: 0 0 12px;
   font-size: clamp(1.05rem, 1.6vw, 1.35rem);
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  font-weight: 850;
 }
 
 p {
   margin: 0;
-  color: #68442a;
+  color: #1f1f1f;
   font-size: 0.95rem;
   line-height: 1.6;
+  font-weight: 400;
 }
 
 @media (max-width: 760px) {
@@ -109,53 +111,53 @@ p {
 .chart-card {
   margin: 28px 0 0;
   padding: 18px;
-  border: 1px solid rgba(143, 78, 30, 0.18);
-  border-radius: 6px;
-  background: rgba(255, 250, 244, 0.72);
+  border: none;
+  background: transparent;
 }
 
 .chart {
   display: block;
   width: 100%;
   height: auto;
-  font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+  font-family: "Arial", "Helvetica Neue", Helvetica, sans-serif;
 }
 
 .chart-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
-  fill: #3b2718;
+  fill: #1f1f1f;
 }
 
 .tick-label {
-  font-size: 10px;
-  fill: #68442a;
+  font-size: 9px;
+  fill: #1f1f1f;
 }
 
 .axis-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  fill: #3b2718;
+  fill: #1f1f1f;
 }
 
 .axis-line {
-  stroke: #4a2b14;
+  stroke: #1f1f1f;
   stroke-width: 1.8;
 }
 
 .grid-line {
-  stroke: rgba(104, 68, 42, 0.18);
+  stroke: rgba(31, 31, 31, 0.16);
   stroke-width: 1;
 }
 
 .tick-line {
-  stroke: #4a2b14;
+  stroke: #1f1f1f;
   stroke-width: 1.3;
 }
 
 .data-point {
   fill: #ff7a1a;
-  stroke: none;
+  stroke: #3b2718;
+  stroke-width: 0.5;
 }
 
 .formula-explanation {
@@ -171,8 +173,11 @@ p {
   padding: 22px;
   border: 1px solid rgba(143, 78, 30, 0.18);
   border-radius: 6px;
-  background: rgba(255, 250, 244, 0.78);
-  text-align: center;
+  background: rgba(255, 186, 94, 0.22);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .main-formula {
@@ -200,11 +205,37 @@ p {
 .coefficient-list {
   margin: 16px 0 0;
   padding-left: 22px;
-  color: #68442a;
+  color: #1f1f1f;
   font-size: 0.95rem;
   line-height: 1.65;
 }
 
 .coefficient-list li + li {
   margin-top: 6px;
+}
+
+a {
+  color: #6f6f6f;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: #3f3f3f;
+}
+
+.animated-data-point {
+  opacity: 0;
+  transform: translateX(-72px);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity 420ms ease-out,
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.chart-card-visible .animated-data-point {
+  opacity: 1;
+  transform: translateX(0);
 }
