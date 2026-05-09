@@ -403,9 +403,9 @@ a:hover {
 }
 
 .dataset-card {
-  width: min(560px, 100%);
-  flex: 0 0 min(560px, 100%);
-  padding: 14px;
+  width: min(560px, calc(100vw - 72px));
+  flex: 0 0 min(560px, calc(100vw - 72px));
+  padding: 10px;
   border: 2px solid rgba(31, 31, 31, 0.22);
   border-radius: 6px;
   background: rgba(255, 250, 244, 0.82);
@@ -486,13 +486,31 @@ a:hover {
     grid-template-columns: 1fr;
   }
 
+  .model-chart-area {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .dataset-carousel {
+    width: 100%;
+    overflow: hidden;
+    padding: 12px 0 18px;
+  }
+
   .dataset-carousel-track {
     gap: 18px;
   }
 
   .dataset-card {
-    width: min(560px, 100%);
-    flex-basis: min(560px, 100%);
+    width: calc(100vw - 76px);
+    flex: 0 0 calc(100vw - 76px);
+    padding: 8px;
+  }
+
+  .dataset-card .chart {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
   }
 }
 

@@ -109,7 +109,7 @@ function ApartmentModelPlot() {
         onMouseLeave={() => setTooltip(null)}
       >
         <text className="chart-title" x={width / 2} y="28" textAnchor="middle">
-          Apartment price with a linear model
+          Data-driven model: ŷ = b₀ + b₁ · x = 0 + 10000 · x
         </text>
 
         {yTicks.map((tick) => (
