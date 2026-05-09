@@ -1,5 +1,7 @@
 import "./App.css";
 import ApartmentScatterPlot from "./ApartmentScatterPlot.jsx";
+import ApartmentModelPlot from "./ApartmentModelPlot.jsx";
+import ModelFittingPlayground from "./ModelFittingPlayground.jsx";
 
 function App() {
   return (
@@ -20,11 +22,12 @@ function App() {
             </p>
 
             <ApartmentScatterPlot />
+
             <div className="formula-explanation">
               <p>
-                In linear regression, we model linear relationships between data variables.
-                In simple one-feature regression, when there is one feature and one target
-                variable, the equation has the form:
+                In linear regression, we model linear relationships between data
+                variables. In simple one-feature regression, when there is one
+                feature and one target variable, the equation has the form:
               </p>
 
               <div className="formula-block">
@@ -32,9 +35,9 @@ function App() {
               </div>
 
               <p>
-                where <strong>x</strong> is the feature, <strong>y</strong> is the target
-                variable. [James, G., et al. Linear Regression. An Introduction to
-                Statistical Learning, 2021. Free version:{" "}
+                where <strong>x</strong> is the feature, <strong>y</strong> is
+                the target variable. [James, G., et al. Linear Regression. An
+                Introduction to Statistical Learning, 2021. Free version:{" "}
                 <a
                   href="https://www.statlearning.com/"
                   target="_blank"
@@ -46,13 +49,13 @@ function App() {
               </p>
 
               <p>
-               So the expression{" "}
+                So the expression{" "}
                 <span className="inline-formula">y = 1 + 10 · x</span>{" "}
                 is a linear regression model. And{" "}
                 <span className="inline-formula">y = 15 − 21 · x</span>{" "}
-                is one as well. The only difference is the coefficients. Since the
-                coefficients are the key parameters of the equation, they have their own
-                names:
+                is one as well. The only difference is the coefficients. Since
+                the coefficients are the key parameters of the equation, they
+                have their own names:
               </p>
 
               <ul className="coefficient-list">
@@ -64,7 +67,11 @@ function App() {
                 </li>
               </ul>
             </div>
-           </article>
+
+            <ApartmentModelPlot />
+
+            <ModelFittingPlayground />
+          </article>
 
           <article>
             <span className="section-number">02</span>

@@ -28,8 +28,8 @@ body {
   max-width: 1120px;
   margin: 0 auto;
   padding: 56px;
-  border: 1px solid rgba(143, 78, 30, 0.18);
-  border-radius: 1px;
+  border: 1px solid rgba(31, 31, 31, 0.18);
+  border-radius: 10px;
   background: rgba(255, 250, 244, 0.74);
   box-shadow: 0 24px 80px rgba(117, 63, 22, 0.16);
   backdrop-filter: blur(12px);
@@ -37,16 +37,17 @@ body {
 
 .eyebrow {
   margin: 0 0 16px;
+  color: #1f1f1f;
   font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-weight: 900;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #b45f1d;
 }
 
 h1 {
   max-width: 860px;
   margin: 0;
+  color: #1f1f1f;
   font-size: clamp(2.1rem, 5vw, 4.2rem);
   line-height: 0.95;
   letter-spacing: -0.055em;
@@ -62,8 +63,8 @@ h1 {
 
 article {
   padding: 22px;
-  border: 1px solid rgba(143, 78, 30, 0.14);
-  border-radius: 1px;
+  border: 1px solid rgba(31, 31, 31, 0.18);
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.54);
 }
 
@@ -76,13 +77,15 @@ article {
   margin-bottom: 20px;
   border-radius: 4px;
   background: #f6b35f;
-  font-weight: 800;
+  color: #1f1f1f;
   font-size: 0.85rem;
-  color: #4a2b14;
+  font-weight: 900;
+  letter-spacing: -0.04em;
 }
 
 h2 {
   margin: 0 0 12px;
+  color: #1f1f1f;
   font-size: clamp(1.05rem, 1.6vw, 1.35rem);
   line-height: 1.08;
   letter-spacing: -0.035em;
@@ -97,20 +100,22 @@ p {
   font-weight: 400;
 }
 
-@media (max-width: 760px) {
-  .page {
-    padding: 20px;
-  }
-
-  .hero {
-    padding: 32px 22px;
-    border-radius: 1px;
-  }
+a {
+  color: #5f5f5f;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
+
+a:hover {
+  color: #2f2f2f;
+}
+
+/* Charts */
 
 .chart-card {
   margin: 28px 0 0;
-  padding: 18px;
+  padding: 0;
   border: none;
   background: transparent;
 }
@@ -125,17 +130,6 @@ p {
 .chart-title {
   font-size: 14px;
   font-weight: 800;
-  fill: #1f1f1f;
-}
-
-.tick-label {
-  font-size: 9px;
-  fill: #1f1f1f;
-}
-
-.axis-label {
-  font-size: 10px;
-  font-weight: 700;
   fill: #1f1f1f;
 }
 
@@ -154,11 +148,39 @@ p {
   stroke-width: 1.3;
 }
 
+.tick-label {
+  font-size: 9px;
+  fill: #1f1f1f;
+}
+
+.axis-label {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #1f1f1f;
+}
+
 .data-point {
   fill: #ff7a1a;
-  stroke: #3b2718;
-  stroke-width: 0.5;
+  stroke: #1f1f1f;
+  stroke-width: 1.5;
 }
+
+.animated-data-point {
+  opacity: 0;
+  transform: translateX(-72px);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity 420ms ease-out,
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.chart-card-visible .animated-data-point {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Formula block */
 
 .formula-explanation {
   margin-top: 28px;
@@ -174,7 +196,6 @@ p {
   border: 1px solid rgba(143, 78, 30, 0.18);
   border-radius: 6px;
   background: rgba(255, 186, 94, 0.22);
-
   display: flex;
   justify-content: center;
   align-items: center;
@@ -182,13 +203,13 @@ p {
 
 .main-formula {
   display: inline-block;
-  font-size: clamp(1.4rem, 4vw, 2rem);
-  font-weight: 800;
-  line-height: 1.2;
-  color: #3b2718;
-  white-space: nowrap;
-  background: none;
   padding: 0;
+  background: none;
+  color: #1f1f1f;
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  font-weight: 900;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .inline-formula {
@@ -196,6 +217,7 @@ p {
   padding: 1px 6px;
   border-radius: 4px;
   background: rgba(255, 186, 94, 0.32);
+  color: #1f1f1f;
   font-size: 0.95em;
   font-weight: 700;
   line-height: inherit;
@@ -214,28 +236,277 @@ p {
   margin-top: 6px;
 }
 
-a {
-  color: #6f6f6f;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
+/* Model line plot */
 
-a:hover {
-  color: #3f3f3f;
-}
-
-.animated-data-point {
-  opacity: 0;
-  transform: translateX(-72px);
+.model-line {
+  stroke: #1f1f1f;
+  stroke-width: 2.2;
+  stroke-linecap: round;
   transform-box: fill-box;
-  transform-origin: center;
-  transition:
-    opacity 420ms ease-out,
-    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: left bottom;
+  transform: scaleY(0);
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.chart-card-visible .animated-data-point {
-  opacity: 1;
-  transform: translateX(0);
+.chart-card-visible .model-line {
+  transform: scaleY(1);
+}
+
+.model-line-hitbox {
+  stroke: transparent;
+  stroke-width: 18;
+  stroke-linecap: round;
+  cursor: crosshair;
+}
+
+.tooltip-guide {
+  stroke: rgba(31, 31, 31, 0.28);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.tooltip-point {
+  fill: #1f1f1f;
+}
+
+.tooltip-box {
+  fill: rgba(255, 250, 244, 0.96);
+  stroke: rgba(31, 31, 31, 0.28);
+  stroke-width: 1;
+  rx: 4;
+}
+
+.tooltip-text {
+  fill: #1f1f1f;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* Model fitting playground */
+
+.model-fitting-playground {
+  margin-top: 34px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(31, 31, 31, 0.14);
+}
+
+.model-fitting-playground h3 {
+  margin: 0 0 22px;
+  color: #1f1f1f;
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  font-weight: 900;
+}
+
+.model-fitting-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 290px) minmax(0, 1fr);
+  gap: 26px;
+  align-items: start;
+}
+
+.model-controls {
+  padding: 18px;
+  border: 1px solid rgba(31, 31, 31, 0.16);
+  border-radius: 4px;
+  background: rgba(255, 186, 94, 0.16);
+}
+
+.model-controls label {
+  display: block;
+  margin-bottom: 22px;
+}
+
+.model-controls label span {
+  display: block;
+  margin-bottom: 8px;
+  color: #1f1f1f;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.model-controls input[type="range"] {
+  width: 100%;
+  accent-color: #1f1f1f;
+}
+
+.model-controls label strong {
+  display: block;
+  margin-top: 6px;
+  color: #1f1f1f;
+  font-size: 0.9rem;
+}
+
+.current-model-card {
+  margin-top: 8px;
+  padding: 14px;
+  border: 1px solid rgba(31, 31, 31, 0.12);
+  border-radius: 4px;
+  background: rgba(255, 250, 244, 0.78);
+}
+
+.current-model-card p {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.current-model-card strong {
+  color: #1f1f1f;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.model-status {
+  margin-top: 14px;
+  color: #1f1f1f;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.model-status-solved {
+  font-weight: 800;
+}
+
+.model-chart-area {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dataset-carousel {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 18px 0 22px;
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+.dataset-carousel:active,
+.dataset-carousel-dragging {
+  cursor: grabbing;
+}
+
+.dataset-carousel-track {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  width: max-content;
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.dataset-carousel-dragging .dataset-carousel-track {
+  transition: none;
+}
+
+.dataset-card {
+  width: min(560px, 100%);
+  flex: 0 0 min(560px, 100%);
+  padding: 14px;
+  border: 2px solid rgba(31, 31, 31, 0.22);
+  border-radius: 6px;
+  background: rgba(255, 250, 244, 0.82);
+  box-shadow: 0 16px 44px rgba(31, 31, 31, 0.08);
+  transition:
+    opacity 260ms ease-out,
+    transform 260ms ease-out,
+    border-color 260ms ease-out,
+    box-shadow 260ms ease-out;
+}
+
+.dataset-card-active {
+  border-color: rgba(31, 31, 31, 0.8);
+  box-shadow: 0 18px 54px rgba(31, 31, 31, 0.14);
+}
+
+.dataset-card .chart {
+  pointer-events: none;
+}
+
+.fit-model-line {
+  stroke: #1f1f1f;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  transition:
+    x1 160ms ease-out,
+    y1 160ms ease-out,
+    x2 160ms ease-out,
+    y2 160ms ease-out,
+    stroke 220ms ease-out,
+    stroke-width 220ms ease-out;
+}
+
+.fit-model-line-solved {
+  stroke: #d00000;
+  stroke-width: 3;
+}
+
+.dataset-carousel-hint {
+  margin-top: 4px;
+  color: #1f1f1f;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0.76;
+}
+
+.dataset-carousel-dots {
+  display: flex;
+  justify-content: space-between;
+  max-width: 260px;
+  margin: 14px auto 0;
+}
+
+.dataset-carousel-dots button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(31, 31, 31, 0.24);
+  border-radius: 4px;
+  background: rgba(255, 250, 244, 0.74);
+  color: #1f1f1f;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dataset-carousel-dots button.active {
+  background: #1f1f1f;
+  color: #fff8ef;
+}
+
+.dataset-carousel-dots button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@media (max-width: 860px) {
+  .model-fitting-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dataset-carousel-track {
+    gap: 18px;
+  }
+
+  .dataset-card {
+    width: min(560px, 100%);
+    flex-basis: min(560px, 100%);
+  }
+}
+
+@media (max-width: 760px) {
+  .page {
+    padding: 20px;
+  }
+
+  .hero {
+    padding: 32px 22px;
+    border-radius: 8px;
+  }
+
+  .sections {
+    margin-top: 44px;
+  }
 }
