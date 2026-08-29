@@ -3,7 +3,7 @@ name: Deploy frontend to GitHub Pages
 on:
   push:
     branches:
-      - frontend
+      - main
     paths:
       - "frontend/**"
       - ".github/workflows/deploy-frontend.yml"
