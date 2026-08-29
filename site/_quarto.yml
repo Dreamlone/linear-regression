@@ -1,0 +1,45 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "A Visual Explanation of Linear Regression"
+  site-url: "https://dreamlone.github.io/linear-regression/"
+  repo-url: "https://github.com/Dreamlone/linear-regression"
+  page-navigation: true
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: en/index.qmd
+        text: English
+      - href: ru/index.qmd
+        text: Русский
+    right:
+      - text: Interactive
+        href: interactive/
+      - icon: github
+        href: https://github.com/Dreamlone/linear-regression
+        text: GitHub
+      - text: "TDS (original)"
+        href: https://towardsdatascience.com/a-visual-explanation-of-the-linear-regression/
+      - text: "Habr (оригинал)"
+        href: https://habr.com/ru/articles/1013998/
+  page-footer:
+    left: "© Mikhail Sarafanov"
+    right:
+      - icon: github
+        href: https://github.com/Dreamlone/linear-regression
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+    toc-location: right
+    toc-depth: 3
+    anchor-sections: true
+    smooth-scroll: true
+    grid:
+      body-width: 900px
+    link-external-newwindow: true
