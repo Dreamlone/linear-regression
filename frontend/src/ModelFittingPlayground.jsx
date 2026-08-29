@@ -1,0 +1,511 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+
+const datasets = [
+  {
+    id: "rooms-basic",
+    title: "Dataset 1: simple apartment prices",
+    points: [
+      { x: 1, y: 10000 },
+      { x: 2, y: 20000 },
+      { x: 4, y: 40000 },
+    ],
+    targetB0: 0,
+    targetB1: 10000,
+  },
+  {
+    id: "rooms-base-price",
+    title: "Dataset 2: apartments with a base price",
+    points: [
+      { x: 1, y: 12000 },
+      { x: 2, y: 19000 },
+      { x: 4, y: 33000 },
+    ],
+    targetB0: 5000,
+    targetB1: 7000,
+  },
+  {
+    id: "rooms-negative-intercept",
+    title: "Dataset 3: steeper growth",
+    points: [
+      { x: 1, y: 4000 },
+      { x: 2, y: 13000 },
+      { x: 4, y: 31000 },
+    ],
+    targetB0: -5000,
+    targetB1: 9000,
+  },
+  {
+    id: "rooms-fixed-cost",
+    title: "Dataset 4: fixed cost plus rooms",
+    points: [
+      { x: 1, y: 15000 },
+      { x: 2, y: 20000 },
+      { x: 4, y: 30000 },
+    ],
+    targetB0: 10000,
+    targetB1: 5000,
+  },
+  {
+    id: "rooms-premium-slope",
+    title: "Dataset 5: premium apartments",
+    points: [
+      { x: 1, y: 11500 },
+      { x: 2, y: 21000 },
+      { x: 4, y: 40000 },
+    ],
+    targetB0: 2000,
+    targetB1: 9500,
+  },
+];
+
+function formatFormula(b0, b1) {
+  const sign = b1 >= 0 ? "+" : "−";
+
+  return `ŷ = ${b0.toLocaleString()} ${sign} ${Math.abs(
+    b1,
+  ).toLocaleString()} · x`;
+}
+
+function DatasetPlot({
+  dataset,
+  displayedB0,
+  displayedB1,
+  isSolved,
+  isCurrentDataset,
+  width,
+  height,
+  margin,
+  plotWidth,
+  plotHeight,
+  xMin,
+  xMax,
+  xScale,
+  yScale,
+  xTicks,
+  yTicks,
+}) {
+  const modelLine = {
+    x1: xMin,
+    y1: displayedB0 + displayedB1 * xMin,
+    x2: xMax,
+    y2: displayedB0 + displayedB1 * xMax,
+  };
+
+  return (
+    <svg
+      className="chart"
+      viewBox={`0 0 ${width} ${height}`}
+      role="img"
+      aria-label="Interactive plot for fitting a linear regression model"
+    >
+      <defs>
+        <clipPath id={`plot-clip-${dataset.id}`}>
+          <rect
+            x={margin.left}
+            y={margin.top}
+            width={plotWidth}
+            height={plotHeight}
+          />
+        </clipPath>
+      </defs>
+
+      <text className="chart-title" x={width / 2} y="28" textAnchor="middle">
+        {dataset.title}
+      </text>
+
+      {yTicks.map((tick) => (
+        <g key={`y-grid-${dataset.id}-${tick}`}>
+          <line
+            className="grid-line"
+            x1={margin.left}
+            y1={yScale(tick)}
+            x2={width - margin.right}
+            y2={yScale(tick)}
+          />
+          <text
+            className="tick-label"
+            x={margin.left - 12}
+            y={yScale(tick)}
+            textAnchor="end"
+            dominantBaseline="middle"
+          >
+            {tick.toLocaleString()}
+          </text>
+        </g>
+      ))}
+
+      {xTicks.map((tick) => (
+        <g key={`x-tick-${dataset.id}-${tick}`}>
+          <line
+            className="tick-line"
+            x1={xScale(tick)}
+            y1={margin.top + plotHeight}
+            x2={xScale(tick)}
+            y2={margin.top + plotHeight + 7}
+          />
+          <text
+            className="tick-label"
+            x={xScale(tick)}
+            y={margin.top + plotHeight + 28}
+            textAnchor="middle"
+          >
+            {tick}
+          </text>
+        </g>
+      ))}
+
+      <line
+        className="axis-line"
+        x1={margin.left}
+        y1={margin.top + plotHeight}
+        x2={width - margin.right}
+        y2={margin.top + plotHeight}
+      />
+
+      <line
+        className="axis-line"
+        x1={margin.left}
+        y1={margin.top}
+        x2={margin.left}
+        y2={margin.top + plotHeight}
+      />
+
+      <text
+        className="axis-label"
+        x={margin.left + plotWidth / 2}
+        y={height - 20}
+        textAnchor="middle"
+      >
+        Number of rooms
+      </text>
+
+      <text
+        className="axis-label"
+        transform={`translate(24 ${margin.top + plotHeight / 2}) rotate(-90)`}
+        textAnchor="middle"
+      >
+        Price, $
+      </text>
+
+      {isCurrentDataset && (
+        <g clipPath={`url(#plot-clip-${dataset.id})`}>
+          <line
+            className={`fit-model-line ${
+              isSolved ? "fit-model-line-solved" : ""
+            }`}
+            x1={xScale(modelLine.x1)}
+            y1={yScale(modelLine.y1)}
+            x2={xScale(modelLine.x2)}
+            y2={yScale(modelLine.y2)}
+          />
+        </g>
+      )}
+
+      {dataset.points.map((point) => (
+        <circle
+          key={`${dataset.id}-${point.x}-${point.y}`}
+          className="data-point"
+          cx={xScale(point.x)}
+          cy={yScale(point.y)}
+          r="4.5"
+        />
+      ))}
+    </svg>
+  );
+}
+
+function ModelFittingPlayground() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [dragStartX, setDragStartX] = useState(null);
+  const [dragOffsetX, setDragOffsetX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const firstCardRef = useRef(null);
+  const [cardStep, setCardStep] = useState(0);
+
+  const initialCoefficients = useMemo(
+    () =>
+      Object.fromEntries(
+        datasets.map((dataset) => [
+          dataset.id,
+          {
+            b0: 0,
+            b1: 0,
+          },
+        ]),
+      ),
+    [],
+  );
+
+  const [coefficientsByDataset, setCoefficientsByDataset] =
+    useState(initialCoefficients);
+
+  const [solvedByDataset, setSolvedByDataset] = useState({});
+
+  const dataset = datasets[currentIndex];
+  const coefficients = coefficientsByDataset[dataset.id];
+  const isSolved = Boolean(solvedByDataset[dataset.id]);
+
+  const displayedB0 = isSolved ? dataset.targetB0 : coefficients.b0;
+  const displayedB1 = isSolved ? dataset.targetB1 : coefficients.b1;
+
+  const width = 560;
+  const height = 360;
+
+  const margin = {
+    top: 52,
+    right: 28,
+    bottom: 72,
+    left: 86,
+  };
+
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+
+  const xMin = 0;
+  const xMax = 5;
+  const yMin = 0;
+  const yMax = 50000;
+
+  const xScale = (x) =>
+    margin.left + ((x - xMin) / (xMax - xMin)) * plotWidth;
+
+  const yScale = (y) =>
+    margin.top + plotHeight - ((y - yMin) / (yMax - yMin)) * plotHeight;
+
+  const xTicks = [0, 1, 2, 3, 4, 5];
+  const yTicks = [0, 10000, 20000, 30000, 40000, 50000];
+
+  useEffect(() => {
+    const updateCardStep = () => {
+      if (!firstCardRef.current) {
+        return;
+      }
+
+      const cardWidth = firstCardRef.current.getBoundingClientRect().width;
+      const gap = window.matchMedia("(max-width: 860px)").matches ? 18 : 28;
+
+      setCardStep(cardWidth + gap);
+    };
+
+    updateCardStep();
+
+    window.addEventListener("resize", updateCardStep);
+
+    return () => {
+      window.removeEventListener("resize", updateCardStep);
+    };
+  }, []);
+
+  useEffect(() => {
+    const hasFoundTarget =
+      coefficients.b0 === dataset.targetB0 &&
+      coefficients.b1 === dataset.targetB1;
+
+    if (hasFoundTarget && !isSolved) {
+      setSolvedByDataset((previous) => ({
+        ...previous,
+        [dataset.id]: true,
+      }));
+    }
+  }, [coefficients.b0, coefficients.b1, dataset, isSolved]);
+
+  const updateCoefficient = (name, value) => {
+    if (isSolved) {
+      return;
+    }
+
+    setCoefficientsByDataset((previous) => ({
+      ...previous,
+      [dataset.id]: {
+        ...previous[dataset.id],
+        [name]: Number(value),
+      },
+    }));
+  };
+
+  const goToPreviousDataset = () => {
+    setCurrentIndex((previous) => Math.max(previous - 1, 0));
+  };
+
+  const goToNextDataset = () => {
+    if (!isSolved) {
+      return;
+    }
+
+    setCurrentIndex((previous) => Math.min(previous + 1, datasets.length - 1));
+  };
+
+  const handlePointerDown = (event) => {
+    setDragStartX(event.clientX);
+    setDragOffsetX(0);
+    setIsDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event) => {
+    if (dragStartX === null) {
+      return;
+    }
+
+    setDragOffsetX(event.clientX - dragStartX);
+  };
+
+  const handlePointerUp = () => {
+    const swipeThreshold = 72;
+
+    if (dragOffsetX <= -swipeThreshold) {
+      goToNextDataset();
+    }
+
+    if (dragOffsetX >= swipeThreshold) {
+      goToPreviousDataset();
+    }
+
+    setDragStartX(null);
+    setDragOffsetX(0);
+    setIsDragging(false);
+  };
+
+  return (
+    <div className="model-fitting-playground">
+      <h3>Find a model for 5 different datasets</h3>
+
+      <div className="model-fitting-layout">
+        <aside className="model-controls">
+          <label>
+            <span>b₀, intercept</span>
+            <input
+              type="range"
+              min="-10000"
+              max="10000"
+              step="10"
+              value={displayedB0}
+              disabled={isSolved}
+              onChange={(event) => updateCoefficient("b0", event.target.value)}
+            />
+            <strong>{displayedB0.toLocaleString()}</strong>
+          </label>
+
+          <label>
+            <span>b₁, slope</span>
+            <input
+              type="range"
+              min="-10000"
+              max="10000"
+              step="10"
+              value={displayedB1}
+              disabled={isSolved}
+              onChange={(event) => updateCoefficient("b1", event.target.value)}
+            />
+            <strong>{displayedB1.toLocaleString()}</strong>
+          </label>
+
+          <div className="current-model-card">
+            <p>Current model</p>
+            <strong>{formatFormula(displayedB0, displayedB1)}</strong>
+          </div>
+
+          {isSolved ? (
+            <p className="model-status model-status-solved">
+              Model found. The line is fixed.
+            </p>
+          ) : (
+            <p className="model-status">
+              Move the sliders until the line passes through all points.
+            </p>
+          )}
+        </aside>
+
+        <section className="model-chart-area">
+          <div
+            className={`dataset-carousel ${
+              isDragging ? "dataset-carousel-dragging" : ""
+            }`}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+          >
+            <div
+              className="dataset-carousel-track"
+              style={{
+                transform: `translateX(${
+                  -(currentIndex * cardStep) + dragOffsetX * 0.45
+                }px)`,
+              }}
+            >
+              {datasets.map((item, index) => {
+                const distanceFromCurrent = Math.abs(index - currentIndex);
+                const isCurrentDataset = index === currentIndex;
+
+                return (
+                  <div
+                    key={item.id}
+                    ref={index === 0 ? firstCardRef : null}
+                    className={`dataset-card ${
+                      isCurrentDataset ? "dataset-card-active" : ""
+                    }`}
+                    style={{
+                      opacity: distanceFromCurrent === 0 ? 1 : 0.26,
+                      transform: `scale(${
+                        distanceFromCurrent === 0 ? 1 : 0.82
+                      })`,
+                    }}
+                  >
+                    <DatasetPlot
+                      dataset={item}
+                      displayedB0={displayedB0}
+                      displayedB1={displayedB1}
+                      isSolved={isSolved}
+                      isCurrentDataset={isCurrentDataset}
+                      width={width}
+                      height={height}
+                      margin={margin}
+                      plotWidth={plotWidth}
+                      plotHeight={plotHeight}
+                      xMin={xMin}
+                      xMax={xMax}
+                      yMin={yMin}
+                      yMax={yMax}
+                      xScale={xScale}
+                      yScale={yScale}
+                      xTicks={xTicks}
+                      yTicks={yTicks}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="dataset-carousel-hint">
+            {isSolved
+              ? "Drag the chart to move to the next dataset."
+              : "Fit the current model first. Then drag to continue."}
+          </div>
+
+          <div className="dataset-carousel-dots">
+            {datasets.map((item, index) => (
+              <button
+                key={item.id}
+                type="button"
+                className={index === currentIndex ? "active" : ""}
+                disabled={index > currentIndex && !isSolved}
+                onClick={() => {
+                  if (index <= currentIndex || isSolved) {
+                    setCurrentIndex(index);
+                  }
+                }}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+export default ModelFittingPlayground;
