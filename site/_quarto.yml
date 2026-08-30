@@ -4,7 +4,7 @@ project:
 
 website:
   title: "A Visual Explanation of Linear Regression"
-  favicon: https://raw.githubusercontent.com/Dreamlone/linear-regression/main/frontend/public/favicon_blue.svg
+  favicon: favicon_blue.svg
   site-url: "https://dreamlone.github.io/linear-regression/"
   repo-url: "https://github.com/Dreamlone/linear-regression"
   page-navigation: true
