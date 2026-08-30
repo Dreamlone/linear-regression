@@ -4,6 +4,7 @@ project:
 
 website:
   title: "A Visual Explanation of Linear Regression"
+  favicon: https://raw.githubusercontent.com/Dreamlone/linear-regression/main/frontend/public/favicon_blue.svg
   site-url: "https://dreamlone.github.io/linear-regression/"
   repo-url: "https://github.com/Dreamlone/linear-regression"
   page-navigation: true
@@ -12,9 +13,9 @@ website:
       - href: index.qmd
         text: Home
       - href: en/index.qmd
-        text: English
+        text: Eng
       - href: ru/index.qmd
-        text: Русский
+        text: Rus
     right:
       - text: Interactive
         href: interactive/
@@ -41,5 +42,5 @@ format:
     anchor-sections: true
     smooth-scroll: true
     grid:
-      body-width: 900px
+      body-width: 1000px
     link-external-newwindow: true

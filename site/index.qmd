@@ -3,11 +3,20 @@ title: "A Visual Explanation of Linear Regression"
 toc: false
 ---
 
+![](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/0_roadmap_eng_transparent.png)
+
 An article about linear regression, told through visualizations, animations, and step-by-step examples — by [Mikhail Sarafanov](https://github.com/Dreamlone).
 
-- [Read in English](en/index.qmd)
-- [Читать на русском](ru/index.qmd)
-- [Interactive playground](interactive/)
 - [GitHub repository](https://github.com/Dreamlone/linear-regression)
+
+---
+
 - [Original article on Towards Data Science](https://towardsdatascience.com/a-visual-explanation-of-the-linear-regression/)
-- [Original article on Habr](https://habr.com/ru/articles/1013998/)
+    - [Quarto version](en/index.qmd)
+
+- [Original article on Habr](https://habr.com/ru/articles/1013998/) - Winner of Technotext 8
+    - [Quarto version](ru/index.qmd)
+
+---
+
+- [Interactive playground](interactive/)
