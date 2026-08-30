@@ -46,3 +46,4 @@ format:
     link-external-newwindow: true
     include-after-body:
       - spoiler.html
+      - goatcounter.html

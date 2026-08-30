@@ -51,6 +51,7 @@ One more thing: the post is simplified on purpose, so some wording and examples 
 - [How to build a simple model](#how-to-build-a-simple-model)
   - [Why this equation, and why two coefficients](#why-this-equation-and-why-two-coefficients)
   - [Analytical solution](#analytical-solution)
+  - [Error is also part of the model](#error-is-also-part-of-the-model)
 - ... in progress
 
 ## Who is this article for
@@ -211,3 +212,21 @@ To find the optimal coefficient values, we will use an analytical solution: plug
 
 ![Analytical solution for simple linear regression. Step 2 shows a Python-like pseudocode for computing the slope coefficient ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/6_analytical_solution.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/6_linear_regression_analytical_solution_eng.png){#fig-sixth loading="lazy"}
 
+### Error is also part of the model
+
+Earlier, I noted that linear regression is an approximation algorithm. This means we do not require the line to pass exactly through the observations. In other words, even at this stage we allow the model’s predictions to differ from the observed apartment prices. And it is important to emphasize: this kind of mismatch is completely normal. In the real world, it is very hard to find a process that generates data lying perfectly on a straight line (@fig-seventh).
+
+![Real-world data can rarely be described by a model without any residual error. That’s why the linear regression equation includes an error term ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/5_and_7_plot_data_is_different.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/7_errors_eng.png){#fig-seventh loading="lazy"}
+
+So, the model needs one more component to be realistic: an error term. With real data, error analysis is essential - it helps spot problems and fix them early. Most importantly, it provides a way to quantify how good the model really is.
+
+## How to measure model quality
+
+Model quality can be assessed using two main approaches:
+
+- Visual evaluation
+- Metric-based evaluation
+
+Before we dive into each one, it is a good moment to define what we mean by “quality” here. In this article, we will consider a model a good one when the error term is as small as possible.
+
+Using the original dataset (see @fig-first), different coefficient values can be plugged into the linear regression equation. Predictions are then generated for the known examples, and the difference between predicted and actual values is compared (Table 1). Among all combinations of the intercept and slope, one pair yields the smallest error.
