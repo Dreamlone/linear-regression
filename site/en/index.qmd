@@ -171,7 +171,7 @@ Since the coefficients are the key parameters of the equation, they have their o
 
 So, when we build a linear regression model, we make the following assumption:
 
-**Assumption 1**. The relationship between the features (independent variables) and the response (dependent variable) is linear [[Kim, Hae-Young. Statistical notes for clinical researchers: simple linear regression 1 – basic concepts, 2018. [https://www.rde.ac/upload/pdf/rde-43-e21.pdf](https://www.rde.ac/upload/pdf/rde-43-e21.pdf)]]{.literature-reference}
+[**Assumption 1**]{#assumption-1}. The relationship between the features (independent variables) and the response (dependent variable) is linear [[Kim, Hae-Young. Statistical notes for clinical researchers: simple linear regression 1 – basic concepts, 2018. [https://www.rde.ac/upload/pdf/rde-43-e21.pdf](https://www.rde.ac/upload/pdf/rde-43-e21.pdf)]]{.literature-reference}
 
 An example of a linear model with the intercept and slope coefficients already fitted (we will discuss why they are called that a bit later) is shown in @fig-fourth.
 
@@ -305,6 +305,100 @@ For dataset C:
 Another widely used diagnostic is the residual plot. The x-axis shows the predicted values, and the y-axis shows the residuals. Residuals are the difference between the observed and predicted values. If you prefer, you can define the error with the opposite sign (predicted minus observed) and plot that instead. It doesn’t change the idea - only the direction of the values on the y-axis.
 
 ![Visual evaluation of model quality: residual plot ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/12_bigger_datasets_residuals.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/12_datasets_residuals_eng.png){#fig-twelfth loading="lazy"}
+
+A residual plot is one of the most convenient tools for checking the key assumptions behind linear regression ([Assumption 1 (linearity) was introduced earlier](#assumption-1)):
+
+- **Assumption 2**. Normality of residuals. The residuals (observed minus predicted) should be approximately normally distributed. Intuitively, most residuals should be small and close to zero, while large residuals are rare. Residuals occur roughly equally often in the positive and negative direction.
+
+- **Assumption 3**. Homoscedasticity (constant variance). The model should have errors of roughly the same magnitude across the full range: cheap apartments, mid-range ones, and expensive ones.
+
+- **Assumption 4**. Independence. Observations (and their residuals) should be independent of each other - i.e., there should be no autocorrelation.
+
+@fig-twelfth shows that dataset B violates Assumption 3: as the number of rooms increases, the errors get larger - the residuals fan out from left to right, indicating increasing variance. In other words, the error is not constant and depends on the feature value. This usually means the model is missing some underlying pattern, which makes its predictions less reliable in that region.
+
+For dataset C, the residuals don’t look normal: the model sometimes systematically overestimates and sometimes systematically underestimates, so the residuals drift above and below zero in a structured way rather than hovering around it randomly. On top of that, the residual plot shows visible patterns, which can be a sign that the errors are not independent (to be fair, not always XD but either way it’s a signal that something is off with the model).
+
+A nice companion to @fig-twelfth is a set of residual distribution plots (@fig-thirteenth). These make the shape of the residuals immediately visible: even without formal statistical tests, you can eyeball how symmetric the distribution is (a good sign is symmetry around zero) and how heavy its tails are. Ideally, the distribution should look bell-shaped, most residuals should be small, while large errors should be rare.
+
+![Visual evaluation of model quality: residual plot and residuals distribution ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/13_bigger_datasets_residuals_kde.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/13_datasets_residuals_kde_eng.png){#fig-thirteenth loading="lazy"}
+
+::: {.callout-note collapse="true"}
+### Side branch 3. A quick reminder about frequency distributions
+
+If your stats course has faded from memory or you never took one this part is worth a closer look. This section introduces the most common ways to visualize samples in mathematical statistics. After it, interpreting the plots used later in the article should be straightforward.
+
+Frequency distribution is an ordered representation showing how many times the values of a random variable fall within certain intervals.
+
+To build one:
+
+1. Split the full range of values into **k** bins (class intervals)
+2. Count how many observations fall into each bin - this is the absolute frequency
+3. Divide the absolute frequency by the sample size **n** to get the relative frequency
+
+In the figure below, the same steps are shown for the variable V:
+
+![Extra Figure 3. Visualization of frequency distribution V as a histogram: how to calculate ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_3_explain_distribution_bins.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/extra_3_hist_explanation_eng.png){#extra-3 loading="lazy"}
+
+The same kind of visualization can be built for variable U as well, but in this section the focus stays on V for simplicity. **Later on, the histogram will be rotated sideways to make it easier to compare the raw data with the vertical layout commonly used for distribution plots.**
+
+From the algorithm description and from the figure above, one important drawback becomes clear: the number of bins k (and therefore the bin width) has a major impact on how the distribution looks.
+
+![Extra Figure 4. Frequency distribution visualizations using different numbers of bins k: 5, 10, and 20. The vertical axis is intentionally left unlabeled to avoid the temptation to interpret point positions along the y-axis, those values can be arbitrary and do not affect the distribution of V ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_4_explain_distribution_different_bins.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/extra_4_hist_bins_eng.png){#extra-4 loading="lazy"}
+
+There are empirical formulas that help choose a reasonable number of bins based on the sample size. Two common examples are Sturges’ rule and the Rice rule (see Extra Figure 5 below) [[Sturges. The Choice of a Class Interval. 1926. DOI: 10.1080/01621459.1926.10502161]]{.literature-reference}, [[Lane, David M., et. al. Histograms. [https://onlinestatbook.com/2/graphing_distributions/histograms.html](https://onlinestatbook.com/2/graphing_distributions/histograms.html)]]{.literature-reference}.
+
+![Extra Figure 5. Rules for choosing the number of bins in histograms Sturges’ and Rice formulas ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_5_explain_bins_rules.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/extra_5_hist_bins_rules_eng.png){#extra-5 loading="lazy"}
+
+An alternative is to visualize the distribution using kernel density estimation (KDE). KDE is a smoothed version of a histogram: instead of rectangular bars, it uses a continuous curve built by summing many smooth “kernel” functions, usually, normal distributions (Extra Figure 6).
+
+![Extra Figure 6. Kernel density estimation (KDE) for variable V ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_6_explain_distribution_kde.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/extra_6_kde_eng.png){#extra-6 loading="lazy"}
+
+I understand that describing KDE as a sum of “tiny normal distributions” isn’t very intuitive. Here’s a better mental picture. Imagine that each data point is filled with a large number of tiny grains of sand. If you let the sand fall under gravity, it forms a little pile directly beneath that point. When several points are close to each other, their sand piles overlap and build a larger mound. Watch the animation below to see how it works:
+
+![Extra Animation 1. Kernel density estimation as falling sand forming a mound ([link to the code for generating the animation](https://github.com/Dreamlone/linear-regression/blob/main/kde_explanation/7_advanced_animation.py) - animation by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/extra_animation_1_kde_animation_sand_eng.gif){#extra-animation-1 loading="lazy"}
+
+
+In a KDE plot, those “sand piles” are typically modeled as small normal (Gaussian) distributions placed around each data point.
+
+Another widely used way to summarize a distribution is a box plot. A box plot describes the distribution in terms of quartiles. It shows:
+
+- The median (second quartile, Q2);
+- The first (Q1) and third (Q3) quartiles (the 25th and 75th percentiles), which form the edges of the “box”;
+- The whiskers, which mark the range of the data excluding outliers;
+- Individual points, which represent outliers.
+
+![Extra Figure 7. Frequency distribution visualization of V variable. Boxplot ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_7_explain_distribution_boxplots.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/extra_7_boxplot_explanation_eng.png){#extra-7 loading="lazy"}
+
+To sum up, the next step is to visualize samples of different sizes and shapes using all the methods discussed above. This will be done by drawing samples from different theoretical distributions: two sample sizes for each, 30 and 500 observations.
+
+![Extra Figure 8. Visualizing samples in different ways (histograms, kernel density estimation, and boxplots) for two theoretical distributions: a normal distribution and a bimodal distribution (a mixture of two Gaussians) ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_8_explain_distribution_different_data.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/extra_8_distributions_eng.png){#extra-8 loading="lazy"}
+
+A frequency distribution is a key tool for describing and understanding the behavior of a random variable based on a sample. Visual methods like histograms, kernel density curves, and box plots complement each other and help build a clear picture of the distribution: its symmetry, where the mass is concentrated, how spread out it is, and whether it contains outliers.
+
+Such point of view on the data is also useful because it has a natural probabilistic interpretation: the most likely values fall in the region where the probability density is highest, i.e., where the KDE curve reaches its peak.
+:::
+
+As noted above, the residual distribution should look roughly normal. That’s why it makes sense to compare two distributions: theoretical normal vs. the residuals we actually observe. Two convenient tools for this are density plots and Q-Q plots with residual quantiles vs. normal quantiles. The parameters of the normal distribution are estimated from the residual sample. Since these plots work best with larger samples, for illustration I’ll artificially increase each residual set to 500 values while preserving the key behavior of the residuals for each dataset (@fig-fourteenth).
+
+![Q-Q plot comparing a normal distribution with the model residuals (bottom row). For clarity, the residual samples for datasets A, B, and C were artificially expanded ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/14_residuals_vs_normal_distribution.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/14_datasets_residuals_qq_eng.png){#fig-fourteenth loading="lazy"}
+
+As @fig-fourteenth shows, the residual distributions for datasets A* and B* are reasonably well approximated by a normal distribution. For B*, the tails drift a bit: large errors occur slightly more often than we would like. The bimodal case C* is much more striking: its residual distribution looks nothing like normal.
+
+Heteroscedasticity in B* won’t show up in these plots, because they look at residuals on their own (one dimension) and ignore how the error changes across the range of predictions.
+
+To sum up, a model is rarely perfect, it has errors. Error analysis with plots is a convenient way to diagnose the model:
+
+- For simple regression (pair regression), it is useful to plot predicted and observed values on the y-axis against the feature on the x-axis. This makes the relationship between the feature and the response easy to see;
+
+- As an addition, plot observed values (x-axis) vs. predicted values (y-axis). The closer the points are to the diagonal line coming from the bottom-left corner, the better. This plot is also handy because it does not depend on how many features the model has;
+
+- If the goal is to compare the full distributions of predictions and observations, rather than individual pairs, a Q-Q plot is a good choice;
+
+- For very large samples, cognitive load can be reduced by grouping values into quantiles on the Q-Q plot, so the plot will have, for example, only 100 scatter points;
+
+- A residual plot helps check whether the key linear regression assumptions hold for the current model (independence, normality of residuals, and homoscedasticity);
+
+- For an easier comparison between the residual distribution and a theoretical normal distribution, use a Q-Q plot.
 
 ---
 
