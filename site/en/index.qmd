@@ -22,7 +22,7 @@ not <details> — worked example below.
 ## *How to build linear regression models, measure their quality, and improve their performance*
 
 ::: {.publication-date}
-Published April 9, 2026
+Published April 9, 2026 - [see original](https://towardsdatascience.com/a-visual-explanation-of-the-linear-regression/)
 :::
 
 ![Roadmap for the article with optional side paths. Road colors match the figure frame colors used in the corresponding sections. Plots from the main narrative use an orange-to-red gradient frame, and so on (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/0_roadmap_eng_transparent.png){#roadmap}

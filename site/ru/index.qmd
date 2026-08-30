@@ -24,7 +24,7 @@ TODO(content): замените всё, что ниже, на перенесён
 -->
 
 ::: {.publication-date}
-9 апр в 19:58
+9 апр 2026 в 19:58 - [см. оригинал](https://habr.com/ru/articles/1013998/)
 :::
 
 ::: {.article-tags}
