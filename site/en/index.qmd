@@ -54,6 +54,7 @@ One more thing: the post is simplified on purpose, so some wording and examples 
   - [Error is also part of the model](#error-is-also-part-of-the-model)
 - [**How to measure model quality**](#how-to-measure-model-quality)
   - [Visual evaluation](#visual-evaluation)
+  - [Metrics](#metrics)
 - ... in progress
 
 ## Who is this article for
@@ -382,9 +383,9 @@ As noted above, the residual distribution should look roughly normal. That’s w
 
 ![Q-Q plot comparing a normal distribution with the model residuals (bottom row). For clarity, the residual samples for datasets A, B, and C were artificially expanded ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/14_residuals_vs_normal_distribution.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/14_datasets_residuals_qq_eng.png){#fig-fourteenth loading="lazy"}
 
-As @fig-fourteenth shows, the residual distributions for datasets A* and B* are reasonably well approximated by a normal distribution. For B*, the tails drift a bit: large errors occur slightly more often than we would like. The bimodal case C* is much more striking: its residual distribution looks nothing like normal.
+As @fig-fourteenth shows, the residual distributions for datasets `A*` and `B*` are reasonably well approximated by a normal distribution. For `B*`, the tails drift a bit: large errors occur slightly more often than we would like. The bimodal case `C*` is much more striking: its residual distribution looks nothing like normal.
 
-Heteroscedasticity in B* won’t show up in these plots, because they look at residuals on their own (one dimension) and ignore how the error changes across the range of predictions.
+Heteroscedasticity in `B*` won’t show up in these plots, because they look at residuals on their own (one dimension) and ignore how the error changes across the range of predictions.
 
 To sum up, a model is rarely perfect, it has errors. Error analysis with plots is a convenient way to diagnose the model:
 
@@ -399,6 +400,45 @@ To sum up, a model is rarely perfect, it has errors. Error analysis with plots i
 - A residual plot helps check whether the key linear regression assumptions hold for the current model (independence, normality of residuals, and homoscedasticity);
 
 - For an easier comparison between the residual distribution and a theoretical normal distribution, use a Q-Q plot.
+
+### Metrics
+
+::: {.callout-note collapse="true"}
+### Disclaimer regarding the designations X and Y
+
+In the visualizations in this section, some notation may look a bit unusual compared to related literature. For example, predicted values are labeled **X**, while the observed response is labeled **Y**. This is intentional: even though the discussion is tied to model evaluation, I don’t want it to feel like the same ideas only apply to the “prediction vs. observation” pair. In practice, **X** and **Y** can be any two arrays - the right choice depends on the task.
+
+There’s also a practical reason for choosing this pair: **X** and **Y** are visually distinct. In plots and animations, they are easier to tell apart than pairs like **U** and **V**, or the more familiar $y$ and $\hat{y}$.
+:::
+
+As compelling as visual diagnostics can be, model quality is best assessed together with metrics (numerical measures of performance). A good metric is appealing because it reduces cognitive load: instead of inspecting yet another set of plots, the evaluation collapses to a single number (@fig-fifteenth).
+
+![Why metrics matter: they let you judge model quality with a single number (sometimes a small set of numbers). The plot shows the Mean Absolute Percentage Error (MAPE) metric ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/15_why_metrics.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/15_why_metrics_eng.png){#fig-fifteenth loading="lazy"}
+
+Unlike a residual plot, a metric is also a very convenient format for automated analysis, not just easy to interpret, but easy to plug into code. That makes metrics useful for numerical optimization, which we will get to a bit later.
+
+This “Metrics” section also includes statistical tests: they help assess the significance of individual coefficients and of the model as a whole (we will cover that later as well).
+
+Here is a non-exhaustive list:
+
+- Correlation coefficient [[Pearson, Karl. VII. Note on regression and inheritance in the case of two parents. 1895. [https://royalsocietypublishing.org/rspl/issue/58/347-352](https://royalsocietypublishing.org/rspl/issue/58/347-352)]]{.literature-reference};
+- Coefficient of determination $R^2$ - [[Kvalseth, Tarald O. Cautionary Note about R². 1985. [https://www.tandfonline.com/doi/abs/10.1080/00031305.1985.10479448](https://www.tandfonline.com/doi/abs/10.1080/00031305.1985.10479448)]]{.literature-reference};
+- Bias;
+- Mean absolute error - MAE;
+- Root mean square error - RMSE;
+- Mean absolute percentage error - MAPE;
+- Symmetric mean absolute percentage error - SMAPE;
+- The F-test for checking whether the model is significant as a whole;
+- The t-test for checking the significance of the features and the target;
+- Durbin-Watson test for analyzing residuals.
+
+@fig-sixteenth shows metrics computed by **comparing the observed apartment prices with the predicted ones.**
+
+![Model metrics for datasets A, B, and C. Note that in the three bottom subplots the y-axis is split by color for each bar group. Because of that, bar heights are only meaningful when comparing the same metric across datasets, for example R² for A, B, and C. They are not meant for comparing different metrics within a single dataset, such as MAE versus correlation coefficient ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/16_datasets_and_metrics.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/16_datasets_metrics_eng.png){#fig-sixteenth loading="lazy"}
+
+The metrics are grouped for readability. The first group, shown in red, includes the correlation coefficient (between predicted and observed values) and the coefficient of determination, R². Both are dimensionless, and values closer to 1 are better. Note that correlation is not limited to predictions versus the target. It can also be computed between a feature and the target, or pairwise between features when there are many of them.
+
+![Animation 1. How to compute the correlation coefficient and the coefficient of determination (R²). Notation: X are the predicted values, Y are the observed values. Please zoom in on the animation to see how the values are inserted into the formulas ([link to the code for generating the animation](https://github.com/Dreamlone/linear-regression/blob/main/examples/animation_1_how_to_calculate_correlation_and_r2.py) - animation by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/animation_1_how_to_calculate_correlation_eng.gif){#animation-1 loading="lazy"}
 
 ---
 
