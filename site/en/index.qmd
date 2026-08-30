@@ -19,9 +19,29 @@ Reference images already in this repo, via GitHub's raw-content CDN, e.g.:
 not <details> — worked example below.
 -->
 
-## Placeholder section
+## *How to build linear regression models, measure their quality, and improve their performance*
 
-Article content goes here.
+::: {.publication-date}
+Published April 9, 2026
+:::
+
+![Roadmap for the article with optional side paths. Road colors match the figure frame colors used in the corresponding sections. Plots from the main narrative use an orange-to-red gradient frame, and so on (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/0_roadmap_eng_transparent.png){#fig-roadmap}
+
+Hello, Towards Data Science people! If you have ever wanted to understand how linear regression works or just refresh the main ideas without jumping between lots of different sources - this article is for you. It is an extra long read that took me more than a year to write. It’s built around five key ideas:
+
+1. **Visuals first**. This is a comic-style article: reading the text helps, but it is not required. A quick pass through the images and animations can still give you a solid understanding of how things work. There are 100+ visuals in total.
+
+2. **Animations where they might help (33 total)**. Computer science is best understood in motion, so I use animations to explain key ideas;
+
+3. **Beginner-friendly**. I kept the material as simple as possible, to make the article easy for beginners to follow.
+
+4. **Reproducible**. Most visuals were generated in Python, and the code is open source.
+
+5. **Focus on practice**. Each next step solves a problem that shows up in the previous step, so the whole article stays connected.
+
+One more thing: the post is simplified on purpose, so some wording and examples may be not perfectly precise. Please don’t just take my word for it - think critically and double-check my points. For the most important parts, I provide links to the source code so you can verify everything yourself.
+
+## Table of contents
 
 ::: {.callout-note collapse="true"}
 ### Side branch 1. Interpolation, extrapolation, and approximation

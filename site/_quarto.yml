@@ -44,3 +44,5 @@ format:
     grid:
       body-width: 1000px
     link-external-newwindow: true
+    include-after-body:
+      - spoiler.html
