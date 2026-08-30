@@ -266,7 +266,7 @@ $$
 
 Квантиль уровня 0.25 ≈ 3. Квантиль уровня 0.75 ≈ 7. Смотрите пояснения на рисунке ниже.
 
-![Дополнительный рисунок 2. Немного про квантили и перцентили](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_2_quantiles_rus.png){#extra-2 loading="lazy"}
+![Дополнительный рисунок 2: Немного про квантили и перцентили](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_2_quantiles_rus.png){#extra-2 loading="lazy"}
 
 25й перцентиль (персентиль) также называется первым квартилем, 50й перцентиль — медиана или второй квартиль, 75й перцентиль — третий квартиль.
 :::
@@ -316,25 +316,25 @@ $$
 
 На рисунке такая последовательность действий для переменной V выглядит следующим образом:
 
-![Дополнительный рисунок 3. Визуализация частотного распределения V в виде гистограммы: методика расчета ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_3_explain_distribution_bins.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_3_hist_explanation_rus.png){#extra-3 loading="lazy"}
+![Дополнительный рисунок 3: Визуализация частотного распределения V в виде гистограммы: методика расчета ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_3_explain_distribution_bins.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_3_hist_explanation_rus.png){#extra-3 loading="lazy"}
 
 Такую же визуализацию можно сделать и для переменной U, но в данном разделе сконцентрируемся только на V, для примера. **Далее по тексту я график переверну на бок, чтобы удобнее было соотносить исходные данные и вертикальную нотацию визуализаций распределений.**
 
 Из описания алгоритма расчета и из рисунка выше можно выделить важный недостаток такой визуализации: количество интервалов k, и, соответственно, их размер значительно влияет на то как будет выглядеть изображаемое распределение.
 
-![Дополнительный рисунок 4. Визуализации частотного распределения с разным количеством интервалов k: 5, 10, 20. Вертикальная ось намеренно не подписана, чтобы не возникло соблазна интерпретировать положение точек на графике по оси ординат: значения этой размерности могут быть какими угодно, на распределение V это не влияет ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_4_explain_distribution_different_bins.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_4_hist_bins_rus.png){#extra-4 loading="lazy"}
+![Дополнительный рисунок 4: Визуализации частотного распределения с разным количеством интервалов k: 5, 10, 20. Вертикальная ось намеренно не подписана, чтобы не возникло соблазна интерпретировать положение точек на графике по оси ординат: значения этой размерности могут быть какими угодно, на распределение V это не влияет ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_4_explain_distribution_different_bins.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_4_hist_bins_rus.png){#extra-4 loading="lazy"}
 
 Существуют эмпирические формулы, которые позволяют подобрать адекватное значение количества интервалов в зависимости от объема выборки. Например формула Стерджеса или формула Райса (см. рисунок ниже) [[Sturges. The Choice of a Class Interval. 1926. DOI: 10.1080/01621459.1926.10502161]]{.literature-reference}, [[Lane, David M., et. al. Histograms. [https://onlinestatbook.com/2/graphing_distributions/histograms.html](https://onlinestatbook.com/2/graphing_distributions/histograms.html)]]{.literature-reference}.
 
-![Дополнительный рисунок 5. Правила подбора количества интервалов при расчете частотных распределений: показаны формулы Стерджеса и Райса ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_5_explain_bins_rules.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_5_hist_bins_rules_rus.png){#extra-5 loading="lazy"}
+![Дополнительный рисунок 5: Правила подбора количества интервалов при расчете частотных распределений: показаны формулы Стерджеса и Райса ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_5_explain_bins_rules.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_5_hist_bins_rules_rus.png){#extra-5 loading="lazy"}
 
 Можно использовать альтернативу — визуализировать с помощью ядерной оценки плотности. Ядерная оценка плотности — это сглаженный аналог гистограммы. Вместо прямоугольных «столбиков» применяется непрерывная кривая, построенная на основе суммы «ядер» гладких функций — как правило, нормальных распределений.
 
-![Дополнительный рисунок 6. Ядерная оценка плотности распределения для выборки V ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_6_explain_distribution_kde.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_6_kde_rus.png){#extra-6 loading="lazy"}
+![Дополнительный рисунок 6: Ядерная оценка плотности распределения для выборки V ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_6_explain_distribution_kde.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_6_kde_rus.png){#extra-6 loading="lazy"}
 
 Понимаю, что такое определение способа визуализации через сумму «мини нормальных распределений» не очень интуитивно. Представьте, что в каждый исходный объект выборки (точка на графике) мы можем вписать большое количество маленьких частичек. И когда под силой тяжести это «песок» высыпется, он образует кучу ровно под исходной точкой. Если несколько точек находились близко друг другу, их песочные кучки наложатся друг на друга и образуют насыпь побольше. Посмотрите анимацию ниже, чтобы понять как это работает:
 
-![Дополнительная анимация 1. Представление ядерной оценки плотности как выпадение насыпи ([ссылка на код для генерации анимации](https://github.com/Dreamlone/linear-regression/blob/main/kde_explanation/7_advanced_animation.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_animation_1_kde_animation_sand_rus.gif){#extra-animation-1 loading="lazy"}
+![Дополнительная анимация 1: Представление ядерной оценки плотности как выпадение насыпи ([ссылка на код для генерации анимации](https://github.com/Dreamlone/linear-regression/blob/main/kde_explanation/7_advanced_animation.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_animation_1_kde_animation_sand_rus.gif){#extra-animation-1 loading="lazy"}
 
 Роль таких кучек из песка в случае построения графиков ядерной оценки плотности играют (как правило) нормальные распределения откладываемые в окрестности каждой из точек.
 
@@ -345,11 +345,11 @@ $$
 - «Усы» — границы диапазона данных без выбросов
 - Отдельные точки — выбросы
 
-![Дополнительный рисунок 7. Визуализация распределения V. Ящики с усами ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_7_explain_distribution_boxplots.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_7_boxplot_explanation_rus.png){#extra-7 loading="lazy"}
+![Дополнительный рисунок 7: Визуализация распределения V. Ящики с усами ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_7_explain_distribution_boxplots.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_7_boxplot_explanation_rus.png){#extra-7 loading="lazy"}
 
 Чтобы подытожить все вышесказанное, визуализируем выборки разного размера и формы всеми рассмотренными способами. Для этого будем рассматривать разные теоретические распределения из которых будем семплировать (извлекать) выборки разного размера: по 30 и 500 элементов.
 
-![Дополнительный рисунок 8. Визуализация выборок различными способами (частотные гистограммы, ядерная оценка плотности, ящики с усами) для двух теоретических распределений: нормальное и бимодальное (смесь двух нормальных) ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_8_explain_distribution_different_data.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_8_distributions_rus.png){#extra-8 loading="lazy"}
+![Дополнительный рисунок 8: Визуализация выборок различными способами (частотные гистограммы, ядерная оценка плотности, ящики с усами) для двух теоретических распределений: нормальное и бимодальное (смесь двух нормальных) ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_8_explain_distribution_different_data.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_8_distributions_rus.png){#extra-8 loading="lazy"}
 
 Частотное распределение удобно еще и тем что имеет вероятностный смысл: наиболее вероятные значения приходятся на интервал, где плотность вероятности наибольшая (где горб графика ядерной оценки плотности (KDE) выше всего).
 
@@ -411,11 +411,11 @@ $$
 
 Метрики разбиты на группы для наглядности. Первая — красная, в ней находятся коэффициент корреляции (между предсказанными и действительными значениями) и коэффициент детерминации. Оба показателя являются безразмерными. И чем ближе к единице, тем лучше. Отмечу, что коэффициент корреляции можно рассчитывать не только между предсказаниями и целевой переменной, но и например между предиктором и откликом, или между признаками попарно (если таких признаков много).
 
-![Анимация 1. Как рассчитать коэффициент корреляции и коэффициент детерминации. Обозначения: X — предсказанные значения, Y — реальные. Пожалуйста, приближайте анимацию чтобы рассмотреть как значения подставляются в формулы ([ссылка на код для генерации анимации](https://github.com/Dreamlone/linear-regression/blob/main/examples/animation_1_how_to_calculate_correlation_and_r2.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/animation_1_how_to_calculate_correlation_rus.gif){#animation-1 loading="lazy"}
+![Анимация 1: Как рассчитать коэффициент корреляции и коэффициент детерминации. Обозначения: X — предсказанные значения, Y — реальные. Пожалуйста, приближайте анимацию чтобы рассмотреть как значения подставляются в формулы ([ссылка на код для генерации анимации](https://github.com/Dreamlone/linear-regression/blob/main/examples/animation_1_how_to_calculate_correlation_and_r2.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/animation_1_how_to_calculate_correlation_rus.gif){#animation-1 loading="lazy"}
 
 Вторая группа — зеленая. Эти метрики показывают ошибку в тех же величинах, что и отклик, то есть в данном случае в долларах $. Для всех трех метрик интерпретация звучит так — чем ближе значение метрики к нулю, тем лучше (Анимация 2).
 
-![Анимация 2. Как рассчитать смещение, среднюю абсолютную ошибку (MAE), корень из средней квадратичной ошибки (RMSE). Обозначения: X — предсказанные значения, Y — реальные ([ссылка на код для генерации анимации](https://github.com/Dreamlone/linear-regression/blob/main/examples/animation_2_how_to_calculate_mae_rmse.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/animation_2_how_to_calculate_mae_rmse_rus.gif){#animation-2 loading="lazy"}
+![Анимация 2: Как рассчитать смещение, среднюю абсолютную ошибку (MAE), корень из средней квадратичной ошибки (RMSE). Обозначения: X — предсказанные значения, Y — реальные ([ссылка на код для генерации анимации](https://github.com/Dreamlone/linear-regression/blob/main/examples/animation_2_how_to_calculate_mae_rmse.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/animation_2_how_to_calculate_mae_rmse_rus.gif){#animation-2 loading="lazy"}
 
 Из любопытного: на @fig-16 метрика смещения равна нулю во всех случаях, что буквально значит, что ошибки модели не смещены ни в меньшую ни в большую сторону. Потому вопрос читателю: почему это будет справедливо для модели линейной регрессии построенной по любым данным (можете попробовать поиграться с датасетами и изменять значения в исходных данных)?
 
@@ -423,7 +423,7 @@ $$
 
 Третья группа — синяя. Здесь показаны метрики ошибки, которые измеряются в процентах. Чем меньше, тем лучше. MAPE здесь чувствительна к ошибкам на маленьких значениях, потому что в формуле расчета разница наблюдения и предсказания делится на само значение наблюдения. Если фактическое значение маленькое, даже небольшая ошибка даст большой процент, и сильно повлияет на итоговый результат (@fig-17).
 
-![Анимация 3. Как рассчитать Среднюю абсолютную процентную ошибку, симметричную среднюю абсолютную процентную ошибку. Обозначения: X — предсказанные значения, Y — реальные ([ссылка на код для генерации анимации](https://github.com/Dreamlone/linear-regression/blob/main/examples/animation_3_how_to_calculate_mape_smape.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/animation_3_how_to_calculate_mape_smape_rus.gif){#animation-3 loading="lazy"}
+![Анимация 3: Как рассчитать Среднюю абсолютную процентную ошибку, симметричную среднюю абсолютную процентную ошибку. Обозначения: X — предсказанные значения, Y — реальные ([ссылка на код для генерации анимации](https://github.com/Dreamlone/linear-regression/blob/main/examples/animation_3_how_to_calculate_mape_smape.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/animation_3_how_to_calculate_mape_smape_rus.gif){#animation-3 loading="lazy"}
 
 ![Особенности расчетов метрики MAPE и SMAPE на двух наборах данных, где значения наблюдений близки к нулю. Показаны изменения в метриках при увеличении значений наблюдений и предсказаний второго набора данных на 10 единиц](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/17_mape_vs_smape.png){#fig-17 loading="lazy"}
 
@@ -436,7 +436,7 @@ $$
 
 Начнем с небольшого эксперимента: используем данные из @fig-17, и исходный датасет наблюдения [1, 2, 3] - предсказания [1, 10, 50] будем двигать дальше и дальше от нуля путем прибавления 10 ко всем значениям на протяжении 10 итераций. И на каждом шаге будем рассчитывать три метрики: MAPE, SMAPE, MAE. Результаты можно увидеть на графике ниже:
 
-![Дополнительный рисунок 9. Исследуем ассиметричность MAPE. Значения метрики MAPE, SMAPE (левая шкала) и MAE (правая шкала) при различной удаленности значений наблюдений и предсказаний модели от нуля. Абсолютное отклонение между наблюдениями и предсказаниями в данном эксперименте неизменно на каждом сдвиге ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_9_difference_mape_smape_metrics.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_9_difference_mape_smape_metrics_rus.png){#extra-9 loading="lazy"}
+![Дополнительный рисунок 9: Исследуем ассиметричность MAPE. Значения метрики MAPE, SMAPE (левая шкала) и MAE (правая шкала) при различной удаленности значений наблюдений и предсказаний модели от нуля. Абсолютное отклонение между наблюдениями и предсказаниями в данном эксперименте неизменно на каждом сдвиге ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/extra_9_difference_mape_smape_metrics.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/extra_9_difference_mape_smape_metrics_rus.png){#extra-9 loading="lazy"}
 
 Как видно из рисунка выше, чем большие значения включены в датасет, тем меньше различия между MAPE и SMAPE, и тем меньше ошибки, измеряемые в процентах. Выравнивание MAPE и SMAPЕ объясняется особенностями расчета, которые позволяют устранить эффект несимметричности MAPE особенно заметный именно на малых значениях наблюдений. MAE при этом неизменна, как и ожидалось.
 
