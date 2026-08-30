@@ -230,3 +230,8 @@ Model quality can be assessed using two main approaches:
 Before we dive into each one, it is a good moment to define what we mean by “quality” here. In this article, we will consider a model a good one when the error term is as small as possible.
 
 Using the original dataset (see @fig-first), different coefficient values can be plugged into the linear regression equation. Predictions are then generated for the known examples, and the difference between predicted and actual values is compared (Table 1). Among all combinations of the intercept and slope, one pair yields the smallest error.
+
+<div class="article-views">
+  <span class="views-icon">👁</span>
+  <span id="view-count">...</span> views
+</div>

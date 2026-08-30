@@ -1,0 +1,32 @@
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const element = document.querySelector("#view-count");
+
+  if (!element) {
+    return;
+  }
+
+  const lang = document.documentElement.lang;
+
+  const path = lang.startsWith("ru")
+    ? "/linear-regression/ru/"
+    : "/linear-regression/en/";
+
+  try {
+    const response = await fetch(
+      "https://linearregression.goatcounter.com/counter/" +
+      encodeURIComponent(path) +
+      ".json"
+    );
+
+    if (!response.ok) {
+      throw new Error();
+    }
+
+    const data = await response.json();
+    element.textContent = data.count;
+  } catch {
+    element.textContent = "—";
+  }
+});
+</script>

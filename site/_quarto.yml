@@ -47,3 +47,4 @@ format:
     include-after-body:
       - spoiler.html
       - goatcounter.html
+      - views.html
