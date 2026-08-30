@@ -129,7 +129,7 @@ TODO(content): замените всё, что ниже, на перенесён
 - Количество комнат в квартире
 - Стоимость апартаментов (для удобства, стоимость будет указана в долларах $, иначе бы много нулей мелькало на экране)
 
-![Визуализация исходного набора данных о стоимости квартир ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/1_plot_initial_data.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/1_plot_initial_data_rus.png){#fig-first}
+![Визуализация исходного набора данных о стоимости квартир ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/1_plot_initial_data.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/1_plot_initial_data_rus.png){#fig-first loading="lazy"}
 
 То есть на момент анализа и подготовки модели, у нас уже должны быть данные. Сбор и предварительную подготовку выборки оставим за рамками текущего рассказа, тем более что в зависимости от предметной области процесс будет значительно отличаться. Главный принцип, который имеет смысл держать в голове, это «мусор на входе — мусор на выходе», что в целом справедливо для задач машинного обучения с учителем. Для хорошей модели нужна, в первую очередь, хорошая выборка данных.
 
@@ -137,11 +137,11 @@ TODO(content): замените всё, что ниже, на перенесён
 
 Как говорил британский статистик Джордж Бокс, «Все модели неточны, но некоторые из них полезны». И полезны они для выявления закономерностей в данных. Как только закономерности описаны в виде математического выражения (модели), мы можем использовать это для, например, генерации предсказаний (@fig-second).
 
-![Превращение таблицы с данными в модель и что можно назвать моделью](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/2_features_target_naming_rus.png){#fig-second}
+![Превращение таблицы с данными в модель и что можно назвать моделью](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/2_features_target_naming_rus.png){#fig-second loading="lazy"}
 
 Моделирование зависимостей между данными — нетривиальная задача. Для этого могут использоваться математические модели самой разной природы, от односложных до самых современных многоступенчатых, например, нейронных сетей. Нам на данном этапе важно зафиксировать то, что **моделями можно называть самые разные преобразователи одних данных (столбцы с признаками) в другие (столбец с откликом)** (@fig-third).
 
-![Рисунок 3. Моделью может быть (почти) что угодно ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/3_plot_dependencies.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/3_dependencies_rus.png){#fig-third}
+![Моделью может быть (почти) что угодно ([ссылка на код для генерации картинки](https://github.com/Dreamlone/linear-regression/blob/main/examples/3_plot_dependencies.py))](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/3_dependencies_rus.png){#fig-third loading="lazy"}
 
 В случае линейной регрессии моделируются **линейные** взаимосвязи между массивами данных. Для парной регрессии (когда есть один предиктор и одна зависимая переменная) уравнение имеет вид:
 

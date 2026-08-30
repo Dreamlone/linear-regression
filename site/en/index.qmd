@@ -25,7 +25,7 @@ not <details> — worked example below.
 Published April 9, 2026
 :::
 
-![Roadmap for the article with optional side paths. Road colors match the figure frame colors used in the corresponding sections. Plots from the main narrative use an orange-to-red gradient frame, and so on (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/0_roadmap_eng_transparent.png){#fig-roadmap}
+![Roadmap for the article with optional side paths. Road colors match the figure frame colors used in the corresponding sections. Plots from the main narrative use an orange-to-red gradient frame, and so on (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/0_roadmap_eng_transparent.png){#roadmap}
 
 Hello, Towards Data Science people! If you have ever wanted to understand how linear regression works or just refresh the main ideas without jumping between lots of different sources - this article is for you. It is an extra long read that took me more than a year to write. It’s built around five key ideas:
 
@@ -43,12 +43,171 @@ One more thing: the post is simplified on purpose, so some wording and examples 
 
 ## Table of contents
 
+- [Who is this article for](#who-is-this-article-for)
+- [What this post covers](#what-this-post-covers)
+- [A brief literary review](#a-brief-literary-review)
+- [A good model starts with data](#a-good-model-starts-with-data)
+- [Why do we need a model?](#why-do-we-need-a-model)
+- [How to build a simple model](#how-to-build-a-simple-model)
+  - [Why this equation, and why two coefficients](#why-this-equation-and-why-two-coefficients)
+  - [Analytical solution](#analytical-solution)
+- ... in progress
+
+## Who is this article for
+
+You can skip this paragraph. Just scroll through the article for two minutes and look at the visuals. You’ll quickly know whether you want to read the full article (the main ideas are shown in the plots and animations). This post is for beginners and for anyone working with data - and also for experienced people who want a quick refresh.
+
+## What this post covers
+
+The article is structured in three acts:
+
+- Linear regression: what it is, why we use it, and how to fit a model;
+- How to evaluate the model’s performance;
+- How to improve the model when the results are not good enough.
+
+At a high level, this article covers:
+
+1. data-driven modeling;
+2. analytical solution for linear regression, and why it is not always practical;
+3. ways to evaluate model quality, both visually and with metrics;
+4. Multiple linear regression, where predictions are based on many features;
+5. the probabilistic side of linear regression, since predictions are not exact and it is important to quantify uncertainty;
+6. ways to improve model quality, from adding complexity to simplifying the model with regularization.
+
+More specifically, it walks through:
+
+1. the least squares method for simple linear regression;
+2. regression metrics such as $R^2$, $RMSE$, $MAE$, $MAPE$, $SMAPE$, along with the Pearson correlation coefficient and the coefficient of determination, plus visual diagnostics like residual plots;
+3. maximum likelihood and prediction intervals;
+4. train/test splits, why they matter and how to do them;
+5. outlier handling methods, including RANSAC, Mahalanobis distance, Local Outlier Factor (LOF), and Cook’s distance;
+6. data preprocessing, including normalization, standardization, and categorical encoding;
+7. the linear algebra behind least squares, and how it extends to multivariate regression;
+8. numerical optimization methods, including gradient descent;
+9. L1 and L2 regularization for linear models;
+10. cross-validation and hyperparameter optimization.
+
+Although this article focuses on linear regression, some parts - especially the section on model evaluation, apply to other regression algorithms as well. The same goes for the feature preprocessing chapters.
+
+Since this is meant as an introductory, ML-related guide to linear regression, I’ll mostly avoid vector notation (where formulas use vectors instead of scalars). In other words, you will hardly see vectors and matrices in the equations, except in a few places where they are truly necessary. Keep in mind that most of the formulas shown here do have a vector form, and modern libraries implement the algorithms in exactly that way. Those implementations are efficient and reliable, so if you decide to code things up, don’t reinvent the wheel - use well-tested libraries or tools with UI when it makes sense.
+
+All animations and images in the article are original and created by the author.
+
+## A brief literary review
+
+This topic isn’t new, so there’s plenty of material out there. Below is a short list of direct predecessors, similar in platform (mostly Towards Data Science) and audience, meaning browser-first readers rather than textbook readers. The list is ordered by increasing subjective complexity:
+
+- [What is Linear Regression?](https://towardsdatascience.com/the-concepts-behind-linear-regression-and-its-implementation-ffbab5a4d65e/) - A beginner-friendly overview of what linear regression is, what the line represents, how predictions are made, with simple visuals and code;
+
+- [A Practical Guide to Linear Regression](https://towardsdatascience.com/a-practical-guide-to-linear-regression-3b1cb9e501a6/) - Represents linear model fitting as machine learning pipeline: EDA, feature handling, model fitting, and evaluation on a real Kaggle dataset;
+
+- [Mastering the Basics: How Linear Regression Unlocks the Secrets of Complex Models](https://towardsdatascience.com/mastering-the-basics-how-linear-regression-unlocks-the-secrets-of-complex-models-8aa33920c105/) - Easy to follow guide with step-by-step calculations memorable and nice visuals;
+
+- [Predict Housing Price using Linear Regression in Python](https://towardsdatascience.com/predict-housing-price-using-linear-regression-in-python-bfc0fcfff640/) - implementation-oriented article built around the Boston Housing dataset, with code examples for calculations from scratch;
+
+- [Multiple Linear Regression Analysis](https://towardsdatascience.com/multiple-linear-regression-analysis/) - An article with more mathematical detail, focused on multicollinearity;
+
+- [Mastering Linear Regression: The Definitive Guide For Aspiring Data Scientists](https://towardsdatascience.com/mastering-linear-regression-the-definitive-guide-for-aspiring-data-scientists-7abd37fcb9ed/) - A long, all in one guide, theory plus Python;
+
+- [Linear Regression In Depth (Part 1)](https://towardsdatascience.com/linear-regression-in-depth-part-1-485f997fd611/) and [Linear Regression In Depth (Part 2)](https://medium.com/data-science/linear-regression-in-depth-part-2-5d40fd19efd4) - Deeper theory plus implementation articles that focuses on simple linear regression and sets up the transition to multiple regression;
+
+Here are a few excellent interactive resources on linear regression. They are worth at least scrolling through on your own, so I won’t provide short summaries for them:
+
+- Jared Wilber. A Visual Introduction To (Almost) Everything You Should Know - [https://mlu-explain.github.io/linear-regression/](https://mlu-explain.github.io/linear-regression/)
+
+- Victor Powell. Linear Regression Explained Visually - [https://setosa.io/ev/linear-regression/](https://setosa.io/ev/linear-regression/)
+
+- Seeing Theory, Regression Analysis. Linear regression is an approach for modeling the linear relationship between two variables - [https://seeing-theory.brown.edu/regression-analysis/index.html](https://seeing-theory.brown.edu/regression-analysis/index.html)
+
+And of course, do not ignore the classic papers if you want to read more about this topic. I’m not listing them as a separate bibliography in this section, but you’ll find links to them later in the text. Each reference appears right after the fragment it relates to, in square brackets, in the format: **[Author(s). Title. Year. Link to the original source]**
+
+## A good model starts with data
+
+Let's assume we have tabular data with two columns:
+
+- Number of rooms in the apartment;
+- The price of the apartment, `$`.
+
+![Visualization of the original dataset on apartment prices ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/1_plot_initial_data.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/1_plot_initial_data_eng.png){#fig-first loading="lazy"}
+
+By the time you build a model, there should already be data. Data collection and the initial preparation of the dataset are outside the scope of this article, especially since the process can vary a lot depending on the domain. The main principle to keep in mind is “garbage in, garbage out”, which applies to supervised machine learning in general. A good model starts with a good dataset.
+
+**Disclaimer regarding the dataset**: The data used in this article is synthetic and was generated by the author. It is distributed under the same license as the source code - BSD 3-Clause.
+
+## Why do we need a model?
+
+As the British statistician George Box once said, “All models are wrong, but some are useful.” Models are useful because they help us uncover patterns in data. Once those patterns are expressed as a mathematical relationship (a model), we can use it, for example, to generate predictions (@fig-second).
+
+![Turning a data table into a model - and what can be considered a model (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/2_features_target_naming_eng.png){#fig-second loading="lazy"}
+
+Modeling relationships in data is not a trivial task. It can be done using mathematical models of many different kinds - from simple ones to modern multi-stage approaches such as neural networks. For now, the key point is that a **“model” can mean any kind of mapping from one set of data (feature columns) to a target column**. I’ll use this definition throughout the article.
+
+![The model can be (almost) anything ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/3_plot_dependencies.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/3_dependencies_eng.png){#fig-third loading="lazy"}
+
+In linear regression, we model linear relationships between data variables. In simple (one-feature) regression - when there is one feature and one dependent variable - the equation has the form:
+
+$$
+y = b_0 + b_1 x
+$$
+
+where:
+
+- $x$ — feature,
+- $y$ — target variable.
+
+::: {.literature-reference}
+[James, G., et al. *Linear Regression. An Introduction to Statistical Learning*, 2021. Free version: [https://www.statlearning.com/](https://www.statlearning.com/)]
+:::
+
+So the expression $y = 1 + 10x$ is a linear regression model. And $y = 15 - 21x$ is one as well — the only difference is the coefficients.
+
+Since the coefficients are the key parameters of the equation, they have their own names:
+
+- $b_0$ — the intercept (also called the bias term)
+- $b_1$ — the slope coefficient
+
+So, when we build a linear regression model, we make the following assumption:
+
+**Assumption 1**. The relationship between the features (independent variables) and the response (dependent variable) is linear [[Kim, Hae-Young. Statistical notes for clinical researchers: simple linear regression 1 – basic concepts, 2018. [https://www.rde.ac/upload/pdf/rde-43-e21.pdf](https://www.rde.ac/upload/pdf/rde-43-e21.pdf)]]{.literature-reference}
+
+An example of a linear model with the intercept and slope coefficients already fitted (we will discuss why they are called that a bit later) is shown in @fig-fourth.
+
+![A linear regression model and its predictions ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/4_plot_linear_regression.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/4_plot_linear_regression_eng.png){#fig-fourth loading="lazy"}
+
+For the dataset shown in @fig-first, estimating the apartment price in dollars means multiplying the number of rooms by 10 000.
+
+Important note: we are focusing on an approximation - so the model line does not have to pass through every data point, because real-world data almost never falls exactly on a single straight line. There is always some noise, and some factors the model does not see. It’s enough for the model line to stay as close to the observed data as possible. If you do not remember well the difference between approximation, interpolation and extrapolation, please check the image below.
+
 ::: {.callout-note collapse="true"}
-### Side branch 1. Interpolation, extrapolation, and approximation
+### Side branch 1. Difference between approximation, interpolation and extrapolation
 
 The difference between the terms interpolation, extrapolation, and approximation, illustrated below.
 
-![Extra Figure 1. The difference between the terms interpolation, extrapolation, and approximation (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/extra_1_interpolation_eng.png){#fig-extra-1}
+![Extra Figure 1. The difference between the terms interpolation, extrapolation, and approximation (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/extra_1_interpolation_eng.png){#extra-1 loading="lazy"}
 :::
 
----
+## How to build a simple model
+
+We need to choose the coefficients $b_0$ and $b_1$ so that the straight line fits the empirical observations (the real data) as closely as possible:
+
+$$
+y = b_0 + b_1 x
+$$
+
+where:
+
+- $x$ — number of rooms,
+- $y$ — apartment price, $.
+
+### Why this equation, and why two coefficients
+
+Despite its apparent simplicity, the linear regression equation can represent many different linear relationships, as shown in @fig-fifth. For each dataset, a different line will be optimal.
+
+![Examples of equations with different optimal coefficient values ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/5_and_7_plot_data_is_different.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/5_data_is_different_clean_eng.png){#fig-fifth loading="lazy"}
+
+### Analytical solution
+
+To find the optimal coefficient values, we will use an analytical solution: plug the empirical data from the previous section into a well-known formula derived long ago (by Carl Gauss and Adrien-Marie Legendre). The analytical solution can be written as four simple steps (@fig-sixth) [Hastie, T., et al. Linear Methods for Regression (Chapter 3 in The Elements of Statistical Learning: Data Mining, Inference, and Prediction). 2009. https://hastie.su.domains/ElemStatLearn].
+
+![Analytical solution for simple linear regression. Step 2 shows a Python-like pseudocode for computing the slope coefficient ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/6_analytical_solution.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/6_linear_regression_analytical_solution_eng.png){#fig-sixth loading="lazy"}
+

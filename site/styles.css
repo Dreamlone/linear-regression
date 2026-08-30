@@ -44,6 +44,10 @@
   color: inherit;
   background: #e9ecef;
 }
+.literature-reference,
+.literature-reference a {
+  color: #6c757d;
+}
 figcaption {
   text-align: center;
 }
