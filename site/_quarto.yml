@@ -10,22 +10,19 @@ website:
   page-navigation: true
   navbar:
     left:
-      - href: index.qmd
-        text: Home
-      - href: en/index.qmd
-        text: Eng
-      - href: ru/index.qmd
-        text: Rus
-    right:
-      - text: Interactive
-        href: interactive/
-      - icon: github
-        href: https://github.com/Dreamlone/linear-regression
-        text: GitHub
       - text: "TDS (original)"
         href: https://towardsdatascience.com/a-visual-explanation-of-the-linear-regression/
       - text: "Habr (оригинал)"
         href: https://habr.com/ru/articles/1013998/
+    right:
+      - href: index.qmd
+        text: home
+      - href: en/index.qmd
+        text: eng
+      - href: ru/index.qmd
+        text: rus
+      - text: interactive (eng)
+        href: interactive/
   page-footer:
     left: "© Mikhail Sarafanov"
     right:
