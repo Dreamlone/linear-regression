@@ -66,3 +66,12 @@
 figcaption {
   text-align: center;
 }
+table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+a {
+  overflow-wrap: anywhere;
+}
