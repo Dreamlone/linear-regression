@@ -455,7 +455,7 @@ The third group, shown in blue, includes error metrics measured in percentages. 
 
 ![Animation 3. How to compute mean absolute percentage error (MAPE) and symmetric mean absolute percentage error (SMAPE). Notation: X are the predicted values, Y are the observed values ([link to the code for generating the animation](https://github.com/Dreamlone/linear-regression/blob/main/examples/animation_3_how_to_calculate_mape_smape.py) - animation by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/animation_3_how_to_calculate_mape_smape_eng.gif){#animation-3 loading="lazy"}
 
-![Figure 17. How MAPE and SMAPE behave on two datasets where the target values are close to zero. The figure shows how the metrics change after adding 10 units to both the observed and predicted values in the second dataset (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/17_mape_vs_smape_eng.png){#fig-17 loading="lazy"}
+![How MAPE and SMAPE behave on two datasets where the target values are close to zero. The figure shows how the metrics change after adding 10 units to both the observed and predicted values in the second dataset (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/17_mape_vs_smape_eng.png){#fig-17 loading="lazy"}
 
 @fig-17 shows that the difference measured in the original units, the absolute deviation between observed and predicted values, stays the same in both cases: it is 0 for the first pair, 8 for the second, and 47 for the third. For percentage-based metrics, the errors shrink for an obvious reason: the observed values become larger.
 
@@ -503,7 +503,7 @@ That is why we now turn to statistics and formal hypothesis testing. A statistic
 
 If you have never come across statistical tests before, it makes sense to start with a simplified definition. A statistical test is a way to check whether what we observe is just random variation or a real pattern. You can think of it as a black box that takes in data and, using a set of formulas, produces an answer: a few intermediate values, such as a test statistic and a p-value, and a final verdict (@fig-18) [[Sureiman, Onchiri, et al. F-test of overall significance in regression analysis simplified. 2020. [https://www.tandfonline.com/doi/full/10.1080/00031305.2016.1154108](https://www.tandfonline.com/doi/full/10.1080/00031305.2016.1154108)]]{.literature-reference}.
 
-![Figure 18. Statistical hypothesis test. The figure shows an example of calculating the F test for overall model significance. The input data are highlighted in orange, and the values produced by the test calculations are highlighted in yellow ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/18_statistical_testing.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/18_statistical_testing_eng.png){#fig-18 loading="lazy"}
+![Statistical hypothesis test. The figure shows an example of calculating the F test for overall model significance. The input data are highlighted in orange, and the values produced by the test calculations are highlighted in yellow ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/18_statistical_testing.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/18_statistical_testing_eng.png){#fig-18 loading="lazy"}
 
 As @fig-18 shows, before running a test, we need to choose a threshold value. Yes, this is the right moment to come back to that caveat: here too, we have to deal with a threshold. But in this case it is much easier, because there are widely accepted standard values to choose from. This threshold is called the significance level. A value of 0.05 means that we accept a 5% chance of incorrectly rejecting the null hypothesis. In this case, the null hypothesis could be something like: the model is no better than a naive prediction based on the mean. We can vary this threshold. For example, some scientific fields use 0.01 or even 0.001, which is more strict, while others use 0.10, which is less strict.
 
@@ -519,7 +519,7 @@ The alternative hypothesis (H₁) is then: at least one coefficient is not equal
 
 Now let us run the tests on our three datasets, A, B, and C (@fig-19).
 
-![Figure 19. F test for overall model significance. The figure shows the test results obtained with the Python package statsmodels at a significance level of 0.05. Here, x is the model feature - the number of rooms ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/19_testing_for_all_datasets.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/19_tests_for_datasets_eng.png){#fig-19 loading="lazy"}
+![F test for overall model significance. The figure shows the test results obtained with the Python package statsmodels at a significance level of 0.05. Here, x is the model feature - the number of rooms ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/19_testing_for_all_datasets.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/19_tests_for_datasets_eng.png){#fig-19 loading="lazy"}
 
 As we can see from @fig-19, in all three cases the p-value is below 0.05, which is our chosen significance level. We use 0.05 because it is the standard default threshold, and in the case of apartment price prediction, choosing the wrong hypothesis is not as critical as it would be, for example, in a medical setting. So there is no strong reason to make the threshold more strict here. p-value is below 0.05 means we reject the null hypothesis, H₀, for models A, B, and C. After this check, we can say that all three models are statistically significant overall: at least one feature contributes to explaining variation in the target.
 
@@ -572,7 +572,7 @@ Later in the article, we will use different metrics throughout the visualization
 
 An interesting combination of visual assessment and formal metrics is the prediction interval. A prediction interval is a range of values within which a new observation is expected to fall with a given probability. It helps show the uncertainty of the prediction by combining statistical measures with the clarity of a visual representation (@fig-20).
 
-![Figure 20. Point estimate and prediction interval (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/20_prediction_interval_eng.png){#fig-20 loading="lazy"}
+![Point estimate and prediction interval (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/20_prediction_interval_eng.png){#fig-20 loading="lazy"}
 
 The main question here is how to choose these threshold values, $\Delta$. The most natural approach, and the one that is actually used in practice, is to extract information about uncertainty from the cases where the model already made errors during training, namely from the residuals. But to turn a raw set of differences into actual threshold values, we need to go one level deeper and look at linear regression as a probabilistic model.
 
@@ -580,7 +580,7 @@ Recall how point prediction works. We plug the feature values into the model, in
 
 When we set up a linear regression model, we assume that small errors are more likely than large ones, and that errors in either direction are equally likely. These two assumptions lead to the probabilistic view of linear regression, where the model coefficients and the error distribution are treated as two parts of the same whole (@fig-21) [[Fisher, R. A. On the Mathematical Foundations of Theoretical Statistics. 1922. [https://doi.org/10.1098/rsta.1922.0009](https://doi.org/10.1098/rsta.1922.0009)]]{.literature-reference}.
 
-![Figure 21. Maximum likelihood as a way to estimate the coefficients of a linear regression model, illustrated with a simplified model that includes only the intercept ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/21_likelihood.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/21_likelihood_eng.png){#fig-21 loading="lazy"}
+![Maximum likelihood as a way to estimate the coefficients of a linear regression model, illustrated with a simplified model that includes only the intercept ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/21_likelihood.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/21_likelihood_eng.png){#fig-21 loading="lazy"}
 
 As @fig-21 shows, the variability of the model errors can be estimated by calculating the standard deviation of the errors, denoted by $\sigma$. We could also talk about the error variance here, since it is another suitable measure of variability. The standard deviation $\sigma$ is simply the square root of the variance. The larger the standard deviation, the greater the uncertainty of the prediction (see Section 2 in @fig-21).
 
@@ -604,7 +604,7 @@ As a simple example, we will generate a dataset of 30 observations with a "perfe
 
 And consider separately what the prediction interval looks like for datasets A, B, and C (@fig-22).
 
-![Figure 22. Prediction intervals at different confidence levels for models fitted to datasets A, B, and C ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/22_prediction_interval_datasets.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/22_prediction_intervals_datasets_eng.png){#fig-22 loading="lazy"}
+![Prediction intervals at different confidence levels for models fitted to datasets A, B, and C ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/22_prediction_interval_datasets.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/22_prediction_intervals_datasets_eng.png){#fig-22 loading="lazy"}
 
 @fig-22 clearly shows that even though models A and B have the same coefficients, their prediction intervals differ in width, with the interval for dataset B being much wider. In absolute terms, the widest prediction interval, as expected, is produced by the model fitted to dataset C.
 
@@ -614,11 +614,11 @@ All of the quality assessments discussed so far focused on how the model behaves
 
 That is why, in machine learning, it is common best practice to split the original dataset into parts. The model is fitted on one part, the training set, and its ability to generalize is evaluated on the other part, the test sample (@fig-23).
 
-![Figure 23. Splitting a dataset into training and test sets. In many cases, the split should be done at random rather than, for example, by taking the first 70% of the dataset for training and the remaining 30% for testing, because the data may be ordered in the raw dataset (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/23_train_test_split_eng.png){#fig-23 loading="lazy"}
+![Splitting a dataset into training and test sets. In many cases, the split should be done at random rather than, for example, by taking the first 70% of the dataset for training and the remaining 30% for testing, because the data may be ordered in the raw dataset (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/23_train_test_split_eng.png){#fig-23 loading="lazy"}
 
 If we combine these model diagnostic methods into one large visualization, this is what we get:
 
-![Figure 24. Model evaluation on the training and test sets, with residual plots and metrics (warning: this figure is information-dense, so it is best read gradually). The prediction intervals are shown at the 95% confidence level and were computed from the training set ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/24_train_test_metrics.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/24_datasets_metric_on_train_test_eng.png){#fig-24 loading="lazy"}
+![Model evaluation on the training and test sets, with residual plots and metrics (warning: this figure is information-dense, so it is best read gradually). The prediction intervals are shown at the 95% confidence level and were computed from the training set ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/24_train_test_metrics.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/24_datasets_metric_on_train_test_eng.png){#fig-24 loading="lazy"}
 
 @fig-24 shows that the metric values are worse on the test data, which is exactly what we would expect, since the model coefficients were optimized on the training set. A few more observations stand out:
 
@@ -640,13 +640,13 @@ To make the rest of the discussion easier to follow, let us introduce one import
 
 From this point of view, A, B, and C are not really separate datasets, even though we can imagine them as data collected in three different cities, A, B, and C. Instead, they are parts of a larger population, D. Let us assume that we can combine these samples and work with them as a single whole (@fig-25).
 
-![Figure 25. **Combining datasets A, B, and C into one larger dataset D**. Let us assume this is all the data we have ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/25_common_data.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/25_common_data_eng.png){#fig-25 loading="lazy"}
+![**Combining datasets A, B, and C into one larger dataset D**. Let us assume this is all the data we have ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/25_common_data.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/25_common_data_eng.png){#fig-25 loading="lazy"}
 
 It is important to keep in mind that everything we do, splitting the data into training and test sets, preprocessing the data, calculating metrics, running statistical tests, and everything else, serves one goal: to make sure the final model describes the full population well. The goal of statistics, and this is true for supervised machine learning as well, is to **draw conclusions about the whole population using only a sample**.
 
 In other words, if we somehow built a model that predicted the prices of these 45 apartments perfectly, we would have a tool that always gives the correct answer, because in this hypothetical world there are no other data on which the model could fail. Again, everything here depends on that "if." Now let me return us to reality and try to describe all the data with a single linear regression model (@fig-26).
 
-![Figure 26. A model fitted to all available data, the "**reference model**." The metric values shown in the figure will be treated as a reference point that we will aim for later in the article ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/26_common_data_model.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/26_common_data_model_eng.png){#fig-26 loading="lazy"}
+![A model fitted to all available data, the "**reference model**." The metric values shown in the figure will be treated as a reference point that we will aim for later in the article ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/26_common_data_model.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/26_common_data_model_eng.png){#fig-26 loading="lazy"}
 
 In the real world, collecting data on every apartment is physically impossible, because it would take too much time, money, and effort, so we always work with only a subset. The same applies here: we collected samples and tried to estimate the relationship between the variables in a way that would bring us as close as possible to the relationship in population, entire dataset D.
 
@@ -672,7 +672,7 @@ Keep in mind that the values from the full population are not directly available
 
 Increasing the sample size is a good idea if only because mathematical statistics tends to work better with larger numbers. As a result, the metrics become more stable, and the statistical tests become more reliable as well (@fig-27).
 
-![Figure 27. Results of the sample size experiment: as the number of observations in the sample increases, the training and test metrics get closer to the values the model shows on the full population. Model quality improves as well ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/27_and_extra_10_train_test_all_boxplot.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/27_train_test_all_stripplot_eng.png){#fig-27 loading="lazy"}
+![Results of the sample size experiment: as the number of observations in the sample increases, the training and test metrics get closer to the values the model shows on the full population. Model quality improves as well ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/27_and_extra_10_train_test_all_boxplot.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/27_train_test_all_stripplot_eng.png){#fig-27 loading="lazy"}
 
 ::: {.callout-note collapse="true"}
 ### If boxplots are more familiar to you, take a look at the boxplot version of @fig-27 below.
@@ -693,11 +693,11 @@ Since this section is about pruning the sample, I will leave out the train-test 
 
 We tried to collect more data for model fitting. But now imagine that we were unlucky: even with a sample of 20 observations, we still failed to obtain a model that looks close to the reference one (@fig-28).
 
-![Figure 28. An "unlucky" sample extraction from the population. The reference model is shown as a black line ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/28_29_not_very_good_split.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/28_not_good_sample_eng.png){#fig-28 loading="lazy"}
+![An "unlucky" sample extraction from the population. The reference model is shown as a black line ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/28_29_not_very_good_split.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/28_not_good_sample_eng.png){#fig-28 loading="lazy"}
 
 Besides a sample that does not reflect the underlying relationship well, other factors can make the task even harder. Such distortions are quite common in real data for many reasons: measurement inaccuracies, technical errors during data storage or transfer, and simple human mistakes. In our case, imagine that some of the real estate agents we asked for data made mistakes when entering information manually from paper records: they typed 3 instead of 4, or added or removed zeros (@fig-29).
 
-![Figure 29. Some samples contain corrupted data ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/28_29_not_very_good_split.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/29_not_good_sample_distorted_eng.png){#fig-29 loading="lazy"}
+![Some samples contain corrupted data ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/28_29_not_very_good_split.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/29_not_good_sample_distorted_eng.png){#fig-29 loading="lazy"}
 
 If we fit a model to this raw data, the result will be far from the reference model, and once again we will be unhappy with the modeling quality.
 
@@ -710,7 +710,7 @@ This time, we will try to solve the problem by removing a few observations that 
 
 Parametric methods rely on an assumption about the shape of the data distribution, most often a normal one. Nonparametric methods do not require such assumptions and work more flexibly, mainly using the ordering of values or quantiles. As a result, parametric methods can be more effective when their assumptions are correct, while nonparametric methods are usually more robust when the distribution is unknown.
 
-![Figure 30. Outlier filtering as a way to detect unusual observations. Here we look at how one-dimensional filtering methods work, using only the target values, on synthetic data ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/30_filtering.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/30_explain_filtering_eng.png){#fig-30 loading="lazy"}
+![Outlier filtering as a way to detect unusual observations. Here we look at how one-dimensional filtering methods work, using only the target values, on synthetic data ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/30_filtering.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/30_explain_filtering_eng.png){#fig-30 loading="lazy"}
 
 In one-dimensional methods (@fig-30), the features are not used. Only one variable is considered, namely the target y. That is why, among other things, these methods clearly do not take the trend in the data into account. Another limitation is that they require a threshold to be chosen, whether it is 1.5 in the interquartile range rule, 3 in the three-sigma rule, or a cutoff value for the Z-score.
 
@@ -720,7 +720,7 @@ One more interesting detail is that the three-sigma rule is really a special cas
 
 If we apply all of the filtering methods described above to our data, we obtain the following fitted models (@fig-31).
 
-![Figure 31. Models fitted to data filtered with one-dimensional methods ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/31_filtering_datasets.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/31_filtering_and_model_eng.png){#fig-31 loading="lazy"}
+![Models fitted to data filtered with one-dimensional methods ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/31_filtering_datasets.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/31_filtering_and_model_eng.png){#fig-31 loading="lazy"}
 
 Looking at @fig-31, we can see that the worst model in terms of RMSE on the population is the one fitted on the data with outliers still included. The best RMSE is achieved by the model fitted on the data filtered using the Z-score method with a threshold of 1.5.
 
@@ -735,11 +735,11 @@ I suggest moving on to methods that use information from multiple variables. I w
 - **Cook's Distance** [[Cook, R. Dennis. Detection of Influential Observation in Linear Regression. 1977. [https://experts.umn.edu/en/publications/detection-of-influential-observation-in-linear-regression-2](https://experts.umn.edu/en/publications/detection-of-influential-observation-in-linear-regression-2)]]{.literature-reference}
 - **Random sample consensus (RANSAC)** [[Fischler, Martin A., et al. Random Sample Consensus: A Paradigm for Model Fitting with Applications to Image Analysis and Automated Cartography. 1981. [https://www.cs.ait.ac.th/~mdailey/cvreadings/Fischler-RANSAC.pdf](https://www.cs.ait.ac.th/~mdailey/cvreadings/Fischler-RANSAC.pdf)]]{.literature-reference}
 
-![Figure 32. Outlier filtering as a way to detect unusual observations. Here we look at how multivariate filtering methods work ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/32_advanced_filtering.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/32_explain_advanced_filtering_eng.png){#fig-32 loading="lazy"}
+![Outlier filtering as a way to detect unusual observations. Here we look at how multivariate filtering methods work ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/32_advanced_filtering.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/32_explain_advanced_filtering_eng.png){#fig-32 loading="lazy"}
 
 Each method shown in @fig-32 deserves a separate discussion, since they are already much more advanced than the one-dimensional approaches. Here, however, I will limit myself to the visualizations and avoid going too deep into the details. We will treat these methods from a practical point of view and look at how their use affects the coefficients and metrics of a linear regression model (@fig-33).
 
-![Figure 33. Models fitted to data filtered with multivariate methods ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/33_advanced_filtering_datasets.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/33_explain_advanced_filtering_data_eng.png){#fig-33 loading="lazy"}
+![Models fitted to data filtered with multivariate methods ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/33_advanced_filtering_datasets.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/33_explain_advanced_filtering_data_eng.png){#fig-33 loading="lazy"}
 
 The methods shown in the visualizations above are not limited to linear regression. This kind of filtering can also be useful for other regression algorithms, and not only regression ones. That said, the most interesting methods to study separately are the ones that are specific to linear regression itself: leverage, Cook's distance, and Random Sample Consensus (RANSAC).
 
@@ -764,7 +764,7 @@ If you are looking for a more automated way to filter out values, that exists to
 
 The results of applying the RANSAC algorithm and the Cook's distance method are shown in @fig-34.
 
-![Figure 34. Linear regression models fitted to data filtered using the RANSAC and Cook's distance outlier detection methods. The RMSE of the reference model on the population is 3873 ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/34_ransac_cook_models.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/34_ransac_cook_models_eng.png){#fig-34 loading="lazy"}
+![Linear regression models fitted to data filtered using the RANSAC and Cook's distance outlier detection methods. The RMSE of the reference model on the population is 3873 ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/34_ransac_cook_models.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/34_ransac_cook_models_eng.png){#fig-34 loading="lazy"}
 
 Based on the results shown in @fig-34, the most promising model in this comparison is the one fitted with RANSAC.
 
@@ -776,17 +776,17 @@ For clarity, in the next part of the article we will continue working with the o
 
 As an alternative, and also as a complement to the first two approaches (of model quality improvement), we can introduce new features to the model.
 
-![Figure 35. Multiple linear regression (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/35_multi_eng.png){#fig-35 loading="lazy"}
+![Multiple linear regression (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/35_multi_eng.png){#fig-35 loading="lazy"}
 
 #### Feature engineering. Generating new features
 
 A good place to start transforming the feature space is with one of the simplest approaches to implement: generating new features from the ones we already have. This makes it possible to avoid changes to the data collection pipelines, which in turn makes the solution faster and often cheaper to implement (in contrast to collecting new features from scratch). One of the most common transformations is the polynomial one, where features are multiplied by each other and raised to a power. Since our current dataset has only one feature, this will look as follows (@fig-36).
 
-![Figure 36. Polynomial feature transformation of degree 2 (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/36_poly_features_eng.png){#fig-36 loading="lazy"}
+![Polynomial feature transformation of degree 2 (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/36_poly_features_eng.png){#fig-36 loading="lazy"}
 
 Note that the resulting equation is now a **polynomial regression model**, which makes it possible to capture nonlinear relationships in the data. The higher the polynomial degree, the more degrees of freedom the model has (@fig-37).
 
-![Figure 37. Examples of polynomials fitted to the sample. At this point nonlinear relationships become possible to model ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/37_poly_features_models.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/37_poly_features_eng.png){#fig-37 loading="lazy"}
+![Examples of polynomials fitted to the sample. At this point nonlinear relationships become possible to model ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/37_poly_features_models.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/37_poly_features_eng.png){#fig-37 loading="lazy"}
 
 There are many different transformations that can be applied to the original data. However, once we use them, the relationship we fit is no longer a straight line, which is already visible in the shape of the fitted curves in @fig-37. For that reason, I will not go into them in detail in this article. If this sparked your curiosity, you can read more about other feature transformations that can be applied to the original data. A good reference here is [Trevor Hastie, Robert Tibshirani, Jerome Friedman - The Elements of Statistical Learning](https://hastie.su.domains/ElemStatLearn/):
 
@@ -820,17 +820,17 @@ Suppose we have a chance to collect several additional candidate features. In th
 
 The updated dataset would then look as follows:
 
-![Figure 38. Dataset D with new features: apartment area, distance to the nearest metro station, city, and whether the apartment has air conditioning (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/38_ext_dataset_eng.png){#fig-38 loading="lazy"}
+![Dataset D with new features: apartment area, distance to the nearest metro station, city, and whether the apartment has air conditioning (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/38_ext_dataset_eng.png){#fig-38 loading="lazy"}
 
 #### A note on visualization
 
 Looking back at [Figure 1](#fig-1), and at most of the figures earlier in the article, it is easy to see that a two-dimensional plot is no longer enough to capture all the features. So it is time to switch to new visualizations and look at the data from a different angle (@fig-39 and @animation-9).
 
-![Figure 39. Visualizing the relationships between several features and the target. The rows and columns correspond to features. Along the main diagonal, where each feature intersects with itself, the figure shows two-dimensional plots with the feature on the x-axis and the target on the y-axis. The upper triangle, above the main diagonal, contains 3D plots with two features on the x- and y-axes and the target on the z-axis. The lower triangle shows the same three-dimensional relationships in a different form, as contour maps where the axes correspond to features ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/39_exploring_extended_data.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/39_eda_extended_dataset_eng.png){#fig-39 loading="lazy"}
+![Visualizing the relationships between several features and the target. The rows and columns correspond to features. Along the main diagonal, where each feature intersects with itself, the figure shows two-dimensional plots with the feature on the x-axis and the target on the y-axis. The upper triangle, above the main diagonal, contains 3D plots with two features on the x- and y-axes and the target on the z-axis. The lower triangle shows the same three-dimensional relationships in a different form, as contour maps where the axes correspond to features ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/39_exploring_extended_data.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/39_eda_extended_dataset_eng.png){#fig-39 loading="lazy"}
 
 It is best to review the figure in detail (@fig-40).
 
-![Figure 40. Previous visualization (see @fig-39) of multidimensional data with annotations (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/40_eda_extended_dataset_labeled_eng.png){#fig-40 loading="lazy"}
+![Previous visualization (see @fig-39) of multidimensional data with annotations (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/40_eda_extended_dataset_labeled_eng.png){#fig-40 loading="lazy"}
 
 ![Animation 9. Three-dimensional scatter plots for two feature pairs: number of rooms & distance to the nearest metro station, and apartment area & air conditioning ([link to the code for generating the animation](https://github.com/Dreamlone/linear-regression/blob/main/examples/animation_9_exploring_extended_data_3d.py) - animation by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/animation_9_3d_rotation_eng.gif){#animation-9 loading="lazy"}
 
@@ -853,7 +853,7 @@ The reason for the price drop becomes much clearer here: even though the apartme
 
 As the number of features grows, it becomes harder to build pairwise visualizations like the ones shown in @fig-39 and @fig-40. If your dataset contains many numerical features, a common choice is to use correlation matrices (@fig-41). I am sure you will come across them often if you continue exploring data science / data analysis domain.
 
-![Figure 41. A matrix of numerical features with the corresponding correlation coefficients ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/41_corr_matrix.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/41_corr_matrix_eng.png){#fig-41 loading="lazy"}
+![A matrix of numerical features with the corresponding correlation coefficients ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/41_corr_matrix.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/41_corr_matrix_eng.png){#fig-41 loading="lazy"}
 
 The same principle applies here as it did when evaluating model quality: it is cognitively easier for an engineer to interpret numbers, one for each pair, than to inspect a large set of subplots. @fig-41 shows that price is positively correlated with the features number of rooms and area, and negatively correlated with distance to the metro. This makes sense: in general, the closer an apartment is to the metro or the larger it is, the more expensive it tends to be.
 
@@ -870,25 +870,25 @@ Starting with the simpler feature, air conditioning, since it takes only two val
 - yes - 1
 - no - 0
 
-![Figure 42. Preprocessing binary features and the resulting linear model ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/42_43_44_binary_feature.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/42_binary_features_eng.png){#fig-42 loading="lazy"}
+![Preprocessing binary features and the resulting linear model ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/42_43_44_binary_feature.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/42_binary_features_eng.png){#fig-42 loading="lazy"}
 
 Notice that @fig-42 does not show two separate models, each fitted to its own subset, but a **single model**. Here, the slope coefficient $b_1$ stays fixed, while the vertical shift of the fitted line differs depending on whether the binary feature is 0 or 1. This happens because when the feature is equal to 0, the corresponding term in the model becomes zero. This works well when the relationship between the features and the target is linear and follows the same direction for all observations. But a binary feature will not help much when the relationship is more complex and changes direction across the data (@fig-43).
 
-![Figure 43. Differences in the relationships between the features and the target across subsets lead to a single model with a binary feature cannot adequately model either part of the dataset (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/43_binary_features_one_model_eng.png){#fig-43 loading="lazy"}
+![Differences in the relationships between the features and the target across subsets lead to a single model with a binary feature cannot adequately model either part of the dataset (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/43_binary_features_one_model_eng.png){#fig-43 loading="lazy"}
 
 As @fig-43 shows, in the worst case a model with a binary feature collapses to the same behavior as a model with just one numerical feature. To address this "problem," we can borrow an idea from the previous section (feature generation) and generate a new interaction feature, or we can fit two separate models for different parts of the dataset (@fig-44).
 
-![Figure 44. Ways to improve a model with a binary feature: fitting separate models and generating an interaction feature from the binary one for more accurate modeling (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/44_binary_with_interaction_term_eng.png){#fig-44 loading="lazy"}
+![Ways to improve a model with a binary feature: fitting separate models and generating an interaction feature from the binary one for more accurate modeling (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/44_binary_with_interaction_term_eng.png){#fig-44 loading="lazy"}
 
 Now that we have dealt with the binary feature, it makes sense to move on to the more complex case where a column contains more than two unique values. There are many ways to encode categorical values, and some of them are shown in @fig-45. I will not go through all of them here, though, because in my own experience one-hot encoding has been enough for practical applications. Just keep in mind that there are different encoding methods.
 
-![Figure 45. Methods for encoding categorical variables ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/45_categorical_features_encoding_example.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/45_categorical_encoding_eng.png){#fig-45 loading="lazy"}
+![Methods for encoding categorical variables ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/45_categorical_features_encoding_example.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/45_categorical_encoding_eng.png){#fig-45 loading="lazy"}
 
 #### Estimating feature importance
 
 Now that we know how to make the model more complex by adding new features, it makes sense to talk about how to combine the independent variables more thoughtfully. Of course, when the feature space grows, whether through feature generation or through collecting new data, practical limits quickly appear, such as "common sense" and model "training time". But we can also rely on more effective heuristics to decide which features are actually worth keeping in the model. Starting with the simplest one and take a closer look at the coefficients of a multiple linear regression model (@fig-46).
 
-![Figure 46. Coefficient size as an indicator of feature importance ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/46_feature_importance.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/46_feature_importance_eng.png){#fig-46 loading="lazy"}
+![Coefficient size as an indicator of feature importance ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/46_feature_importance.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/46_feature_importance_eng.png){#fig-46 loading="lazy"}
 
 As @fig-46 shows, a small problem appears here: differences in feature scale affect the estimated coefficients. Differences in scale also lead to other unpleasant effects, which become especially noticeable when numerical methods are used to find the optimal coefficients. That is why it is standard practice to bring features to a common scale through normalization.
 
@@ -896,13 +896,13 @@ As @fig-46 shows, a small problem appears here: differences in feature scale aff
 
 Normalization is a data transformation that brings the values in the arrays to the same range (@fig-47).
 
-![Figure 47. Demonstration of the results of applying data normalization methods to two features: number of rooms and distance to the metro ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/47_example_normalization.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/47_normalization_eng.png){#fig-47 loading="lazy"}
+![Demonstration of the results of applying data normalization methods to two features: number of rooms and distance to the metro ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/47_example_normalization.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/47_normalization_eng.png){#fig-47 loading="lazy"}
 
 Once the features are brought to the same scale, the size of the coefficients in a linear regression model becomes a convenient indicator of how strongly the model relies on each variable when making predictions.
 
 The exact formulas used for normalization and standardization are shown in @fig-48.
 
-![Figure 48. Scaling methods. Extreme cases with outliers are shown here. In practice, if the training set is representative, such outliers should be much less common ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/48_normalization_and_scaling_calulations.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/48_normalization_eng.png){#fig-48 loading="lazy"}
+![Scaling methods. Extreme cases with outliers are shown here. In practice, if the training set is representative, such outliers should be much less common ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/48_normalization_and_scaling_calulations.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/48_normalization_eng.png){#fig-48 loading="lazy"}
 
 From this point on, we will assume that all numerical features have been standardized. For the sake of clearer visualizations, we will apply the same transformation to the target as well, even though that is not compulsory. When needed, we can always convert the target back to its original scale.
 
@@ -936,21 +936,21 @@ A quick disclaimer: this section **will be very colorful**, and that is intentio
 
 Earlier, when we introduced the analytical solution, we wrote the calculations in scalar form. But it is much more efficient to switch to vector notation. To make that step easier, we will visualize the original data not in feature space, but in observation space (@fig-49).
 
-![Figure 49. A toy dataset and its representation in observation space (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/49_vectors_eng.png){#fig-49 loading="lazy"}
+![A toy dataset and its representation in observation space (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/49_vectors_eng.png){#fig-49 loading="lazy"}
 
 Even though this way of looking at the data may seem counterintuitive at first, there is no magic behind it. The data are exactly the same, only the form has changed. Moving on, in school, at least in my case, vectors were introduced as directed line segments. These "directed line segments" can be multiplied by a number and added together. In vector space, the goal of linear regression is to find a transformation of the vector $x$ such that the resulting prediction vector, usually written as $\hat{y}$, is as close as possible to the target vector $y$. To see how this works, we can start by trying the simplest transformations, beginning with multiplication by a number (@fig-50).
 
-![Figure 50. Building the simplest linear regression model: slope ($b_1$) only, scaling the vector x by different numbers (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/50_vectors_multiplication_eng.png){#fig-50 loading="lazy"}
+![Building the simplest linear regression model: slope ($b_1$) only, scaling the vector x by different numbers (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/50_vectors_multiplication_eng.png){#fig-50 loading="lazy"}
 
 Starting from the top-left corner of @fig-50, the model does not transform the feature vector $x$ at all, because the coefficient $b_1$ is equal to 1. As a result, the predicted values are exactly the same as the feature values, and the vector $x$ fully corresponds to the forecast vector
 
 If the coefficient $b_1$ is greater than 1, multiplying the vector $x$ by this coefficient increases the length of the prediction vector proportionally. The feature vector can also be compressed, when $b_1$ is between 0 and 1, or flipped in the opposite direction, when $b_1$ is less than 0.
 
-![Figure 51. What to do when multiplying by $b_1$ is not enough (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/51_vectors_two_vectors_eng.png){#fig-51 loading="lazy"}
+![What to do when multiplying by $b_1$ is not enough (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/51_vectors_two_vectors_eng.png){#fig-51 loading="lazy"}
 
 @fig-50 gives a clear visual explanation of what it means to multiply a vector by a scalar. But in @fig-51, two more vector operations appear. It makes sense to briefly review them separately before moving on (@fig-52).
 
-![Figure 52. A small but important reminder: translation and vector addition (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/52_vectors_reminder_eng.png){#fig-52 loading="lazy"}
+![A small but important reminder: translation and vector addition (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/52_vectors_reminder_eng.png){#fig-52 loading="lazy"}
 
 After this brief reminder, we can continue. As @fig-51 shows, for two observations we were able to express the target vector as a combination of feature vectors and coefficients. But now it is time to make the task more difficult (@animation-14).
 
@@ -964,17 +964,17 @@ The area of the graph that contains all possible solutions can be outlined, whic
 
 In the visualization above, we built this subspace by combining the vectors $v$ and $x$ with different coefficients. The same expression can also be written in a more compact form, using matrix multiplication. To do this, we introduce one more vector, this time built from the coefficients $b_0$ and $b_1$. We will denote it by $\vec{b}$. A vector can be transformed by multiplying it by a matrix, which can rotate it, stretch or compress it, and also map it into another subspace. If we take the matrix $X$ built from the column vectors $v$ and $x$, and multiply it by the vector $\vec{b}$ made up of the coefficient values, we obtain a mapping of $y$ into the subspace $\text{Col}(X)$ (@fig-53).
 
-![Figure 53. Transforming the target vector $y$ into the prediction vector $\hat{y}$ (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/53_surface_and_matrix_eng.png){#fig-53 loading="lazy"}
+![Transforming the target vector $y$ into the prediction vector $\hat{y}$ (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/53_surface_and_matrix_eng.png){#fig-53 loading="lazy"}
 
 Note that, in line with our assumptions, the target vector does not lie in the prediction subspace. While a straight line can always be drawn exactly through two points, with three or more points the chance increases that no perfect model with zero error exists. That is why the target vector does not lie on the hyperplane even for the optimal model (see the black vector for model C in @fig-54).
 
-![Figure 54. Visualization of two poor models, A and B, and one optimal model, C ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/54_surface.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/54_surface_eng.png){#fig-54 loading="lazy"}
+![Visualization of two poor models, A and B, and one optimal model, C ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/54_surface.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/54_surface_eng.png){#fig-54 loading="lazy"}
 
 A closer look at the figure reveals an important difference between the prediction vectors of models A, B, and C: the vector for model C looks like the shadow of the target vector on the plane. This means that solving a linear regression problem can be interpreted as **projecting** the vector $y$ onto the subspace $\text{Col}(X)$. The best prediction among all possible ones is the vector that ends at the point on the plane closest to the target. From basic geometry, the closest point on a plane is the point where a perpendicular from the target meets the plane. This perpendicular segment is also a vector, called the residual vector $e$, because it is obtained by subtracting the predictions from the target (recall the residual formula from the chapter on visual model evaluation).
 
 So, we know the target vector $y$ and the feature vector $x$. Our goal is to find a coefficient vector $\vec{b}$ such that the resulting prediction vector $\hat{y}$ is as close as possible to $y$. We do not know the residual vector $e$, but we do know that it is orthogonal to the space $\text{Col}(X)$. This, in turn, means that $e$ is orthogonal to every direction in the plane, and therefore, in particular, perpendicular to every column of $X$, that is, to the vectors $v$ and $x$.
 
-![Figure 55. Using the orthogonality property to derive the formula. To find the coefficient vector, we need to transpose, multiply, and invert the feature matrix. The Ordinary Least Squares (OLS) method (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/55_resolution_eng.png){#fig-55 loading="lazy"}
+![Using the orthogonality property to derive the formula. To find the coefficient vector, we need to transpose, multiply, and invert the feature matrix. The Ordinary Least Squares (OLS) method (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/55_resolution_eng.png){#fig-55 loading="lazy"}
 
 The analytical method we have just gone through is called the least squares method, or Ordinary Least Squares (OLS). It has this name because we chose the coefficients to minimize the sum of squared residuals of the model (@fig-6). In vector space, the size of the residuals is the squared Euclidean distance from the target point to the subspace $\text{Col}(X)$ (@fig-55). In other words, least squares means the smallest squared distance.
 
@@ -998,7 +998,7 @@ And even though we previously had no trouble finding a projection onto such a su
 
 With this kind of input data, the problem appears when trying to compute the inverse matrix (@fig-56).
 
-![Figure 56. The formula for the analytical solution that we used earlier can no longer be applied. Exactly the same problem will also appear in our main apartment price dataset (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/56_issue_with_analytical_solution_eng.png){#fig-56 loading="lazy"}
+![The formula for the analytical solution that we used earlier can no longer be applied. Exactly the same problem will also appear in our main apartment price dataset (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/56_issue_with_analytical_solution_eng.png){#fig-56 loading="lazy"}
 
 As @fig-56 shows, the matrix is singular, which means the inverse matrix formula cannot be applied and there is no unique solution. It is worth noting that even when there is no exact linear dependence, the problem still remains if the features are highly correlated with one another, for example, floor area and number of rooms. In that case, the matrix becomes ill-conditioned, and the solution becomes numerically unstable. Other issues may also arise, for example with one-hot encoded features, but even this is already enough to start thinking about alternative solution methods.
 
@@ -1037,7 +1037,7 @@ Instead of blindly trying random coefficient combinations, the approach can be i
 
 To make the idea easier to see, we will simplify the problem and take a slice along just one parameter, a one dimensional array, and use it as an example. As we move along this array, we can use the fact that the error value has already been computed at the previous step. By taking MSE in this example and comparing the current value with the previous one, we can determine which direction makes sense for the next step, as shown in @fig-57.
 
-![Figure 57. Descent using pairwise comparisons. Optimizing the coefficient values in the slice along the intercept parameter $b_0$ ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/57_one_dimension_data_pairwise_descent.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/57_one_dimension_slice_eng.png){#fig-57 loading="lazy"}
+![Descent using pairwise comparisons. Optimizing the coefficient values in the slice along the intercept parameter $b_0$ ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/57_one_dimension_data_pairwise_descent.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/57_one_dimension_slice_eng.png){#fig-57 loading="lazy"}
 
 We move along the slice from left to right, and if the error starts to increase, we turn and move in the opposite direction.
 
@@ -1057,7 +1057,7 @@ So, we want the grid to be as dense as possible in order to descend to the minim
 
 As the grid step becomes smaller in pairwise comparisons, we arrive at the limit based definition of the derivative (@fig-58).
 
-![Figure 58. The gradient on a slice of the error function: in the one dimensional case, it is the derivative and shows the direction of change in MSE ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/58_raw_plot_for_limit.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/58_lim_eng.png){#fig-58 loading="lazy"}
+![The gradient on a slice of the error function: in the one dimensional case, it is the derivative and shows the direction of change in MSE ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/58_raw_plot_for_limit.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/58_lim_eng.png){#fig-58 loading="lazy"}
 
 Now it is time to surf across the error landscape. See the animation below, which shows the gradient and the anti-gradient vectors (@animation-22). As we can see, the step size can now be chosen freely, because we are no longer constrained by a regular grid [[Goh, Gabriel. Why Momentum Really Works. 2017. [https://distill.pub/2017/momentum/](https://distill.pub/2017/momentum/)]]{.literature-reference}.
 
@@ -1065,7 +1065,7 @@ Now it is time to surf across the error landscape. See the animation below, whic
 
 In multivariate spaces, for example when optimizing the intercept and slope coefficients at the same time, the gradient consists of partial derivatives (@fig-59).
 
-![Figure 59. Choosing the direction when the gradient is computed with respect to two coefficients ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/59_gradient_two_slices.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/59_two_slices_static_eng.png){#fig-59 loading="lazy"}
+![Choosing the direction when the gradient is computed with respect to two coefficients ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/59_gradient_two_slices.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/59_two_slices_static_eng.png){#fig-59 loading="lazy"}
 
 It is now time to see gradient descent in action (@animation-23).
 
@@ -1081,7 +1081,7 @@ It is now time to see gradient descent in action (@animation-23).
 
 A useful feature of numerical methods is that the error function can be defined in different ways and, as a result, different properties of the model can be optimized (@fig-60).
 
-![Figure 60. A model can be optimized in different ways. Tukey's biweight loss as a way to handle outliers ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/60_new_loss.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/60_new_error_eng.png){#fig-60 loading="lazy"}
+![A model can be optimized in different ways. Tukey's biweight loss as a way to handle outliers ([link to the code for doing the computations](https://github.com/Dreamlone/linear-regression/blob/main/examples/60_new_loss.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/60_new_error_eng.png){#fig-60 loading="lazy"}
 
 When Tukey's loss function is used, the optimization process looks as follows (@animation-24).
 
@@ -1093,7 +1093,7 @@ However, unlike the squared loss, Tukey's loss function is not always convex, wh
 
 Now we move on to multivariate regression. If we look at the convergence history of the solution toward the optimal coefficients, we can see how the coefficients for the "important" features gradually increase, while the error gradually decreases as well (@fig-61).
 
-![Figure 61. The process of converging to the optimal solution in a multiple linear regression model ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/61_coefficients_history.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/61_mse_vs_iteration_static_eng.png){#fig-61 loading="lazy"}
+![The process of converging to the optimal solution in a multiple linear regression model ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/61_coefficients_history.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/61_mse_vs_iteration_static_eng.png){#fig-61 loading="lazy"}
 
 ## Regularization
 
@@ -1108,21 +1108,21 @@ So, in this section, we will look at coefficient estimation from two perspective
 
 Keep in mind that our data is not great: there is multicollinearity, meaning correlation between features, which leads to numerically unstable coefficients (@fig-62).
 
-![Figure 62. Multicollinearity makes the model unstable: different training samples drawn from the same population lead to different results ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/62_65_different_split.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/62_static_splits_2x3_lr_eng.png){#fig-62 loading="lazy"}
+![Multicollinearity makes the model unstable: different training samples drawn from the same population lead to different results ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/62_65_different_split.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/62_static_splits_2x3_lr_eng.png){#fig-62 loading="lazy"}
 
 One way to improve numerical stability is to impose constraints on the coefficients, that is, to use regularization (@fig-63).
 
-![Figure 63. Imposing constraints on the values of the coefficients for the features in a linear regression model. Lasso and Ridge regression. Split 2 (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/63_regularization_eng.png){#fig-63 loading="lazy"}
+![Imposing constraints on the values of the coefficients for the features in a linear regression model. Lasso and Ridge regression. Split 2 (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/63_regularization_eng.png){#fig-63 loading="lazy"}
 
 Regularization allows finer control over the training process: the feature coefficients take on more reasonable values. This also helps address possible overfitting, when the model performs much worse on new data than on the training set (@fig-64).
 
-![Figure 64. The convergence of coefficients under L1 regularization (Lasso) and L2 regularization (Ridge). Train/test split 2 ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/64_lasso_and_ridge.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/64_lasso_vs_ridge_history_static_eng_split_2.png){#fig-64 loading="lazy"}
+![The convergence of coefficients under L1 regularization (Lasso) and L2 regularization (Ridge). Train/test split 2 ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/64_lasso_and_ridge.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/64_lasso_vs_ridge_history_static_eng_split_2.png){#fig-64 loading="lazy"}
 
 At a certain point (@fig-64), the metric on the test set begins to rise and diverge from the metric on the training set, starting from iteration 10 of gradient descent with L2 regularization. This is another sign of overfitting. Still, for linear models, such behavior across gradient descent iterations is relatively rare, unlike in many other machine learning algorithms.
 
 Now we can look at how the plots change for different coefficient values in @fig-65.
 
-![Figure 65. Coefficients of a multiple linear regression model obtained with Ridge regression, compared with coefficients obtained without regularization ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/62_65_different_split.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/65_static_splits_2x3_ridge_alpha_0_200_eng.png){#fig-65 loading="lazy"}
+![Coefficients of a multiple linear regression model obtained with Ridge regression, compared with coefficients obtained without regularization ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/62_65_different_split.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/65_static_splits_2x3_ridge_alpha_0_200_eng.png){#fig-65 loading="lazy"}
 
 @fig-65 shows that with regularization, the coefficients become more even and no longer differ much, even when different training samples are used to fit the model.
 
@@ -1140,7 +1140,7 @@ Animation 26 shows the following:
 
 The main takeaway from Animation 26 is this: with weak regularization, the model performs very well on the training set, but its quality drops noticeably on the test set. This is an example of overfitting (@fig-66).
 
-![Figure 66. Overfitting, when a model performs poorly on new data (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/66_overfitting_eng.png){#fig-66 loading="lazy"}
+![Overfitting, when a model performs poorly on new data (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/66_overfitting_eng.png){#fig-66 loading="lazy"}
 
 Here is an artificial but highly illustrative example based on generated features for polynomial regression (@animation-27).
 
@@ -1150,11 +1150,11 @@ Here is an artificial but highly illustrative example based on generated feature
 
 Above, we touched on a very important question: how to determine which value of the hyperparameter alpha is suitable for our dataset (since we can vary regularization strength). One option is to split the data into training and test sets, train n models on the training set, then evaluate the metric on the test set for each model. We then choose the one with the smallest test error (@fig-67).
 
-![Figure 67. The hyperparameter tuning by grid search, with metrics measured on the test set in order to find the optimal model coefficients ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/67_68_hyperparameters_optimization.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/67_hyperparamters_train_test_eng.png){#fig-67 loading="lazy"}
+![The hyperparameter tuning by grid search, with metrics measured on the test set in order to find the optimal model coefficients ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/67_68_hyperparameters_optimization.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/67_hyperparamters_train_test_eng.png){#fig-67 loading="lazy"}
 
 However, the approach above creates a risk of tuning the model to a specific test set, which is why cross-validation is commonly used in machine learning (@fig-68).
 
-![Figure 68. Splitting the data into training, validation and test sets, and training the model on the data ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/67_68_hyperparameters_optimization.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/68_hyperparamter_cv_fold_cross_validation_eng.png){#fig-68 loading="lazy"}
+![Splitting the data into training, validation and test sets, and training the model on the data ([link to the code for generating the image](https://github.com/Dreamlone/linear-regression/blob/main/examples/67_68_hyperparameters_optimization.py) - image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/68_hyperparamter_cv_fold_cross_validation_eng.png){#fig-68 loading="lazy"}
 
 As @fig-68 shows, in cross-validation the metric is evaluated using the entire dataset, which makes comparisons more reliable. This is a very common approach in machine learning, and not only for linear regression models. If this topic interests you, the *scikit-learn* documentation on cross-validation is a good place to continue: [https://scikit-learn.org/stable/modules/cross_validation.html](https://scikit-learn.org/stable/modules/cross_validation.html).
 
@@ -1166,7 +1166,7 @@ In statistics and probability theory, it involves parameter estimation, residual
 
 In linear algebra, it brings in vectors, matrix operations, projections onto feature subspaces, and much more.
 
-![Figure 69. Thank you for your attention! (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/69_final_picture_eng.png){#fig-69 loading="lazy"}
+![Thank you for your attention! (image by author)](https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/tds/69_final_picture_eng.png){#fig-69 loading="lazy"}
 
 ## Conclusion
 
