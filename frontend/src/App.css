@@ -27,12 +27,6 @@ body {
 .hero {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 56px;
-  border: 1px solid rgba(31, 31, 31, 0.18);
-  border-radius: 10px;
-  background: rgba(255, 250, 244, 0.74);
-  box-shadow: 0 24px 80px rgba(117, 63, 22, 0.16);
-  backdrop-filter: blur(12px);
 }
 
 .eyebrow {
@@ -128,7 +122,7 @@ a:hover {
 }
 
 .chart-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   fill: #1f1f1f;
 }
@@ -149,12 +143,12 @@ a:hover {
 }
 
 .tick-label {
-  font-size: 9px;
+  font-size: 12px;
   fill: #1f1f1f;
 }
 
 .axis-label {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
   fill: #1f1f1f;
 }
@@ -252,11 +246,13 @@ a:hover {
   transform: scaleY(1);
 }
 
-.model-line-hitbox {
-  stroke: transparent;
-  stroke-width: 18;
-  stroke-linecap: round;
+.model-hover-area {
+  fill: transparent;
   cursor: crosshair;
+}
+
+.model-tooltip {
+  pointer-events: none;
 }
 
 .tooltip-guide {
@@ -331,11 +327,28 @@ a:hover {
   accent-color: #1f1f1f;
 }
 
-.model-controls label strong {
+.coefficient-input {
   display: block;
-  margin-top: 6px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 9px;
+  border: 1px solid rgba(31, 31, 31, 0.28);
+  border-radius: 4px;
+  background: rgba(255, 250, 244, 0.9);
   color: #1f1f1f;
+  font-family: inherit;
   font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.coefficient-input:focus-visible {
+  outline: 2px solid #1f1f1f;
+  outline-offset: 1px;
+}
+
+.coefficient-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .current-model-card {
@@ -516,15 +529,27 @@ a:hover {
 
 @media (max-width: 760px) {
   .page {
-    padding: 20px;
-  }
-
-  .hero {
-    padding: 32px 22px;
-    border-radius: 8px;
+    padding: 20px 16px;
   }
 
   .sections {
     margin-top: 44px;
+    gap: 16px;
+  }
+
+  article {
+    padding: 16px;
+  }
+
+  /* Let the model-fitting chart bleed past the article's own padding so
+     it gets noticeably more room (and legible axis text) on narrow
+     phones, instead of shrinking inside page + article padding twice. */
+  .model-chart-area {
+    margin: 0 -16px;
+  }
+
+  .dataset-card {
+    width: calc(100vw - 40px);
+    flex: 0 0 calc(100vw - 40px);
   }
 }

@@ -194,15 +194,6 @@ function ApartmentModelPlot() {
           y2={yScale(modelLine.y2)}
         />
 
-        <line
-          className="model-line-hitbox"
-          x1={xScale(modelLine.x1)}
-          y1={yScale(modelLine.y1)}
-          x2={xScale(modelLine.x2)}
-          y2={yScale(modelLine.y2)}
-          onMouseMove={handleModelMouseMove}
-        />
-
         {points.map((point) => (
           <circle
             key={point.room}
@@ -212,6 +203,16 @@ function ApartmentModelPlot() {
             r="4.5"
           />
         ))}
+
+        <rect
+          className="model-hover-area"
+          x={margin.left}
+          y={margin.top}
+          width={plotWidth}
+          height={plotHeight}
+          onMouseMove={handleModelMouseMove}
+          onMouseLeave={() => setTooltip(null)}
+        />
 
         {tooltip && (
           <g className="model-tooltip">

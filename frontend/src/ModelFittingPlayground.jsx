@@ -58,6 +58,8 @@ const datasets = [
   },
 ];
 
+const SLIDER_SNAP_DISTANCE = 150;
+
 function formatFormula(b0, b1) {
   const sign = b1 >= 0 ? "+" : "−";
 
@@ -240,14 +242,22 @@ function ModelFittingPlayground() {
   const [coefficientsByDataset, setCoefficientsByDataset] =
     useState(initialCoefficients);
 
-  const [solvedByDataset, setSolvedByDataset] = useState({});
-
   const dataset = datasets[currentIndex];
   const coefficients = coefficientsByDataset[dataset.id];
-  const isSolved = Boolean(solvedByDataset[dataset.id]);
 
-  const displayedB0 = isSolved ? dataset.targetB0 : coefficients.b0;
-  const displayedB1 = isSolved ? dataset.targetB1 : coefficients.b1;
+  // Once the coefficients match the target exactly, updateCoefficient()
+  // below refuses further edits, so they stay pinned at the target and
+  // this stays true - no separate "solved" state/effect needed.
+  const isSolved =
+    coefficients.b0 === dataset.targetB0 &&
+    coefficients.b1 === dataset.targetB1;
+
+  const displayedB0 = coefficients.b0;
+  const displayedB1 = coefficients.b1;
+
+  const [b0Input, setB0Input] = useState(() => String(coefficients.b0));
+  const [b1Input, setB1Input] = useState(() => String(coefficients.b1));
+
 
   const width = 560;
   const height = 360;
@@ -297,35 +307,60 @@ function ModelFittingPlayground() {
     };
   }, []);
 
-  useEffect(() => {
-    const hasFoundTarget =
-      coefficients.b0 === dataset.targetB0 &&
-      coefficients.b1 === dataset.targetB1;
-
-    if (hasFoundTarget && !isSolved) {
-      setSolvedByDataset((previous) => ({
-        ...previous,
-        [dataset.id]: true,
-      }));
-    }
-  }, [coefficients.b0, coefficients.b1, dataset, isSolved]);
-
   const updateCoefficient = (name, value) => {
     if (isSolved) {
       return;
     }
 
+    if (value === "") {
+      return;
+    }
+
+    const parsed = Number(value);
+
+    if (Number.isNaN(parsed)) {
+      return;
+    }
+
+    const clamped = Math.min(Math.max(parsed, -10000), 10000);
+
     setCoefficientsByDataset((previous) => ({
       ...previous,
       [dataset.id]: {
         ...previous[dataset.id],
-        [name]: Number(value),
+        [name]: clamped,
       },
     }));
   };
 
+  const handleSliderChange = (name, value, setLocalText) => {
+    const target = name === "b0" ? dataset.targetB0 : dataset.targetB1;
+    const raw = Number(value);
+    // Magnetic snap: dragging within one and a half steps of the target
+    // locks the slider onto it, so you don't have to release on the exact
+    // pixel.
+    const snapped = Math.abs(raw - target) <= SLIDER_SNAP_DISTANCE ? target : raw;
+
+    updateCoefficient(name, snapped);
+    setLocalText(String(snapped));
+  };
+
+  const handleNumberInputChange = (name, rawValue, setLocalText) => {
+    setLocalText(rawValue);
+    updateCoefficient(name, rawValue);
+  };
+
+  const goToDataset = (index) => {
+    const clampedIndex = Math.min(Math.max(index, 0), datasets.length - 1);
+    const nextCoefficients = coefficientsByDataset[datasets[clampedIndex].id];
+
+    setCurrentIndex(clampedIndex);
+    setB0Input(String(nextCoefficients.b0));
+    setB1Input(String(nextCoefficients.b1));
+  };
+
   const goToPreviousDataset = () => {
-    setCurrentIndex((previous) => Math.max(previous - 1, 0));
+    goToDataset(currentIndex - 1);
   };
 
   const goToNextDataset = () => {
@@ -333,7 +368,7 @@ function ModelFittingPlayground() {
       return;
     }
 
-    setCurrentIndex((previous) => Math.min(previous + 1, datasets.length - 1));
+    goToDataset(currentIndex + 1);
   };
 
   const handlePointerDown = (event) => {
@@ -379,12 +414,23 @@ function ModelFittingPlayground() {
               type="range"
               min="-10000"
               max="10000"
-              step="10"
+              step="100"
               value={displayedB0}
               disabled={isSolved}
-              onChange={(event) => updateCoefficient("b0", event.target.value)}
+              onChange={(event) =>
+                handleSliderChange("b0", event.target.value, setB0Input)
+              }
             />
-            <strong>{displayedB0.toLocaleString()}</strong>
+            <input
+              type="number"
+              className="coefficient-input"
+              step="100"
+              value={b0Input}
+              disabled={isSolved}
+              onChange={(event) =>
+                handleNumberInputChange("b0", event.target.value, setB0Input)
+              }
+            />
           </label>
 
           <label>
@@ -393,12 +439,23 @@ function ModelFittingPlayground() {
               type="range"
               min="-10000"
               max="10000"
-              step="10"
+              step="100"
               value={displayedB1}
               disabled={isSolved}
-              onChange={(event) => updateCoefficient("b1", event.target.value)}
+              onChange={(event) =>
+                handleSliderChange("b1", event.target.value, setB1Input)
+              }
             />
-            <strong>{displayedB1.toLocaleString()}</strong>
+            <input
+              type="number"
+              className="coefficient-input"
+              step="100"
+              value={b1Input}
+              disabled={isSolved}
+              onChange={(event) =>
+                handleNumberInputChange("b1", event.target.value, setB1Input)
+              }
+            />
           </label>
 
           <div className="current-model-card">
@@ -494,7 +551,7 @@ function ModelFittingPlayground() {
                 disabled={index > currentIndex && !isSolved}
                 onClick={() => {
                   if (index <= currentIndex || isSolved) {
-                    setCurrentIndex(index);
+                    goToDataset(index);
                   }
                 }}
               >
