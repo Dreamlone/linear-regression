@@ -5,24 +5,6 @@ lang: ru
 
 [Read in English →](../en/index.qmd){.lang-switch}
 
-<!--
-TODO(content): замените всё, что ниже, на перенесённый текст статьи.
-Сохраняйте порядок заголовков, абзацы, формулы, ссылки на код, подписи,
-изображения и GIF-анимации в точности как в опубликованной версии — без
-пересказа, сокращения или упрощения.
-
-Источник: https://habr.com/ru/articles/1013998/
-
-Изображения уже есть в этом репозитории, ссылаться через raw-CDN GitHub, напр.:
-  https://raw.githubusercontent.com/Dreamlone/linear-regression/main/plots_per_article/habr/<file>
-
-Внимание: имена файлов в plots_per_article/tds и plots_per_article/habr не всегда
-параллельны (см. план миграции) — проверяйте каждый путь отдельно для ru-версии.
-
-Раскрывающиеся блоки "Side branch" реализуются нативным Quarto callout,
-а не через <details> — рабочий пример ниже.
--->
-
 ::: {.publication-date}
 9 апр 2026 в 19:58 - [см. оригинал](https://habr.com/ru/articles/1013998/)
 :::
