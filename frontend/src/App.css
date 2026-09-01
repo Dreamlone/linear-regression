@@ -303,7 +303,7 @@ a:hover {
 }
 
 .model-controls {
-  padding: 18px;
+  padding: 14px;
   border: 1px solid rgba(31, 31, 31, 0.16);
   border-radius: 4px;
   background: rgba(255, 186, 94, 0.16);
@@ -311,33 +311,39 @@ a:hover {
 
 .model-controls label {
   display: block;
-  margin-bottom: 22px;
+  margin-bottom: 14px;
 }
 
 .model-controls label span {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: #1f1f1f;
   font-size: 0.86rem;
   font-weight: 800;
 }
 
+.coefficient-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .model-controls input[type="range"] {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   accent-color: #1f1f1f;
 }
 
 .coefficient-input {
-  display: block;
-  width: 100%;
-  margin-top: 8px;
-  padding: 7px 9px;
+  flex: 0 0 auto;
+  width: 5.5em;
+  padding: 6px 8px;
   border: 1px solid rgba(31, 31, 31, 0.28);
   border-radius: 4px;
   background: rgba(255, 250, 244, 0.9);
   color: #1f1f1f;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   font-weight: 800;
 }
 
@@ -352,30 +358,30 @@ a:hover {
 }
 
 .current-model-card {
-  margin-top: 8px;
-  padding: 14px;
+  margin-top: 4px;
+  padding: 10px 12px;
   border: 1px solid rgba(31, 31, 31, 0.12);
   border-radius: 4px;
   background: rgba(255, 250, 244, 0.78);
 }
 
 .current-model-card p {
-  margin: 0 0 6px;
-  font-size: 0.8rem;
+  margin: 0 0 4px;
+  font-size: 0.78rem;
   font-weight: 800;
 }
 
 .current-model-card strong {
   color: #1f1f1f;
-  font-size: 1rem;
-  line-height: 1.35;
+  font-size: 0.95rem;
+  line-height: 1.3;
 }
 
 .model-status {
-  margin-top: 14px;
+  margin-top: 10px;
   color: #1f1f1f;
-  font-size: 0.86rem;
-  line-height: 1.45;
+  font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 .model-status-solved {
@@ -416,6 +422,7 @@ a:hover {
 }
 
 .dataset-card {
+  position: relative;
   width: min(560px, calc(100vw - 72px));
   flex: 0 0 min(560px, calc(100vw - 72px));
   padding: 10px;
@@ -437,6 +444,81 @@ a:hover {
 
 .dataset-card .chart {
   pointer-events: none;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.surprise-note {
+  position: absolute;
+  top: 46px;
+  right: 14px;
+  max-width: 150px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255, 250, 244, 0.92);
+  box-shadow: 0 2px 8px rgba(31, 31, 31, 0.1);
+  color: rgba(31, 31, 31, 0.55);
+  font-size: 0.78rem;
+  font-style: italic;
+  text-align: center;
+  pointer-events: none;
+  animation: rise-in 420ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surprise-note {
+    animation: none;
+  }
+}
+
+.congrats-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  aspect-ratio: 560 / 360;
+  padding: 32px;
+  text-align: center;
+}
+
+.congrats-heading {
+  margin: 0;
+  color: #1f1f1f;
+  font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.congrats-body {
+  margin: 0;
+  max-width: 34em;
+  color: rgba(31, 31, 31, 0.75);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.model-controls-done p {
+  margin: 0;
+  color: #1f1f1f;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.model-controls-done .model-controls-done-sub {
+  margin-top: 8px;
+  color: rgba(31, 31, 31, 0.7);
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 .fit-model-line {
@@ -545,6 +627,7 @@ a:hover {
      it gets noticeably more room (and legible axis text) on narrow
      phones, instead of shrinking inside page + article padding twice. */
   .model-chart-area {
+    width: calc(100% + 32px);
     margin: 0 -16px;
   }
 

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 const datasets = [
   {
     id: "rooms-basic",
+    type: "model",
     title: "Dataset 1: simple apartment prices",
     points: [
       { x: 1, y: 10000 },
@@ -14,47 +15,35 @@ const datasets = [
   },
   {
     id: "rooms-base-price",
+    type: "model",
     title: "Dataset 2: apartments with a base price",
     points: [
-      { x: 1, y: 12000 },
-      { x: 2, y: 19000 },
-      { x: 4, y: 33000 },
+      { x: 1, y: 15000 },
+      { x: 2, y: 25000 },
+      { x: 4, y: 45000 },
     ],
     targetB0: 5000,
-    targetB1: 7000,
+    targetB1: 10000,
   },
   {
-    id: "rooms-negative-intercept",
-    title: "Dataset 3: steeper growth",
+    id: "rooms-negative-slope",
+    type: "model",
+    title: "Dataset 3: price drops with more rooms?",
     points: [
-      { x: 1, y: 4000 },
-      { x: 2, y: 13000 },
-      { x: 4, y: 31000 },
+      { x: 1, y: 13000 },
+      { x: 2, y: 11000 },
+      { x: 4, y: 7000 },
     ],
-    targetB0: -5000,
-    targetB1: 9000,
+    targetB0: 15000,
+    targetB1: -2000,
+    surpriseNote: "Wow, why is it decreasing?",
   },
   {
-    id: "rooms-fixed-cost",
-    title: "Dataset 4: fixed cost plus rooms",
-    points: [
-      { x: 1, y: 15000 },
-      { x: 2, y: 20000 },
-      { x: 4, y: 30000 },
-    ],
-    targetB0: 10000,
-    targetB1: 5000,
-  },
-  {
-    id: "rooms-premium-slope",
-    title: "Dataset 5: premium apartments",
-    points: [
-      { x: 1, y: 11500 },
-      { x: 2, y: 21000 },
-      { x: 4, y: 40000 },
-    ],
-    targetB0: 2000,
-    targetB1: 9500,
+    id: "congrats",
+    type: "message",
+    title: "You've got it",
+    heading: "Nice work!",
+    body: "You've seen how b₀ shifts the line up and down, and how b₁ controls its slope — including which way it tilts. That's the whole shape of a linear model.",
   },
 ];
 
@@ -216,6 +205,15 @@ function DatasetPlot({
   );
 }
 
+function CongratsCard({ dataset }) {
+  return (
+    <div className="congrats-card">
+      <p className="congrats-heading">{dataset.heading}</p>
+      <p className="congrats-body">{dataset.body}</p>
+    </div>
+  );
+}
+
 function ModelFittingPlayground() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [dragStartX, setDragStartX] = useState(null);
@@ -322,7 +320,7 @@ function ModelFittingPlayground() {
       return;
     }
 
-    const clamped = Math.min(Math.max(parsed, -10000), 10000);
+    const clamped = Math.min(Math.max(parsed, -10000), 20000);
 
     setCoefficientsByDataset((previous) => ({
       ...previous,
@@ -404,73 +402,97 @@ function ModelFittingPlayground() {
 
   return (
     <div className="model-fitting-playground">
-      <h3>Find a model for 5 different datasets</h3>
+      <h3>Find a model for 3 different datasets</h3>
 
       <div className="model-fitting-layout">
         <aside className="model-controls">
-          <label>
-            <span>b₀, intercept</span>
-            <input
-              type="range"
-              min="-10000"
-              max="10000"
-              step="100"
-              value={displayedB0}
-              disabled={isSolved}
-              onChange={(event) =>
-                handleSliderChange("b0", event.target.value, setB0Input)
-              }
-            />
-            <input
-              type="number"
-              className="coefficient-input"
-              step="100"
-              value={b0Input}
-              disabled={isSolved}
-              onChange={(event) =>
-                handleNumberInputChange("b0", event.target.value, setB0Input)
-              }
-            />
-          </label>
+          {dataset.type === "model" ? (
+            <>
+              <label>
+                <span>b₀, intercept</span>
+                <div className="coefficient-row">
+                  <input
+                    type="range"
+                    min="-10000"
+                    max="20000"
+                    step="100"
+                    value={displayedB0}
+                    disabled={isSolved}
+                    onChange={(event) =>
+                      handleSliderChange("b0", event.target.value, setB0Input)
+                    }
+                  />
+                  <input
+                    type="number"
+                    className="coefficient-input"
+                    step="100"
+                    value={b0Input}
+                    disabled={isSolved}
+                    onChange={(event) =>
+                      handleNumberInputChange(
+                        "b0",
+                        event.target.value,
+                        setB0Input,
+                      )
+                    }
+                  />
+                </div>
+              </label>
 
-          <label>
-            <span>b₁, slope</span>
-            <input
-              type="range"
-              min="-10000"
-              max="10000"
-              step="100"
-              value={displayedB1}
-              disabled={isSolved}
-              onChange={(event) =>
-                handleSliderChange("b1", event.target.value, setB1Input)
-              }
-            />
-            <input
-              type="number"
-              className="coefficient-input"
-              step="100"
-              value={b1Input}
-              disabled={isSolved}
-              onChange={(event) =>
-                handleNumberInputChange("b1", event.target.value, setB1Input)
-              }
-            />
-          </label>
+              <label>
+                <span>b₁, slope</span>
+                <div className="coefficient-row">
+                  <input
+                    type="range"
+                    min="-10000"
+                    max="20000"
+                    step="100"
+                    value={displayedB1}
+                    disabled={isSolved}
+                    onChange={(event) =>
+                      handleSliderChange("b1", event.target.value, setB1Input)
+                    }
+                  />
+                  <input
+                    type="number"
+                    className="coefficient-input"
+                    step="100"
+                    value={b1Input}
+                    disabled={isSolved}
+                    onChange={(event) =>
+                      handleNumberInputChange(
+                        "b1",
+                        event.target.value,
+                        setB1Input,
+                      )
+                    }
+                  />
+                </div>
+              </label>
 
-          <div className="current-model-card">
-            <p>Current model</p>
-            <strong>{formatFormula(displayedB0, displayedB1)}</strong>
-          </div>
+              <div className="current-model-card">
+                <p>Current model</p>
+                <strong>{formatFormula(displayedB0, displayedB1)}</strong>
+              </div>
 
-          {isSolved ? (
-            <p className="model-status model-status-solved">
-              Model found. The line is fixed.
-            </p>
+              {isSolved ? (
+                <p className="model-status model-status-solved">
+                  Model found. The line is fixed.
+                </p>
+              ) : (
+                <p className="model-status">
+                  Move the sliders until the line passes through all points.
+                </p>
+              )}
+            </>
           ) : (
-            <p className="model-status">
-              Move the sliders until the line passes through all points.
-            </p>
+            <div className="model-controls-done">
+              <p>All three models solved.</p>
+              <p className="model-controls-done-sub">
+                b₀ and b₁ are all it takes to describe any straight-line
+                model.
+              </p>
+            </div>
           )}
         </aside>
 
@@ -510,26 +532,34 @@ function ModelFittingPlayground() {
                       })`,
                     }}
                   >
-                    <DatasetPlot
-                      dataset={item}
-                      displayedB0={displayedB0}
-                      displayedB1={displayedB1}
-                      isSolved={isSolved}
-                      isCurrentDataset={isCurrentDataset}
-                      width={width}
-                      height={height}
-                      margin={margin}
-                      plotWidth={plotWidth}
-                      plotHeight={plotHeight}
-                      xMin={xMin}
-                      xMax={xMax}
-                      yMin={yMin}
-                      yMax={yMax}
-                      xScale={xScale}
-                      yScale={yScale}
-                      xTicks={xTicks}
-                      yTicks={yTicks}
-                    />
+                    {item.type === "model" ? (
+                      <DatasetPlot
+                        dataset={item}
+                        displayedB0={displayedB0}
+                        displayedB1={displayedB1}
+                        isSolved={isSolved}
+                        isCurrentDataset={isCurrentDataset}
+                        width={width}
+                        height={height}
+                        margin={margin}
+                        plotWidth={plotWidth}
+                        plotHeight={plotHeight}
+                        xMin={xMin}
+                        xMax={xMax}
+                        yMin={yMin}
+                        yMax={yMax}
+                        xScale={xScale}
+                        yScale={yScale}
+                        xTicks={xTicks}
+                        yTicks={yTicks}
+                      />
+                    ) : (
+                      <CongratsCard dataset={item} />
+                    )}
+
+                    {item.surpriseNote && isCurrentDataset && (
+                      <div className="surprise-note">{item.surpriseNote}</div>
+                    )}
                   </div>
                 );
               })}
@@ -537,9 +567,11 @@ function ModelFittingPlayground() {
           </div>
 
           <div className="dataset-carousel-hint">
-            {isSolved
-              ? "Drag the chart to move to the next dataset."
-              : "Fit the current model first. Then drag to continue."}
+            {dataset.type !== "model"
+              ? "You've completed every dataset."
+              : isSolved
+                ? "Drag the chart to move to the next dataset."
+                : "Fit the current model first. Then drag to continue."}
           </div>
 
           <div className="dataset-carousel-dots">
@@ -554,8 +586,9 @@ function ModelFittingPlayground() {
                     goToDataset(index);
                   }
                 }}
+                aria-label={item.type === "message" ? "Summary" : `Dataset ${index + 1}`}
               >
-                {index + 1}
+                {item.type === "message" ? "!" : index + 1}
               </button>
             ))}
           </div>
