@@ -290,7 +290,10 @@ function ModelFittingPlayground() {
         return;
       }
 
-      const cardWidth = firstCardRef.current.getBoundingClientRect().width;
+      // offsetWidth (layout box), not getBoundingClientRect (visual box) -
+      // the first card gets scaled down via CSS transform whenever it isn't
+      // the active card, which would otherwise corrupt this measurement.
+      const cardWidth = firstCardRef.current.offsetWidth;
       const gap = window.matchMedia("(max-width: 860px)").matches ? 18 : 28;
 
       setCardStep(cardWidth + gap);
