@@ -581,9 +581,16 @@ a:hover {
     grid-template-columns: 1fr;
   }
 
+  /* Chart first, controls below - dragging the sliders with a thumb
+     otherwise covers the chart sitting right above them. */
   .model-chart-area {
+    order: 1;
     width: 100%;
     overflow: hidden;
+  }
+
+  .model-controls {
+    order: 2;
   }
 
   .dataset-carousel {
@@ -634,5 +641,11 @@ a:hover {
   .dataset-card {
     width: calc(100vw - 40px);
     flex: 0 0 calc(100vw - 40px);
+  }
+
+  /* The disabled sliders and the solved model line already communicate
+     that a model was found - keep this screen shorter on phones. */
+  .model-status-solved {
+    display: none;
   }
 }
