@@ -47,7 +47,7 @@ const datasets = [
   },
 ];
 
-const SLIDER_SNAP_DISTANCE = 150;
+const SLIDER_SNAP_DISTANCE = 750;
 
 function formatFormula(b0, b1) {
   const sign = b1 >= 0 ? "+" : "−";
@@ -415,7 +415,7 @@ function ModelFittingPlayground() {
                     type="range"
                     min="-10000"
                     max="20000"
-                    step="100"
+                    step="500"
                     value={displayedB0}
                     disabled={isSolved}
                     onChange={(event) =>
@@ -425,7 +425,7 @@ function ModelFittingPlayground() {
                   <input
                     type="number"
                     className="coefficient-input"
-                    step="100"
+                    step="500"
                     value={b0Input}
                     disabled={isSolved}
                     onChange={(event) =>
@@ -446,7 +446,7 @@ function ModelFittingPlayground() {
                     type="range"
                     min="-10000"
                     max="20000"
-                    step="100"
+                    step="500"
                     value={displayedB1}
                     disabled={isSolved}
                     onChange={(event) =>
@@ -456,7 +456,7 @@ function ModelFittingPlayground() {
                   <input
                     type="number"
                     className="coefficient-input"
-                    step="100"
+                    step="500"
                     value={b1Input}
                     disabled={isSolved}
                     onChange={(event) =>
