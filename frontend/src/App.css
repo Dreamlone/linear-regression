@@ -77,11 +77,12 @@ article {
 
 h2 {
   margin: 0 0 12px;
-  color: #1f1f1f;
+  color: #ff7a1a;
   font-size: clamp(1.05rem, 1.6vw, 1.35rem);
   line-height: 1.15;
   letter-spacing: -0.025em;
   font-weight: 700;
+  text-align: center;
 }
 
 p {
@@ -120,7 +121,7 @@ a:hover {
 }
 
 .chart-title {
-  font-size: 16px;
+  font-size: 10px;
   font-weight: 700;
   fill: #1f1f1f;
 }
@@ -297,10 +298,10 @@ a:hover {
 .model-fitting-playground h3 {
   margin: 0 0 22px;
   color: #1f1f1f;
-  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  font-size: clamp(0.95rem, 1.3vw, 1.15rem);
   line-height: 1.1;
   letter-spacing: -0.03em;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .model-fitting-layout {
@@ -670,10 +671,10 @@ a:hover {
 .analytical-solution-title {
   margin: 0 0 20px;
   color: #1f1f1f;
-  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  font-size: clamp(0.95rem, 1.3vw, 1.15rem);
   line-height: 1.1;
   letter-spacing: -0.03em;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .analytical-level {
@@ -950,8 +951,66 @@ a:hover {
   opacity: 1;
 }
 
+.residual-line {
+  stroke: #d0021b;
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  opacity: 0;
+  transition: opacity 500ms ease-out;
+}
+
+.chart-card-visible .residual-line {
+  opacity: 0.55;
+}
+
+.epsilon-label {
+  font-size: 15px;
+  font-style: italic;
+  fill: #d0021b;
+}
+
+.multiple-regression-placeholder {
+  margin-top: 28px;
+}
+
+.placeholder-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.placeholder-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid rgba(31, 31, 31, 0.08);
+  border-radius: 12px;
+  background: rgba(31, 31, 31, 0.02);
+  text-align: center;
+}
+
+.placeholder-column .analytical-row-label {
+  margin-bottom: 12px;
+}
+
+.mini-feature-chart {
+  max-width: 260px;
+}
+
+.placeholder-trend-line {
+  stroke: #ff7a1a;
+  stroke-width: 2;
+  stroke-dasharray: 5 5;
+  opacity: 0.85;
+}
+
 @media (max-width: 760px) {
   .analytical-level-body {
+    grid-template-columns: 1fr;
+  }
+
+  .placeholder-columns {
     grid-template-columns: 1fr;
   }
 }

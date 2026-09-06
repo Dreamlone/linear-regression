@@ -3,6 +3,8 @@ import ApartmentScatterPlot from "./ApartmentScatterPlot.jsx";
 import ApartmentModelPlot from "./ApartmentModelPlot.jsx";
 import ModelFittingPlayground from "./ModelFittingPlayground.jsx";
 import AnalyticalSolution from "./AnalyticalSolution.jsx";
+import ResidualsExample from "./ResidualsExample.jsx";
+import MultipleRegressionPlaceholder from "./MultipleRegressionPlaceholder.jsx";
 
 function App() {
   return (
@@ -94,6 +96,50 @@ function App() {
             </div>
 
             <AnalyticalSolution />
+
+            <div className="formula-explanation">
+              <p>
+                The formulas above always produce a line — but "best fit"
+                does not mean "error-free". Here are the same three
+                apartments, with slightly different prices this time. Even
+                the optimal line, chosen by minimizing squared errors,
+                still misses every single point by some amount:
+              </p>
+
+              <div className="formula-block">
+                <span className="main-formula">y = b₀ + b₁ · x + ε</span>
+              </div>
+
+              <p>
+                That leftover gap between what actually happened and what
+                the model predicts is the error term, ε (epsilon) — and no
+                line, however well chosen, can make it disappear entirely.
+              </p>
+            </div>
+
+            <ResidualsExample />
+
+            <div className="formula-explanation">
+              <p>
+                The same closed-form idea extends beyond a single feature.
+                With two or more features, b₀ and b₁ become a vector of
+                coefficients, and instead of dividing by a sum of squares,
+                the solution comes from inverting a matrix:
+              </p>
+
+              <div className="formula-block">
+                <span className="main-formula">b = (Xᵀ X)⁻¹ Xᵀ y</span>
+              </div>
+
+              <p>
+                This only works cleanly when the features bring genuinely
+                different information. If one feature can be predicted
+                from another, the matrix inversion breaks down — a problem
+                called collinearity:
+              </p>
+            </div>
+
+            <MultipleRegressionPlaceholder />
           </article>
 
           <article>
