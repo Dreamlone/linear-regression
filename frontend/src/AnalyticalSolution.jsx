@@ -1,3 +1,5 @@
+import { useEffect, useId, useRef, useState } from "react";
+
 const rooms = [1, 2, 4];
 const prices = [10000, 20000, 40000];
 
@@ -55,37 +57,82 @@ function yScale(y) {
 
 const LABEL_X = 2.9;
 
-function lineYAt(x, meanX, meanY, slope) {
-  return meanY + slope * (x - meanX);
-}
+function MeanFitChart({
+  showMean,
+  showLine,
+  finalLine,
+  meanX,
+  meanY,
+  slope,
+  intercept,
+  altSlope,
+  altIntercept,
+  predictions,
+}) {
+  // The "correct" line always passes through the mean point by definition,
+  // so when an explicit intercept isn't given (level 2, before b0 exists
+  // yet), it's derived from the slope and the mean instead - same line,
+  // just not yet named "the intercept".
+  const correctB0 = intercept !== undefined ? intercept : meanY - slope * meanX;
+  const correctY = (x) => correctB0 + slope * x;
 
-function MeanFitChart({ showMean, showLine, meanX, meanY, slope, altSlope }) {
+  const hasAlt = altSlope !== undefined || altIntercept !== undefined;
+  const altB1 = altSlope !== undefined ? altSlope : slope;
+  const altB0 =
+    altIntercept !== undefined ? altIntercept : meanY - altSlope * meanX;
+  const altY = (x) => altB0 + altB1 * x;
+
   const line = showLine
-    ? {
-        x1: X_MIN,
-        y1: lineYAt(X_MIN, meanX, meanY, slope),
-        x2: X_MAX,
-        y2: lineYAt(X_MAX, meanX, meanY, slope),
-      }
+    ? { x1: X_MIN, y1: correctY(X_MIN), x2: X_MAX, y2: correctY(X_MAX) }
     : null;
 
   const altLine =
-    showLine && altSlope !== undefined
-      ? {
-          x1: X_MIN,
-          y1: lineYAt(X_MIN, meanX, meanY, altSlope),
-          x2: X_MAX,
-          y2: lineYAt(X_MAX, meanX, meanY, altSlope),
-        }
+    showLine && hasAlt
+      ? { x1: X_MIN, y1: altY(X_MIN), x2: X_MAX, y2: altY(X_MAX) }
       : null;
+
+  const clipId = useId();
+
+  const chartRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.35 },
+    );
+
+    if (chartRef.current) {
+      observer.observe(chartRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <svg
-      className="chart"
+      ref={chartRef}
+      className={`chart ${isVisible ? "chart-card-visible" : ""}`}
       viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
       role="img"
       aria-label="Apartment price vs. number of rooms, with the mean of each variable highlighted"
     >
+      <defs>
+        <clipPath id={clipId}>
+          <rect
+            x={CHART_MARGIN.left}
+            y={CHART_MARGIN.top}
+            width={PLOT_WIDTH}
+            height={PLOT_HEIGHT}
+          />
+        </clipPath>
+      </defs>
+
       {Y_TICKS.map((tick) => (
         <g key={`y-grid-${tick}`}>
           <line
@@ -160,8 +207,8 @@ function MeanFitChart({ showMean, showLine, meanX, meanY, slope, altSlope }) {
         Price, $
       </text>
 
-      {altLine && (
-        <>
+      <g clipPath={`url(#${clipId})`}>
+        {altLine && (
           <line
             className="alt-fit-line"
             x1={xScale(altLine.x1)}
@@ -169,55 +216,114 @@ function MeanFitChart({ showMean, showLine, meanX, meanY, slope, altSlope }) {
             x2={xScale(altLine.x2)}
             y2={yScale(altLine.y2)}
           />
-          <text
-            className="chart-line-label alt-line-label"
-            x={xScale(LABEL_X) + 8}
-            y={yScale(lineYAt(LABEL_X, meanX, meanY, altSlope)) + 16}
-          >
-            this one?
-          </text>
-        </>
-      )}
+        )}
 
-      {line && (
-        <>
+        {line && (
           <line
-            className="mean-fit-line"
+            className={finalLine ? "final-fit-line" : "mean-fit-line"}
             x1={xScale(line.x1)}
             y1={yScale(line.y1)}
             x2={xScale(line.x2)}
             y2={yScale(line.y2)}
           />
-          {altLine && (
-            <text
-              className="chart-line-label correct-line-label"
-              x={xScale(LABEL_X) + 8}
-              y={yScale(lineYAt(LABEL_X, meanX, meanY, slope)) - 8}
-            >
-              or that one?
-            </text>
-          )}
-        </>
+        )}
+      </g>
+
+      {altLine && (
+        <text
+          className="chart-line-label alt-line-label"
+          x={xScale(LABEL_X) + 8}
+          y={yScale(altY(LABEL_X)) + 16}
+        >
+          this one?
+        </text>
+      )}
+
+      {line && altLine && (
+        <text
+          className="chart-line-label correct-line-label"
+          x={xScale(LABEL_X) + 8}
+          y={yScale(correctY(LABEL_X)) - 8}
+        >
+          or that one?
+        </text>
       )}
 
       {rooms.map((room, index) => (
         <circle
           key={`raw-${room}`}
-          className="raw-data-point"
+          className="raw-data-point animated-data-point"
           cx={xScale(room)}
           cy={yScale(prices[index])}
           r="4.5"
+          style={{ transitionDelay: `${index * 300}ms` }}
         />
       ))}
 
       {showMean && (
         <circle
-          className="mean-point"
+          className="mean-point animated-data-point"
           cx={xScale(meanX)}
           cy={yScale(meanY)}
           r="5.5"
+          style={{ transitionDelay: `${rooms.length * 300 + 200}ms` }}
         />
       )}
+
+      {predictions &&
+        predictions.map((prediction) => {
+          const px = xScale(prediction.x);
+          const py = yScale(correctY(prediction.x));
+          // Label sits above and to the left of its point: anchoring the
+          // text at its end (rather than its start) keeps it clear of the
+          // point and the line regardless of how long the word is.
+          const labelX = px - 10;
+          const labelY = py - 12;
+
+          return (
+            <g key={prediction.term} className="term-hover" tabIndex={0}>
+              <circle
+                className="predicted-point animated-data-point"
+                cx={px}
+                cy={py}
+                r="5.5"
+                style={{ transitionDelay: "1100ms" }}
+              />
+
+              <rect
+                className="term-hit-area"
+                x={labelX - 105}
+                y={labelY - 14}
+                width="110"
+                height="20"
+              />
+
+              <text
+                className="chart-term-label"
+                x={labelX}
+                y={labelY}
+                textAnchor="end"
+              >
+                {prediction.term}
+              </text>
+
+              <g
+                className="chart-term-tooltip"
+                transform={`translate(${px + prediction.tooltipDx} ${
+                  py + prediction.tooltipDy
+                })`}
+              >
+                <rect className="tooltip-box" width="190" height="44" />
+                <text className="tooltip-text" x="12" y="18">
+                  {prediction.description[0]}
+                </text>
+                <text className="tooltip-text" x="12" y="34">
+                  {prediction.description[1]}
+                </text>
+              </g>
+            </g>
+          );
+        })}
     </svg>
   );
 }
@@ -231,6 +337,30 @@ function NumberCube({ label, highlight }) {
 }
 
 const ALT_SLOPE = 4000;
+const ALT_INTERCEPT = -6000;
+
+const PREDICTIONS = [
+  {
+    x: 3,
+    term: "interpolation",
+    description: [
+      "Predicting inside the range",
+      "of the observed data.",
+    ],
+    tooltipDx: -195,
+    tooltipDy: -70,
+  },
+  {
+    x: 5,
+    term: "extrapolation",
+    description: [
+      "Predicting beyond the observed",
+      "range — less reliable.",
+    ],
+    tooltipDx: -195,
+    tooltipDy: 20,
+  },
+];
 
 function AnalyticalSolution() {
   const meanX = mean(rooms);
@@ -241,6 +371,7 @@ function AnalyticalSolution() {
     meanX,
     meanY,
   );
+  const intercept = meanY - slope * meanX;
 
   return (
     <div className="analytical-solution">
@@ -357,7 +488,40 @@ function AnalyticalSolution() {
       <div className="analytical-level">
         <div className="analytical-level-heading">
           <span className="analytical-level-number">3</span>
-          <h4>Compute the intercept</h4>
+          <h4>Compute the intercept b₀</h4>
+        </div>
+
+        <div className="analytical-level-body">
+          <div className="analytical-level-left">
+            <div className="analytical-formula">
+              <span className="analytical-formula-main">b₀ = ȳ − b₁ · x̄</span>
+
+              <span className="analytical-formula-step">
+                b₀ = {formatSigned(meanY, 2)} − {Math.round(slope).toLocaleString()} ×{" "}
+                {meanX.toFixed(4)}
+              </span>
+
+              <span className="analytical-formula-step">
+                b₀ = {formatSigned(meanY, 2)} − {formatSigned(slope * meanX, 2)}
+              </span>
+
+              <span className="analytical-formula-result">
+                b₀ ≈ {(Math.round(intercept) || 0).toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          <div className="analytical-level-right">
+            <MeanFitChart
+              showMean
+              showLine
+              meanX={meanX}
+              meanY={meanY}
+              slope={slope}
+              intercept={intercept}
+              altIntercept={ALT_INTERCEPT}
+            />
+          </div>
         </div>
       </div>
 
@@ -365,6 +529,37 @@ function AnalyticalSolution() {
         <div className="analytical-level-heading">
           <span className="analytical-level-number">4</span>
           <h4>Substitute estimated coefficients</h4>
+        </div>
+
+        <div className="analytical-level-body">
+          <div className="analytical-level-left">
+            <div className="analytical-formula">
+              <span className="analytical-formula-main">ŷ = b₀ + b₁ · x</span>
+
+              <span className="analytical-formula-result">
+                ŷ = {(Math.round(intercept) || 0).toLocaleString()} +{" "}
+                {Math.round(slope).toLocaleString()} · x
+              </span>
+
+              <span className="analytical-formula-step">
+                The model is complete. Hover the labels on the chart to see
+                what it can — and can't — safely predict.
+              </span>
+            </div>
+          </div>
+
+          <div className="analytical-level-right">
+            <MeanFitChart
+              showMean
+              showLine
+              finalLine
+              meanX={meanX}
+              meanY={meanY}
+              slope={slope}
+              intercept={intercept}
+              predictions={PREDICTIONS}
+            />
+          </div>
         </div>
       </div>
     </div>
