@@ -1,5 +1,7 @@
 # A Visual Explanation of Linear Regression
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22544297.svg)](https://doi.org/10.5281/zenodo.22544297)
+
 <img src="./plots_per_article/tds/0_roadmap_eng_transparent.png" width="1200"/>
 
 This repository contains materials to explain the linear regression algorithm.
@@ -107,11 +109,13 @@ poetry run python examples/1_plot_initial_data.py
 ## How to cite
 
 ```
-@misc{dreamlone-linear-regression,
-  author       = {Mikhail Sarafanov},
-  title        = {A Visual Explanation of Linear Regression},
-  howpublished = {\url{https://github.com/Dreamlone/linear-regression}},
-  year         = {2026}
+@software{sarafanov_visual_linear_regression_2026,
+  author  = {Mikhail Sarafanov},
+  title   = {A Visual Explanation of Linear Regression},
+  year    = {2026},
+  version = {1.1},
+  doi     = {10.5281/zenodo.22544297},
+  url     = {https://doi.org/10.5281/zenodo.22544297}
 }
 ```
 
