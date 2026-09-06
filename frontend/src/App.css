@@ -61,8 +61,14 @@ article {
 }
 
 .section-number {
-  display: block;
-  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 0 auto 20px;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 122, 26, 0.5);
+  border-radius: 8px;
   color: #ff7a1a;
   font-size: 0.8rem;
   font-weight: 700;
@@ -699,9 +705,9 @@ a:hover {
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: 1px solid rgba(255, 122, 26, 0.5);
+  border: 1px solid rgba(31, 31, 31, 0.35);
   border-radius: 8px;
-  color: #ff7a1a;
+  color: #1f1f1f;
   font-size: 0.85rem;
   font-weight: 700;
 }
@@ -907,6 +913,15 @@ a:hover {
   fill: rgba(255, 250, 244, 0.95);
   stroke: #ff7a1a;
   stroke-width: 2;
+}
+
+.term-hover {
+  outline: none;
+}
+
+.term-hover:focus-visible {
+  outline: 2px solid #ff7a1a;
+  outline-offset: 2px;
 }
 
 .term-hit-area {
