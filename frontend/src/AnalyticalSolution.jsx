@@ -242,8 +242,9 @@ function MeanFitChart({
       {line && altLine && (
         <text
           className="chart-line-label correct-line-label"
-          x={xScale(LABEL_X) + 8}
-          y={yScale(correctY(LABEL_X)) - 8}
+          x={xScale(LABEL_X) - 8}
+          y={yScale(correctY(LABEL_X)) - 10}
+          textAnchor="end"
         >
           or that one?
         </text>
