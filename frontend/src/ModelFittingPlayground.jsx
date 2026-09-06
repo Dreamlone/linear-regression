@@ -250,6 +250,25 @@ function ModelFittingPlayground() {
     coefficients.b0 === dataset.targetB0 &&
     coefficients.b1 === dataset.targetB1;
 
+  // Whether the dataset at a given index has been solved - used to gate
+  // navigation. Unlike `isSolved` above (which only describes the
+  // currently active dataset), this can be checked for any index, so
+  // solving dataset N only unlocks dataset N+1, not every later one.
+  const isDatasetSolvedAt = (index) => {
+    const item = datasets[index];
+
+    if (item.type !== "model") {
+      return false;
+    }
+
+    const itemCoefficients = coefficientsByDataset[item.id];
+
+    return (
+      itemCoefficients.b0 === item.targetB0 &&
+      itemCoefficients.b1 === item.targetB1
+    );
+  };
+
   const displayedB0 = coefficients.b0;
   const displayedB1 = coefficients.b1;
 
@@ -578,22 +597,26 @@ function ModelFittingPlayground() {
           </div>
 
           <div className="dataset-carousel-dots">
-            {datasets.map((item, index) => (
-              <button
-                key={item.id}
-                type="button"
-                className={index === currentIndex ? "active" : ""}
-                disabled={index > currentIndex && !isSolved}
-                onClick={() => {
-                  if (index <= currentIndex || isSolved) {
-                    goToDataset(index);
-                  }
-                }}
-                aria-label={item.type === "message" ? "Summary" : `Dataset ${index + 1}`}
-              >
-                {item.type === "message" ? "!" : index + 1}
-              </button>
-            ))}
+            {datasets.map((item, index) => {
+              const isUnlocked = index === 0 || isDatasetSolvedAt(index - 1);
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={index === currentIndex ? "active" : ""}
+                  disabled={!isUnlocked}
+                  onClick={() => {
+                    if (isUnlocked) {
+                      goToDataset(index);
+                    }
+                  }}
+                  aria-label={item.type === "message" ? "Summary" : `Dataset ${index + 1}`}
+                >
+                  {item.type === "message" ? "!" : index + 1}
+                </button>
+              );
+            })}
           </div>
         </section>
       </div>

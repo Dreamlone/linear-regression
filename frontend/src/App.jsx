@@ -2,6 +2,7 @@ import "./App.css";
 import ApartmentScatterPlot from "./ApartmentScatterPlot.jsx";
 import ApartmentModelPlot from "./ApartmentModelPlot.jsx";
 import ModelFittingPlayground from "./ModelFittingPlayground.jsx";
+import AnalyticalSolution from "./AnalyticalSolution.jsx";
 
 function App() {
   return (
@@ -81,6 +82,18 @@ function App() {
               coefficients mean, and why minimizing errors leads us to the best
               fit.
             </p>
+
+            <div className="formula-explanation">
+              <p>
+                In the previous section, you searched for good coefficients by
+                hand. For one feature, though, there is a direct, closed-form
+                way to compute the best b₀ and b₁ — no trial and error
+                required. Here is how it works, step by step, using the same
+                apartment data as before:
+              </p>
+            </div>
+
+            <AnalyticalSolution />
           </article>
 
           <article>
