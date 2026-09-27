@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Dreamlone <mik.sarafanov@gmail.com>"]
 readme = "README.md"
-packages = [{include = "linear_regression"}]
+packages = [{include = "examples"}, {include = "kde_explanation"}]
 
 [tool.poetry.dependencies]
 python = "^3.13"
